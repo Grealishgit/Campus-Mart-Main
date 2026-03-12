@@ -45,12 +45,21 @@ const ProductItemScreen = () => {
 
     return (
         <SafeAreaView className='items-center flex-1 bg-white'>
-            <View className='flex-row items-center w-full gap-4 px-4 py-3 border-b border-gray-100'>
+            <View className='flex-row items-center justify-between w-full gap-4 px-4 py-3 border-b border-gray-100'>
                 <Pressable onPress={() => router.back()} className='items-center justify-center w-10 h-10 rounded-full active:bg-gray-100'>
                     <Ionicons name="chevron-back" size={24} color="primary" />
                 </Pressable>
-                <Text>Product ID: {id}</Text>
-                <Text>Title: {title}</Text>
+
+                <View className='flex-row items-center gap-2'>
+                    <Pressable onPress={() => { }} className='items-center justify-center w-10 h-10 rounded-full active:bg-gray-100'>
+                        <Ionicons name="download-outline" size={24} color="primary" />
+                    </Pressable>
+
+                    <Pressable onPress={() => { }} className='items-center justify-center w-10 h-10 rounded-full active:bg-gray-100'>
+                        <Ionicons name="heart-outline" size={24} color="primary" />
+                    </Pressable>
+                </View>
+
             </View>
 
         </SafeAreaView>
