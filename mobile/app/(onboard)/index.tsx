@@ -46,7 +46,7 @@ const OnboardingScreen = () => {
             {/* Skip Button */}
             <View className="items-end px-6 pt-6 pb-2">
                 <Pressable onPress={() => router.replace('/(auth)' as any)}>
-                    <Text className="text-lg tracking-wide text-gray-800 font-display-medium">
+                    <Text className="text-2xl tracking-wide text-primary font-display-medium">
                         Skip
                     </Text>
                 </Pressable>
@@ -100,9 +100,9 @@ const OnboardingScreen = () => {
                 {/* Next Button */}
                 <Pressable
                     onPress={nextStep}
-                    className="flex-row items-center justify-center w-full px-6 py-5 rounded-lg bg-primary active:opacity-80"
+                    className="flex-row items-center justify-center w-full px-6 py-5 rounded-3xl bg-primary active:opacity-80"
                 >
-                    <Text className="font-semibold text-white text-md">
+                    <Text className="text-xl font-semibold text-white">
                         {step === steps.length - 1 ? 'Get Started' : 'Next'}
                     </Text>
                     <Text className="ml-2 text-lg text-white">

@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TextInput } from 'react-native'
+import { View, Text, Pressable, TextInput, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,14 @@ const SignUpScreen = () => {
     const [agreeToTerms, setAgreeToTerms] = useState(false);
 
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        fullName: string;
+        email: string;
+        faculty: string;
+        year: string;
+        phone: string;
+        password: string;
+    }>({
         fullName: '',
         email: '',
         faculty: '',
@@ -22,6 +29,50 @@ const SignUpScreen = () => {
         password: ''
     });
 
+    const [errors, setErrors] = useState<Partial<typeof formData>>({});
+
+    const validate = (): boolean => {
+        const newErrors: Partial<typeof formData> = {};
+
+        if (!formData.fullName.trim())
+            newErrors.fullName = 'Full name is required.';
+
+        if (!formData.email.trim())
+            newErrors.email = 'Email is required.';
+        else if (!/^[^\s@]+@[^\s@]+\.(ac\.ke|edu)$/.test(formData.email))
+            newErrors.email = 'Must be a valid university email (.ac.ke or .edu).';
+
+        if (!formData.faculty.trim())
+            newErrors.faculty = 'Faculty is required.';
+
+        if (!formData.year.trim())
+            newErrors.year = 'Year of study is required.';
+
+        if (!formData.phone.trim())
+            newErrors.phone = 'Phone number is required.';
+        else if (!/^\+?[0-9]{9,13}$/.test(formData.phone))
+            newErrors.phone = 'Enter a valid phone number.';
+
+        if (!formData.password)
+            newErrors.password = 'Password is required.';
+        else if (formData.password.length < 8)
+            newErrors.password = 'Password must be at least 8 characters.';
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSignUp = () => {
+        if (!agreeToTerms) {
+            Alert.alert('Terms & Conditions', 'You must agree to the terms to continue.');
+            return;
+        }
+        if (!validate()) return;
+
+        // TODO: calling API ya kusign up hapa
+        console.log('Form is valid:', formData);
+    }
+
     return (
         <SafeAreaView className="flex-1 bg-white">
             {/* Header */}
@@ -29,9 +80,9 @@ const SignUpScreen = () => {
                 <Pressable onPress={() => router.navigate('/(onboard)')}
                     className="items-center justify-center w-10 h-10 rounded-full active:bg-gray-100"
                 >
-                    <Ionicons name="chevron-back" size={24} color="black" />
+                    <Ionicons name="chevron-back" size={24} color="primary" />
                 </Pressable>
-                <Text className="flex-1 pr-10 text-3xl text-center font-display-bold">Sign Up</Text>
+                <Text className="flex-1 pr-10 text-3xl text-center text-primary font-display-bold">Campus Mart</Text>
             </View>
 
 
@@ -47,7 +98,7 @@ const SignUpScreen = () => {
 
                     <View className="space-y-2">
                         <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">Full Name</Text>
-                        <View className="flex-row items-center bg-white border border-gray-400 rounded-xl">
+                        <View className={`flex-row items-center bg-white border rounded-xl ${errors.fullName ? 'border-red-400' : 'border-gray-400'}`}>
                             <View className="pl-4">
                                 <Ionicons name="person" size={20} color="#9ca3af" />
                             </View>
@@ -58,12 +109,13 @@ const SignUpScreen = () => {
                                 onChangeText={(text) => setFormData({ ...formData, fullName: text })}
                             />
                         </View>
+                        {errors.fullName && <Text className="ml-1 text-sm text-red-500">{errors.fullName}</Text>}
                     </View>
 
                     {/* University Email */}
                     <View className="mt-4 space-y-2">
                         <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">University Email</Text>
-                        <View className="flex-row items-center bg-white border border-gray-400 rounded-xl">
+                        <View className={`flex-row items-center bg-white border rounded-xl ${errors.email ? 'border-red-400' : 'border-gray-400'}`}>
                             <View className="pl-4">
                                 <Ionicons name="school" size={20} color="#9ca3af" />
                             </View>
@@ -76,15 +128,17 @@ const SignUpScreen = () => {
                                 onChangeText={(text) => setFormData({ ...formData, email: text })}
                             />
                         </View>
-                        <Text className="mt-3 ml-1 font-medium text-md text-primary">Must end in .ac.ke or .edu</Text>
+                        {errors.email
+                            ? <Text className="ml-1 text-sm text-red-500">{errors.email}</Text>
+                            : <Text className="mt-3 ml-1 font-medium text-md text-primary">Must end in .ac.ke or .edu</Text>
+                        }
                     </View>
 
                     {/* Faculty and Year Row */}
                     <View className="flex-row gap-4 mt-4">
                         <View className="flex-1 space-y-2">
                             <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">Faculty</Text>
-                            <View className="bg-white border border-gray-400 rounded-xl">
-                                {/* You'll need a picker component here */}
+                            <View className={`bg-white border rounded-xl ${errors.faculty ? 'border-red-400' : 'border-gray-400'}`}>
                                 <TextInput
                                     className="p-4 text-base font-display"
                                     placeholder="Select"
@@ -92,10 +146,11 @@ const SignUpScreen = () => {
                                     onChangeText={(text) => setFormData({ ...formData, faculty: text })}
                                 />
                             </View>
+                            {errors.faculty && <Text className="ml-1 text-sm text-red-500">{errors.faculty}</Text>}
                         </View>
                         <View className="flex-1 space-y-2">
                             <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">Year</Text>
-                            <View className="bg-white border border-gray-400 rounded-xl">
+                            <View className={`bg-white border rounded-xl ${errors.year ? 'border-red-400' : 'border-gray-400'}`}>
                                 <TextInput
                                     className="p-4 text-base font-display"
                                     placeholder="Year"
@@ -103,13 +158,14 @@ const SignUpScreen = () => {
                                     onChangeText={(text) => setFormData({ ...formData, year: text })}
                                 />
                             </View>
+                            {errors.year && <Text className="ml-1 text-sm text-red-500">{errors.year}</Text>}
                         </View>
                     </View>
 
                     {/* Phone Number */}
                     <View className="mt-4 space-y-2">
                         <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">Phone Number</Text>
-                        <View className="flex-row items-center bg-white border border-gray-400 rounded-xl">
+                        <View className={`flex-row items-center bg-white border rounded-xl ${errors.phone ? 'border-red-400' : 'border-gray-400'}`}>
                             <View className="flex-row items-center pl-4 pr-3 border-r border-gray-400">
                                 <Text className="text-sm font-bold text-gray-500">+254</Text>
                             </View>
@@ -121,12 +177,13 @@ const SignUpScreen = () => {
                                 onChangeText={(text) => setFormData({ ...formData, phone: text })}
                             />
                         </View>
+                        {errors.phone && <Text className="ml-1 text-sm text-red-500">{errors.phone}</Text>}
                     </View>
 
                     {/* Password */}
                     <View className="mt-5 space-y-2">
                         <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">Password</Text>
-                        <View className="flex-row items-center bg-white border border-gray-400 rounded-xl">
+                        <View className={`flex-row items-center bg-white border rounded-xl ${errors.password ? 'border-red-400' : 'border-gray-400'}`}>
                             <View className="pl-4">
                                 <MaterialIcons name="password" size={24} color="#9ca3af" />
                             </View>
@@ -146,6 +203,7 @@ const SignUpScreen = () => {
                                 </Text>
                             </Pressable>
                         </View>
+                        {errors.password && <Text className="ml-1 text-sm text-red-500">{errors.password}</Text>}
                     </View>
 
                     {/* Terms Checkbox */}
@@ -163,7 +221,7 @@ const SignUpScreen = () => {
                     </Pressable>
 
                     {/* Create Account Button */}
-                    <Pressable
+                    <Pressable onPress={handleSignUp}
                         className="flex-row items-center justify-center w-full gap-2 py-4 mt-4 bg-primary rounded-xl active:opacity-80"
                     >
                         <Text className="text-lg font-bold text-white">Create Account</Text>
@@ -173,7 +231,7 @@ const SignUpScreen = () => {
                     {/* Sign In Link */}
                     <View className="flex-row items-center justify-center py-4 mt-3">
                         <Text className="text-lg text-gray-500 font-display">Already have an account? </Text>
-                        <Pressable>
+                        <Pressable onPress={() => router.push('/(auth)/SignIn')}>
                             <Text className="text-xl font-display-bold text-primary">Sign In</Text>
                         </Pressable>
                     </View>
