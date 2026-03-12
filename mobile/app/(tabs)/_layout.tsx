@@ -52,9 +52,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="browse"
         options={{
-          title: 'Explore',
+          title: 'Browse',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="compass-outline" color={color} />,
-          tabBarLabel: ({ focused, color }) => <TabLabel label="Explore" focused={focused} color={color} />,
+          tabBarLabel: ({ focused, color }) => <TabLabel label="Browse" focused={focused} color={color} />,
         }}
       />
       <Tabs.Screen
