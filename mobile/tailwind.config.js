@@ -12,7 +12,12 @@ module.exports = {
         "success": "#10B981",
       },
       fontFamily: {
-        "display": ["Inter", "sans-serif"]
+        "display": ["Jost-Regular"],
+        "display-medium": ["Jost-Medium"],
+        "display-semibold": ["Jost-Semibold"],
+        "display-bold": ["Jost-Bold"],
+        "display-black": ["Jost-Black"],
+        "display-light": ["Jost-Light"],
       },
       borderRadius: {
         "DEFAULT": "0.5rem",

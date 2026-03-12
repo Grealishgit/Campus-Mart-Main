@@ -46,14 +46,22 @@ const OnboardingScreen = () => {
             {/* Skip Button */}
             <View className="items-end px-6 pt-6 pb-2">
                 <Pressable onPress={() => router.replace('/(auth)' as any)}>
-                    <Text className="text-lg font-semibold tracking-wide text-gray-800">
+                    <Text className="text-lg tracking-wide text-gray-800 font-display-medium">
                         Skip
                     </Text>
                 </Pressable>
             </View>
 
+
             {/* Content */}
             <View className="items-center justify-center flex-1 px-8">
+
+                <View className="flex items-center justify-center" style={{ marginBottom: 32 }}>
+                    <Text className="text-5xl font-display-bold text-primary">
+                        Campus Mart
+                    </Text>
+                </View>
+
                 {/* Icon Circle */}
                 <View className="items-center justify-center w-64 h-64 mb-8">
                     <View className="items-center justify-center w-64 h-64 border rounded-full border-primary/20 bg-[#eeeef9]">
@@ -67,10 +75,10 @@ const OnboardingScreen = () => {
 
                 {/* Text Content */}
                 <View className="items-center space-y-4">
-                    <Text className="text-4xl font-bold text-[#111827] text-center">
+                    <Text className="text-4xl text-center font-display-bold text-primary">
                         {steps[step].title}
                     </Text>
-                    <Text className="max-w-xs text-lg text-center text-gray-500">
+                    <Text className="max-w-xs text-lg text-center text-gray-500 font-display">
                         {steps[step].description}
                     </Text>
                 </View>

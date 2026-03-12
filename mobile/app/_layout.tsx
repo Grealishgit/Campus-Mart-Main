@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import 'react-native-reanimated';
 import "../global.css"
 
@@ -13,6 +14,20 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+
+  const [fontsLoaded] = useFonts({
+    'Jost-Black': require('../assets/fonts/Jost-Black.ttf'),
+    'Jost-Bold': require('../assets/fonts/Jost-Bold.ttf'),
+    'Jost-Light': require('../assets/fonts/Jost-Light.ttf'),
+    'Jost-Semibold': require('../assets/fonts/Jost-SemiBold.ttf'),
+    'Jost-Medium': require('../assets/fonts/Jost-Medium.ttf'),
+    'Jost-Regular': require('../assets/fonts/Jost-Regular.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
