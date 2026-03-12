@@ -154,7 +154,7 @@ const HomeScreen = () => {
                 renderItem={({ item }) => (
                   <ListingCard
                     listing={item}
-                    onClick={() => router.push(`/listing/${item.id}` as any)}
+                    onClick={() => router.push(`/product-item/${item.id}` as any)}
                     cardWidth={cardWidth}
                   />
                 )}
