@@ -2,12 +2,27 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import Foundation from '@expo/vector-icons/Foundation';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Entypo from '@expo/vector-icons/Entypo';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+
+const TabLabel = ({ label, focused, color }: { label: string; focused: boolean; color: string }) => (
+  <View style={{ alignItems: 'center' }}>
+    <Text style={{ color, fontSize: 12, fontFamily: 'Jost-Regular' }}>{label}</Text>
+    {focused && (
+      <View style={{
+        width: 5,
+        height: 5,
+        borderRadius: 3,
+        backgroundColor: color,
+        marginTop: 3,
+      }} />
+    )}
+  </View>
+);
 
 
 export default function TabLayout() {
@@ -19,13 +34,19 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-
+        tabBarStyle: styles.tabBar,
+        tabBarBackground: () => (
+          <View style={styles.tabBarBackground} />
+        ),
+        tabBarItemStyle: styles.tabBarItem,
+        tabBarLabelStyle: styles.tabBarLabel,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <Foundation size={28} name="home" color={color} />,
+          tabBarLabel: ({ focused, color }) => <TabLabel label="Home" focused={focused} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -33,6 +54,7 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="compass-outline" color={color} />,
+          tabBarLabel: ({ focused, color }) => <TabLabel label="Explore" focused={focused} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -40,6 +62,7 @@ export default function TabLayout() {
         options={{
           title: 'Leases',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="bookmarks-outline" color={color} />,
+          tabBarLabel: ({ focused, color }) => <TabLabel label="Leases" focused={focused} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -47,6 +70,7 @@ export default function TabLayout() {
         options={{
           title: 'Chats',
           tabBarIcon: ({ color }) => <Entypo size={28} name="chat" color={color} />,
+          tabBarLabel: ({ focused, color }) => <TabLabel label="Chats" focused={focused} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -54,8 +78,56 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="person-outline" color={color} />,
+          tabBarLabel: ({ focused, color }) => <TabLabel label="Profile" focused={focused} color={color} />,
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: 'transparent',
+    borderTopWidth: 1,
+    elevation: 0,
+    height: 80,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+    paddingTop: 0,
+  },
+  tabBarBackground: {
+    backgroundColor: '#ffffff',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  tabBarItem: {
+    paddingTop: 7,
+  },
+  tabBarLabel: {
+    fontSize: 14,
+    fontFamily: 'font-display',
+    marginTop: 4,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 60,
+    height: 40,
+    borderRadius: 20,
+    marginTop: 0,
+  },
+  iconContainerActive: {
+    backgroundColor: '#1d2158',
+    marginTop: -60,
+    width: 55,
+    height: 55,
+    borderRadius: 30,
+    borderWidth: 7,
+    borderColor: '#6769ef',
+    elevation: 1,
+  },
+});

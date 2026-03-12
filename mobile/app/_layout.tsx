@@ -38,12 +38,12 @@ export default function RootLayout() {
     </View>
   )
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded) return (
     <View className='items-center justify-center flex-1 bg-primary'>
       <Ionicons name='school' size={60} color='white' />
       <Text className='mb-3 text-4xl text-white font-display-bold'>Campus Mart</Text>
     </View>
-  }
+  )
 
   return (
     <ThemeProvider value={colorScheme === 'light' ? DarkTheme : DefaultTheme}>
