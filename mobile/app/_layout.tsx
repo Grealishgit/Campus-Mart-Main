@@ -47,10 +47,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'light' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(onboard)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#ffffff" } }} >
+        <Stack.Screen name="(onboard)" options={{ animation: "fade_from_bottom" }} />
+        <Stack.Screen name="(auth)" options={{ animation: "slide_from_right" }} />
+        <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
