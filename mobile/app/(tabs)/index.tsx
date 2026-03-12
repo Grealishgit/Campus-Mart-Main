@@ -5,17 +5,14 @@ import { Listing, TransactionType } from '@/types';
 import { dummyListing } from '@/lib/dummydata';
 import { Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 import '../../global.css'
 import ListingCard from '@/components/ListingCard';
 
-interface HomeProps {
-  onListingClick: (listing: Listing) => void;
-  onNavigate: (screen: Screen) => void;
-}
+const HomeScreen = () => {
 
-const HomeScreen = ({ onListingClick, onNavigate }: HomeProps) => {
-
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'sale' | 'lease'>('sale');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { width } = useWindowDimensions();
@@ -105,21 +102,39 @@ const HomeScreen = ({ onListingClick, onNavigate }: HomeProps) => {
             <View className="flex-row p-1 bg-gray-100 rounded-xl">
               <Pressable
                 onPress={() => setActiveTab('sale')}
-                className={`flex-1 py-2 rounded-lg ${activeTab === 'sale' ? 'bg-white shadow-sm' : ''
-                  }`}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  backgroundColor: activeTab === 'sale' ? '#fff' : 'transparent',
+                }}
               >
-                <Text className={`text-center font-display-bold ${activeTab === 'sale' ? 'text-primary' : 'text-gray-500'
-                  }`}>
+                <Text
+                  style={{
+                    textAlign: 'center',
+                    fontFamily: 'Jost-Bold',
+                    color: activeTab === 'sale' ? '#6769ef' : '#6b7280',
+                  }}
+                >
                   Buy Now
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => setActiveTab('lease')}
-                className={`flex-1 py-2 rounded-lg ${activeTab === 'lease' ? 'bg-white shadow-sm' : ''
-                  }`}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  backgroundColor: activeTab === 'lease' ? '#fff' : 'transparent',
+                }}
               >
-                <Text className={`text-center font-display-bold ${activeTab === 'lease' ? 'text-primary' : 'text-gray-500'
-                  }`}>
+                <Text
+                  style={{
+                    textAlign: 'center',
+                    fontFamily: 'Jost-Bold',
+                    color: activeTab === 'lease' ? '#6769ef' : '#6b7280',
+                  }}
+                >
                   Rent/Lease
                 </Text>
               </Pressable>
@@ -130,6 +145,7 @@ const HomeScreen = ({ onListingClick, onNavigate }: HomeProps) => {
           <View className="px-4">
             {filteredListings.length > 0 ? (
               <FlatList
+                key={`${activeTab}-${selectedCategory}`}
                 data={filteredListings}
                 keyExtractor={(item) => item.id}
                 numColumns={2}
@@ -138,7 +154,7 @@ const HomeScreen = ({ onListingClick, onNavigate }: HomeProps) => {
                 renderItem={({ item }) => (
                   <ListingCard
                     listing={item}
-                    onClick={() => onListingClick(item)}
+                    onClick={() => router.push(`/listing/${item.id}` as any)}
                     cardWidth={cardWidth}
                   />
                 )}
