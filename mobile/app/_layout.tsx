@@ -3,10 +3,13 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import 'react-native-reanimated';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import "../global.css"
 
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View, Text, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -14,6 +17,8 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
 
   const [fontsLoaded] = useFonts({
@@ -25,12 +30,23 @@ export default function RootLayout() {
     'Jost-Regular': require('../assets/fonts/Jost-Regular.ttf'),
   });
 
+  if (!isAuthenticated) return (
+    <View className='items-center justify-center flex-1 bg-primary'>
+      <Ionicons name='school' size={60} color='white' />
+      <Text className='mb-3 text-4xl text-white font-display-bold'>Campus Mart</Text>
+      <ActivityIndicator size='large' color='white' />
+    </View>
+  )
+
   if (!fontsLoaded) {
-    return null;
+    <View className='items-center justify-center flex-1 bg-primary'>
+      <Ionicons name='school' size={60} color='white' />
+      <Text className='mb-3 text-4xl text-white font-display-bold'>Campus Mart</Text>
+    </View>
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === 'light' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(onboard)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
