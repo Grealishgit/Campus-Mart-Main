@@ -26,6 +26,31 @@ const HomeScreen = () => {
     return matchesTab && matchesCategory;
   });
 
+
+  const handleOnClick = (item: Listing) => {
+    router.push({
+      pathname: '/product-item/[id]',
+      params: {
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        priceUnit: item.priceUnit ?? '',
+        type: item.type,
+        category: item.category,
+        condition: item.condition,
+        location: item.location,
+        distance: item.distance,
+        imageUrl: item.imageUrl,
+        isVerified: String(item.isVerified),
+        description: item.description,
+        sellerName: item.seller.name,
+        sellerRating: item.seller.rating,
+        sellerAvatar: item.seller.avatarUrl,
+        sellerVerified: String(item.seller.isVerified),
+      }
+    } as any);
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
@@ -154,7 +179,7 @@ const HomeScreen = () => {
                 renderItem={({ item }) => (
                   <ListingCard
                     listing={item}
-                    onClick={() => router.push(`/product-item/${item.id}` as any)}
+                    onClick={() => handleOnClick(item)}
                     cardWidth={cardWidth}
                   />
                 )}
