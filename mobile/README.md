@@ -1,6 +1,5 @@
-# Welcome to your Expo app 👋
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# Campus Mart
+Campus Mart is a mobile application designed to facilitate buying, selling, and leasing of items within a campus community. The app provides a platform for students to connect with each other, share information about available items, and engage in transactions securely and efficiently.
 
 ## Get started
 
@@ -75,6 +74,8 @@ You can also control the size using HTML:
 <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:400px; margin:0 auto;">
    <img src="https://27gy2ox4et.ucarecd.net/b002207e-1b50-4cef-919e-f90161f6a1ca/WhatsAppImage20260313at105614AM.jpeg" alt="Splash Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/5d75e896-7cff-4131-a0b0-8f6dc7d9a3be/WhatsAppImage20260313at105614AM1.jpeg" alt="Onboarding Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
-   <img src="https://27gy2ox4et.ucarecd.net/688ab0c9-734b-4d48-bf8c-7ea4574d9a79/WhatsAppImage20260313at105615AM2.jpeg" alt="Home Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/5e2bcc68-09e9-41c7-a806-962dba408ed3/WhatsAppImage20260313at105615AM1.jpeg" alt="Create Account Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+   <img src="https://27gy2ox4et.ucarecd.net/6506bd80-aca5-47e3-a25a-0a744a851695/WhatsAppImage20260313at105615AM.jpeg" alt="Login Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+   <img src="https://27gy2ox4et.ucarecd.net/688ab0c9-734b-4d48-bf8c-7ea4574d9a79/WhatsAppImage20260313at105615AM2.jpeg" alt="Home Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+   
 </div>
