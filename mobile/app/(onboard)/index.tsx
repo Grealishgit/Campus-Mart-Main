@@ -102,7 +102,7 @@ const OnboardingScreen = () => {
                     onPress={nextStep}
                     className="flex-row items-center justify-center w-full px-6 py-5 rounded-3xl bg-primary active:opacity-80"
                 >
-                    <Text className="text-xl font-semibold text-white">
+                    <Text className="text-xl text-white font-display-bold">
                         {step === steps.length - 1 ? 'Get Started' : 'Next'}
                     </Text>
                     <Text className="ml-2 text-lg text-white">
