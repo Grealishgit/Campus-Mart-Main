@@ -1,8 +1,9 @@
-import { View, Text, Pressable, Image } from 'react-native'
+import { View, Text, Pressable, Image, ScrollView } from 'react-native'
 import React, { useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import map from '../../assets/images/map.png'
 
 
 const ProductItemScreen = () => {
@@ -52,28 +53,26 @@ const ProductItemScreen = () => {
     }>();
 
     return (
-        <SafeAreaView className='items-center flex-1 bg-white'>
+        <SafeAreaView className='relative flex-1 bg-white'>
 
-            <View className='relative w-full'>
-                <Image source={{ uri: imageUrl }} className='w-full h-[450px]' resizeMode='cover' />
-
-                <View className='absolute flex-row items-center justify-between w-full gap-4 px-4 py-3 top-4'>
-                    <Pressable onPress={() => router.back()} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
+            <View className='absolute z-50 flex-row items-center justify-between w-full gap-4 px-4 py-3 top-8'>
+                <Pressable onPress={() => router.back()} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
                     <Ionicons name="chevron-back" size={24} color="primary" />
                 </Pressable>
 
                 <View className='flex-row items-center gap-2'>
-                        <Pressable onPress={() => { }} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
+                    <Pressable onPress={() => { }} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
                         <Ionicons name="download-outline" size={24} color="primary" />
                     </Pressable>
 
-                        <Pressable onPress={handleLikeProduct} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
-                            <Ionicons name={likeProduct ? "heart" : "heart-outline"} size={24} color={likeProduct ? "#6769ef" : "gray"} />
+                    <Pressable onPress={handleLikeProduct} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
+                        <Ionicons name={likeProduct ? "heart" : "heart-outline"} size={24} color={likeProduct ? "#6769ef" : "gray"} />
                     </Pressable>
                 </View>
 
             </View>
-            </View>
+            <ScrollView className='flex flex-col w-full '>
+                <Image source={{ uri: imageUrl }} className='w-full h-[450px]' resizeMode='cover' />
 
             <View className='flex flex-col w-full p-2'>
                 <View className='flex flex-col w-full gap-2 p-2 mt-3'>
@@ -82,7 +81,7 @@ const ProductItemScreen = () => {
                         <Text className='ml-3 text-lg text-gray-500 font-display-medium'> Final Price</Text></Text>
                 </View>
 
-                <View className='flex-row justify-between w-full gap-2 p-2 mt-3 rounded-full shadow'>
+                    <View className='flex-row justify-between w-full gap-2 p-4 mt-3 bg-white shadow-lg rounded-2xl'>
                     <View className='flex-col gap-1'>
                         <Image source={{ uri: sellerAvatar }} className='rounded-full w-14 h-14' />
                     </View>
@@ -101,7 +100,7 @@ const ProductItemScreen = () => {
                     <View className='flex-col items-end gap-1 p-1'>
                         <View className='flex-row gap-2 p-1 mr-2 bg-yellow-100 rounded-lg'>
                             <Ionicons name="star" size={16} color="#fbbf24" />
-                            <Text className='text-sm text-gray-500 font-display' numberOfLines={1}>
+                                <Text className='text-orange-900 text-md font-display-semibold' numberOfLines={1}>
                                 {sellerRating}
                             </Text>
                         </View>
@@ -109,8 +108,54 @@ const ProductItemScreen = () => {
 
                     </View>
                 </View>
-            </View>
 
+                    <View className='flex-row justify-between w-full gap-1 p-2 mt-3'>
+
+                        <View className='flex-col items-center justify-center flex-1 p-2 bg-white border border-gray-300 rounded-lg shadow-xl'>
+                            <Feather name="box" size={24} color="#6769ef" />
+                            <Text className='text-xl font-display-bold text-primary'>Condition</Text>
+                            <Text className='text-sm text-gray-400 font-display-medium'>{condition}</Text>
+                        </View>
+
+                        <View className='flex-col items-center justify-center flex-1 p-2 bg-white border border-gray-300 rounded-lg shadow-xl'>
+                            <Ionicons name="location-outline" size={24} color="#6769ef" />
+                            <Text className='text-xl font-display-bold text-primary'>Pickup</Text>
+                            <Text className='text-sm text-gray-500 font-display-medium'>{location}</Text>
+                        </View>
+
+                        <View className='flex-col items-center justify-center flex-1 p-2 bg-white border border-gray-300 rounded-lg shadow-xl'>
+                            <MaterialCommunityIcons name="progress-helper" size={24} color="#6769ef" />
+                            <Text className='text-xl font-display-bold text-primary'>Availability</Text>
+                            <Text className='text-sm text-gray-500 font-display-medium'>{category}</Text>
+                        </View>
+
+                    </View>
+
+
+                    <View className='flex-col w-full p-4 mt-2'>
+                        <Text className='text-3xl text-black font-display-bold'>ABOUT THIS ITEM</Text>
+                        <Text className='mt-2 text-lg text-gray-500 font-display'>{description}</Text>
+                    </View>
+
+                    <View className='relative w-full h-48 overflow-hidden bg-blue-100 border border-gray-300 rounded-xl'>
+                        <Image
+                            source={map}
+                            className='absolute inset-0 w-full h-full'
+                            resizeMode='cover'
+                        />
+
+                        <View className='absolute inset-0 items-center justify-center bg-black/30'>
+                            <Feather name="map" size={45} color="white" />
+                            <Text className='text-3xl text-white font-display-bold'>{distance} km away</Text>
+                        </View>
+                    </View>
+
+                    <View>
+
+                    </View>
+
+                </View>
+            </ScrollView>
         </SafeAreaView>
     )
 }
