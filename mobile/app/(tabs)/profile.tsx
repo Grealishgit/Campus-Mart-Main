@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 const ProfileScreen = () => {
   return (
     <SafeAreaView className='flex-1'>
-      <Text>profile</Text>
+      <Text>TODO NEXT</Text>
     </SafeAreaView>
   )
 }
