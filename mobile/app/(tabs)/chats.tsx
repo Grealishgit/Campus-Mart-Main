@@ -196,7 +196,23 @@ const ChatScreen = () => {
                                 </View>
                             </View>
 
-                            <Text className='text-gray-400 font-display-semibold mb-3'>Select a conversation to start messaging</Text>
+                            <Text className='text-gray-400 font-display-semibold mb-3'>
+                                Select or search a conversation to start messaging</Text>
+
+                            <View className="px-2 py-3">
+                                <View className="flex-row items-center bg-white border border-gray-300 rounded-xl">
+                                    <View className="flex-row items-center pl-4 pr-3 ">
+                                        <Ionicons name='search' size={24} color="#9CA3AF" />
+                                    </View>
+                                    <TextInput
+                                        className="flex-1 p-3.5 pl-3 text-xl font-display"
+                                        placeholder="Search people ,conversations..."
+                                        keyboardType='default'
+                                    />
+
+                                </View>
+
+                            </View>
 
                             {conversations.map(conv => (
                                 <Pressable

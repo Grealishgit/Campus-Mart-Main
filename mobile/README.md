@@ -81,6 +81,9 @@ You can also control the size using HTML:
     <img src="https://27gy2ox4et.ucarecd.net/e0b97db0-173b-43b1-b1bb-c0cffadfa9a1/WhatsAppImage20260314at34526PM.jpeg" alt="Search Screen Filter" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/6992c428-8bbc-4373-aa32-bf6e9c036caf/WhatsAppImage20260313at104406PM.jpeg" alt="Product/Item Info" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
     <img src="https://27gy2ox4et.ucarecd.net/35063cf0-2788-467b-b072-0b011eaa16d9/WhatsAppImage20260314at15827PM.jpeg" alt="Lease Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+    <img src="https://27gy2ox4et.ucarecd.net/ab24bbe2-605b-48a4-978e-56001217105d/WhatsAppImage20260314at61427PM.jpeg" alt="Chats Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+    <img src="https://27gy2ox4et.ucarecd.net/507da3ff-f3d4-428e-ad09-2b1e5850d073/WhatsAppImage20260314at61426PM.jpeg" alt="Chat Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+    <img src="https://27gy2ox4et.ucarecd.net/a95236a1-0198-4658-9222-a4cad4edaa8b/WhatsAppImage20260314at61621PM.jpeg" alt="Chat Screen New Message" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
     <img src="https://27gy2ox4et.ucarecd.net/db5db565-0a36-492e-997b-5c2efd81c900/WhatsAppImage20260314at123138PM.jpeg" alt="Profile Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
     <img src="https://27gy2ox4et.ucarecd.net/8562f373-05e6-43d8-84bf-cd36af1ca4ff/WhatsAppImage20260314at123137PM.jpeg" alt="Edit Profile Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
 </div>
