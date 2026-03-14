@@ -77,6 +77,8 @@ You can also control the size using HTML:
    <img src="https://27gy2ox4et.ucarecd.net/5e2bcc68-09e9-41c7-a806-962dba408ed3/WhatsAppImage20260313at105615AM1.jpeg" alt="Create Account Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/6506bd80-aca5-47e3-a25a-0a744a851695/WhatsAppImage20260313at105615AM.jpeg" alt="Login Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/688ab0c9-734b-4d48-bf8c-7ea4574d9a79/WhatsAppImage20260313at105615AM2.jpeg" alt="Home Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+   <img src="https://27gy2ox4et.ucarecd.net/7dd700f0-8fbc-41a6-b2e5-a7af5f4e0ecb/WhatsAppImage20260314at34353PM.jpeg" alt="Search Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+    <img src="https://27gy2ox4et.ucarecd.net/e0b97db0-173b-43b1-b1bb-c0cffadfa9a1/WhatsAppImage20260314at34526PM.jpeg" alt="Search Screen Filter" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/6992c428-8bbc-4373-aa32-bf6e9c036caf/WhatsAppImage20260313at104406PM.jpeg" alt="Product/Item Info" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
     <img src="https://27gy2ox4et.ucarecd.net/35063cf0-2788-467b-b072-0b011eaa16d9/WhatsAppImage20260314at15827PM.jpeg" alt="Lease Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
     <img src="https://27gy2ox4et.ucarecd.net/db5db565-0a36-492e-997b-5c2efd81c900/WhatsAppImage20260314at123138PM.jpeg" alt="Profile Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
