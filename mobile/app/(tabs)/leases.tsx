@@ -22,7 +22,7 @@ const LeaseScreen = () => {
             due: 'Oct 15 (4 days ago)',
             status: 'Overdue',
             imageUrl: 'https://picsum.photos/seed/scooter/200'
-        }
+        },
     ];
 
 
@@ -68,55 +68,66 @@ const LeaseScreen = () => {
                     </View>
 
 
-                    <View className="flex gap-3 p-4">
-                        <View className="flex flex-col flex-1 gap-1 p-4 border rounded-2xl bg-primary/10 border-primary/20">
-                            <Text className="text-xs font-bold tracking-wider uppercase text-primary">Items Out</Text>
-                            <Text className="text-2xl font-black text-primary">02</Text>
+                    <View className="flex-row justify-between gap-2 p-4">
+                        <View className="flex flex-col flex-1 gap-1 p-4 border rounded-lg bg-primary/10 border-primary/20">
+                            <Text className="tracking-wider uppercase text-md font-display-bold text-primary">Items Out</Text>
+                            <Text className="text-4xl text-center font-display-semibold text-primary">02</Text>
                         </View>
-                        <View className="flex flex-col flex-1 gap-1 p-4 border border-orange-100 rounded-2xl bg-orange-50 ">
-                            <Text className="text-xs font-bold tracking-wider text-orange-600 uppercase">Next Return</Text>
-                            <View className="flex items-baseline gap-1">
-                                <Text className="text-2xl font-black text-orange-600">04</Text>
-                                <Text className="text-xs font-medium text-orange-600/70">days</Text>
+
+                        <View className="flex flex-col flex-1 gap-1 p-4 border border-orange-100 rounded-lg bg-orange-50 ">
+                            <Text className="tracking-wider text-orange-600 uppercase text-md font-display-semibold">Next Return</Text>
+                            <View className="flex-row justify-center gap-1">
+                                <Text className="text-4xl text-center text-orange-600 font-display-bold">04</Text>
+                                <Text className="mt-3 text-md font-display text-end text-orange-600/70">days</Text>
                             </View>
                         </View>
                     </View>
 
                     <View className="px-4 pt-2">
-                        <Text className="text-lg font-bold">Ongoing Rentals</Text>
+                        <Text className="text-2xl font-display-bold">Ongoing Rentals</Text>
                     </View>
 
-                    <View className="p-4 space-y-4">
+                    <View className="flex-col gap-4 p-4">
                         {activeLeases.map(lease => (
-                            <View key={lease.id} className={`flex flex-col gap-4 rounded-2xl bg-white  p-4 ios-shadow border ${lease.status === 'Overdue' ? 'border-2 border-red-100 ' : 'border-[#d0d0e7]/50'}`}>
-                                <View className="flex gap-4">
+                            <View key={lease.id}
+                                className={`flex-col gap-2 rounded-lg bg-white p-4 border ${lease.status === 'Overdue' ? 'border-2 border-red-100 ' : 'border-[#d0d0e7]/50'}`}>
+
+                                <View className="flex-row gap-4">
                                     <View className="overflow-hidden border border-gray-100 size-24 rounded-xl">
                                         <Image src={lease.imageUrl} alt={lease.title} className="object-cover w-full h-full" />
                                     </View>
+
                                     <View className="flex flex-col justify-between flex-1 py-0.5 min-w-0">
-                                        <View className="flex items-start justify-between gap-2">
+
+                                        <View className="flex-row items-start justify-between gap-2">
                                             <View className="flex-1 min-w-0">
-                                                <Text className="text-lg font-bold leading-tight truncate">{lease.title}</Text>
-                                                <View className="flex items-center gap-1.5 text-[#4e4f97] text-xs">
-                                                    <Text className="text-base material-symbols-outlined">person</Text>
-                                                    <Text className="truncate">{lease.seller}</Text>
+                                                <Text className="text-lg leading-tight text-black truncate font-display-bold">{lease.title}
+                                                </Text>
+                                                <View className="flex-row mt-0.5 items-center gap-1.5 text-[#4e4f97] text-xs">
+                                                    <Ionicons name="person" size={16} color="#4e4f97" />
+                                                    <Text className="truncate font-display-medium text-[#4e4f97]">{lease.seller}</Text>
                                                 </View>
                                             </View>
                                             <Text className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${lease.status === 'Overdue' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
                                                 {lease.status}
                                             </Text>
                                         </View>
-                                        <View className={`flex items-center gap-1.5 text-xs ${lease.status === 'Overdue' ? 'text-red-600 font-bold' : 'text-[#4e4f97]'}`}>
-                                            <Text className="text-base material-symbols-outlined">{lease.status === 'Overdue' ? 'warning' : 'calendar_today'}</Text>
-                                            <Text>Due: {lease.due}</Text>
+
+                                        <View className="flex-row items-center gap-1.5">
+                                            {lease.status === 'Overdue' ? <Ionicons name='warning-outline' color='#ef4444' size={16} /> : <Ionicons name='checkmark-circle' color='#10b981' size={16} />}
+                                            <Text className={`text-md ${lease.status === 'Overdue' ? 'text-red-600' : 'text-green-700'} font-display-medium`}>Due: {lease.due}</Text>
                                         </View>
                                     </View>
                                 </View>
-                                <View className="flex gap-2">
-                                    <Pressable className="flex-1 h-10 rounded-xl border border-[#d0d0e7] text-sm font-semibold hover:bg-gray-50">Mark Returned</Pressable>
-                                    <Pressable className={`flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 ${lease.status === 'Overdue' ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                                        <Text className="text-lg material-symbols-outlined">history_edu</Text>
-                                        Extend Lease
+
+                                <View className="flex-row gap-2 mt-2">
+                                    <Pressable className="flex-1 p-2 py-3 rounded-xl border border-[#d0d0e7]  items-center">
+                                        <Text className='text-lg text-center font-display-medium'>Mark Returned</Text>
+                                    </Pressable>
+                                    <Pressable className={`flex-1 p-2 py-3 flex-row rounded-xl  
+                                        ${lease.status === 'Overdue' ? 'bg-[#a4a5f5]' : 'bg-[#6769ef]'}  flex items-center justify-center gap-2 shadow-lg shadow-primary/20 `}>
+                                        <Ionicons name="calendar" size={16} color="white" />
+                                        <Text className='text-lg text-white font-display-medium'>Extend Lease</Text> 
                                     </Pressable>
                                 </View>
                             </View>
