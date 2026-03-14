@@ -1,6 +1,7 @@
 import { View, Text, Pressable, Image } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons';
 
 const LeaseScreen = () => {
 
@@ -24,33 +25,48 @@ const LeaseScreen = () => {
         }
     ];
 
+
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+
     return (
         <SafeAreaView className='flex-1'>
-            <View className="flex flex-col h-full overflow-hidden bg-whitet">
+            <View className="flex flex-col h-full overflow-hidden bg-white">
+
                 <View className="sticky top-0 z-50 bg-background-light/80backdrop-blur-md border-b border-[#d0d0e7]/30">
-                    <View className="flex items-center justify-between p-4">
-                        <View className="flex items-center gap-3">
+                    <View className="flex-row items-center justify-between w-full p-4">
+                        <View className="flex-row items-center gap-3">
                             <Pressable className="p-2 rounded-full hover:bg-gray-100">
-                                <Text className="text-2xl material-symbols-outlined">arrow_back_ios_new</Text>
+                                <Ionicons name="chevron-back" size={24} color="black" />
                             </Pressable>
-                            <Text className="text-xl font-bold tracking-tight">My Leases</Text>
+                            <Text className="text-2xl tracking-tight font-display-bold">My Leases</Text>
                         </View>
                         <View className="relative">
-                            <Pressable className="p-2 rounded-full hover:bg-gray-100">
-                                <Text className="text-2xl material-symbols-outlined">notifications</Text>
+                            <Pressable className="p-2 hover:bg-gray-100">
+                                <Ionicons name="notifications-outline" size={24} color="black" />
+                                <View className="absolute flex w-2 h-2 bg-[#6769ef] rounded-full top-2 right-2 ring-2 ring-white" /> 
                             </Pressable>
-                            <Text className="absolute flex w-2 h-2 bg-red-500 rounded-full top-2 right-2 ring-2 ring-white"></Text>
+
                         </View>
                     </View>
                 </View>
 
-                <View className="flex-1 pb-32 overflow-y-auto no-scrollbar">
-                    <View className="px-4 pt-6">
-                        <View className="flex p-1 bg-gray-100 rounded-xl">
-                            <Pressable className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white shadow-sm text-primary ">Active Leases</Pressable>
-                            <Pressable className="flex-1 py-2.5 text-sm font-semibold text-gray-400">Lease History</Pressable>
+                <View className="flex-1 w-full pb-32 overflow-y-auto ">
+                    <View className="flex-row justify-between px-4 pt-6">
+                        <View className="flex-row flex-1 p-1 bg-gray-100 rounded-xl">
+                            <Pressable onPress={() => setActiveTab('active')} className={`flex-1 py-2.5 text-lg font-display-medium rounded-lg ${activeTab === 'active' ? 'bg-primary text-white shadow-sm' : 'text-gray-400'}`}>
+                                <Text className={`text-lg text-center font-display-medium ${activeTab === 'active' ? 'text-white shadow-sm' : 'text-gray-400'}`}>
+                                    Active Leases
+                                </Text>
+
+                            </Pressable>
+                            <Pressable onPress={() => setActiveTab('history')} className={`flex-1 py-2.5 rounded-lg ${activeTab === 'history' ? 'bg-primary' : ''}`}>
+                                <Text className={`text-lg text-center font-display-medium ${activeTab === 'history' ? 'text-white shadow-sm' : 'text-gray-400'}`}>
+                                    Lease History
+                                </Text>
+                            </Pressable>
                         </View>
                     </View>
+
 
                     <View className="flex gap-3 p-4">
                         <View className="flex flex-col flex-1 gap-1 p-4 border rounded-2xl bg-primary/10 border-primary/20">
