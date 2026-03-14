@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Pressable } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import profile from '../../assets/imgs/profile.jpeg'
 
 
 const myItems = [
@@ -73,14 +74,14 @@ const ProfileScreen = () => {
             <View className="flex flex-col items-center w-full gap-4">
               <View className="relative">
                 <View className="overflow-hidden rounded-full shadow-lg size-32 ring-4 ring-white">
-                  <Image source={{ uri: "https://i.pravatar.cc/150?u=me" }} alt="Me" className="object-cover w-full h-full" />
+                  <Image source={profile} alt="Me" className="object-cover w-full h-full" />
                 </View>
                 <View className="absolute flex items-center justify-center p-1 text-white border-2 border-white rounded-full bottom-1 right-1 bg-primary">
                   <MaterialIcons name="verified" size={16} color="white" />
                 </View>
               </View>
               <View className="flex flex-col items-center text-center">
-                <Text className="text-3xl tracking-tight font-display-bold">Alex Rivera</Text>
+                <Text className="text-3xl tracking-tight font-display-bold">Arnold Njeru (Big G)</Text>
                 <Text className="mt-1 text-sm text-gray-500 font-display-medium">Faculty of Science • Class of 2025</Text>
               </View>
               <Pressable onPress={() => setEditProfile(true)}

@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import map from '../../assets/images/map.png'
+import map from '../../assets/imgs/map.png'
 
 
 const ProductItemScreen = () => {
