@@ -1,8 +1,9 @@
-import { View, Text, Image, ScrollView } from 'react-native'
+import { View, Text, Image, ScrollView, Modal } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Pressable } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 
 const myItems = [
@@ -46,6 +47,8 @@ const ProfileScreen = () => {
 
   const [activeTab, setActiveTab] = useState<'my listings' | 'favorites' | 'reviews'>('my listings');
 
+  const [editProfile, setEditProfile] = useState<boolean>(false);
+
   const tabs = [
     { label: 'My Listings', value: 'my listings' },
     { label: 'Favorites', value: 'favorites' },
@@ -80,7 +83,9 @@ const ProfileScreen = () => {
                 <Text className="text-3xl tracking-tight font-display-bold">Alex Rivera</Text>
                 <Text className="mt-1 text-sm text-gray-500 font-display-medium">Faculty of Science • Class of 2025</Text>
               </View>
-              <Pressable className="flex items-center justify-center w-full p-2 px-8 py-3 rounded-lg bg-primary">
+              <Pressable onPress={() => setEditProfile(true)}
+                className="flex items-center justify-center w-full p-2 px-8 py-3 rounded-lg bg-primary">
+
                 <Text className='text-2xl text-white font-display-medium'>
                   Edit Profile
                 </Text>
@@ -136,16 +141,41 @@ const ProfileScreen = () => {
           </View>
 
           <View className="p-6 pb-32">
-            <Pressable className="flex items-center justify-center w-full gap-2 py-3 font-bold text-red-500 transition-colors rounded-xl hover:bg-red-50">
-              <Text className="material-symbols-outlined text-[20px]">logout</Text>
-              Logout
+            <Pressable onPress={() => router.navigate('/(auth)/SignIn')} className="flex items-center justify-center w-full gap-2 py-3 font-bold border border-red-500 rounded-lg bg-red-50">
+              <Text className="text-xl text-red-500 font-display-bold">logout</Text>
             </Pressable>
-            <Text className="text-center text-gray-400 text-[10px] mt-4 uppercase tracking-[0.2em] font-medium">CampusMart v2.4.0</Text>
+            <Text className="text-center text-gray-400 text-md font-display-bold mt-4 uppercase tracking-[0.2em] ">CampusMart v1.0.0</Text>
           </View>
         </ScrollView>
 
 
       </View>
+
+      {editProfile && (
+        <Modal onRequestClose={() => setEditProfile(false)}
+          animationType="slide" transparent={true}>
+          <View className="justify-end flex-1 bg-black/40">
+            <View className="w-full p-5 bg-white rounded-t-3xl">
+              <View className="flex-row items-center justify-between w-full mb-4">
+                <Text className="text-2xl font-display-bold">Edit Profile</Text>
+                <Pressable onPress={() => setEditProfile(false)}>
+                  <Ionicons name="close" size={24} color="#6769ef" />
+                </Pressable>
+              </View>
+
+
+              <View className='flex items-center justify-center w-full p-3'>
+                <Text className='text-xl text-center font-display-bold'>Editing Profile Here</Text>
+                <Pressable className='justify-center w-full p-2 py-3 mt-3 bg-red-500 rounded-lg'>
+                  <Text className='text-2xl text-center text-white font-display-bold'>Delete Account</Text>
+                </Pressable>
+              </View>
+
+            </View>
+          </View>
+        </Modal>
+      )}
+
     </SafeAreaView>
   )
 }
