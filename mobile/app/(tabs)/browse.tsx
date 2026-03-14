@@ -11,13 +11,22 @@ const BrowseScreen = () => {
 
   const recommendedItems = [1, 2, 3, 4, 5, 6];
 
-  const categories = ['TextBooks', 'Electronics', 'Clothing', 'Household']
+  const categories = ['TextBooks', 'Electronics', 'Clothing', 'Household'];
+
+  const [activeCategory, setActiveCategory] = useState<string>('TextBooks');
 
   const [selectedFilter, setSelectedFilter] = useState<string | null>('Under 5k KES');
 
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
 
   const [priceRange, setPriceRange] = useState([0, 50000]);
+
+  const [searchValue, setSearchValue] = useState<string>('');
+
+
+  const handleClearSearchValue = () => {
+    setSearchValue('');
+  }
 
   return (
     <SafeAreaView className='flex-1'>
@@ -29,7 +38,7 @@ const BrowseScreen = () => {
               <Ionicons name='chevron-back' size={24} color="primary" />
             </Pressable>
             <Text className="text-2xl tracking-tight text-center font-display-bold ">Search</Text>
-            <Pressable className="flex justify-center">
+            <Pressable onPress={handleClearSearchValue} className="flex justify-center">
               <Text className='text-xl text-right font-display-semibold text-primary'>Clear</Text>
             </Pressable>
           </View>
@@ -43,14 +52,18 @@ const BrowseScreen = () => {
                 className="flex-1 p-3.5 pl-3 text-xl font-display"
                 placeholder="Search textbooks, tech, furniture..."
                 keyboardType='default'
+                value={searchValue}
+                onChangeText={setSearchValue}
 
               />
-              <View className="flex-row items-center pl-4 pr-3 ">
-                <View className='p-1 bg-gray-300 rounded-full'>
+              {searchValue.length > 0 && (
+                <View className="flex-row items-center pl-4 pr-3 ">
+                  <Pressable onPress={handleClearSearchValue} className='p-1 bg-gray-300 rounded-full'>
                   <Ionicons name='close' size={20} color="#9CA3AF" />
+                  </Pressable>
                 </View>
+              )}
 
-              </View>
             </View>
 
           </View>
@@ -146,9 +159,11 @@ const BrowseScreen = () => {
                   <ScrollView className="px-4" showsVerticalScrollIndicator={false}>
                     <View className="flex-row gap-2">
                       {categories.map(cat => (
-                        <View key={cat} className="flex items-center px-5 py-3 bg-slate-100 rounded-xl text-slate-700 ">
-                          <Text className='text-black font-display-medium text-md'>{cat}</Text>
-                        </View>
+                        <Pressable onPress={() => setActiveCategory(cat)}
+                          key={cat} className={`flex items-center rounded-xl px-5 py-3
+                           ${activeCategory === cat ? 'bg-primary ' : 'bg-slate-100 '}`}>
+                          <Text className={`text-black ${activeCategory === cat ? 'text-white' : 'text-slate-700'} font-display-medium text-md`}>{cat}</Text>
+                        </Pressable>
                       ))}
                     </View>
 
