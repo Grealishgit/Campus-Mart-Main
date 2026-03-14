@@ -69,7 +69,11 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        <ScrollView className="flex-1 overflow-y-auto">
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
           <View className="flex flex-col items-center gap-6 p-4">
             <View className="flex flex-col items-center w-full gap-4">
               <View className="relative">

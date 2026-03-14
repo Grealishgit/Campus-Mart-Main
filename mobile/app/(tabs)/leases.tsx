@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image } from 'react-native'
+import { View, Text, Pressable, Image, ScrollView } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
@@ -30,7 +30,8 @@ const LeaseScreen = () => {
 
     return (
         <SafeAreaView className='flex-1'>
-            <View className="flex flex-col h-full overflow-hidden bg-white">
+
+            <View className="flex-col flex-1 h-full overflow-hidden bg-white">
 
                 <View className="sticky top-0 z-50 bg-background-light/80backdrop-blur-md border-b border-[#d0d0e7]/30">
                     <View className="flex-row items-center justify-between w-full p-4">
@@ -43,14 +44,14 @@ const LeaseScreen = () => {
                         <View className="relative">
                             <Pressable className="p-2 hover:bg-gray-100">
                                 <Ionicons name="notifications-outline" size={24} color="black" />
-                                <View className="absolute flex w-2 h-2 bg-[#6769ef] rounded-full top-2 right-2 ring-2 ring-white" /> 
+                                <View className="absolute flex w-2 h-2 bg-[#6769ef] rounded-full top-2 right-2 ring-2 ring-white" />
                             </Pressable>
 
                         </View>
                     </View>
                 </View>
 
-                <View className="flex-1 w-full pb-32 overflow-y-auto ">
+                <View className="w-full overflow-y-auto ">
                     <View className="flex-row justify-between px-4 pt-6">
                         <View className="flex-row flex-1 p-1 bg-gray-100 rounded-xl">
                             <Pressable onPress={() => setActiveTab('active')} className={`flex-1 py-2.5 text-lg font-display-medium rounded-lg ${activeTab === 'active' ? 'bg-primary text-white shadow-sm' : 'text-gray-400'}`}>
@@ -68,7 +69,10 @@ const LeaseScreen = () => {
                     </View>
 
 
-                    <View className="flex-row justify-between gap-2 p-4">
+
+                </View>
+
+                <View className="flex-row justify-between gap-2 p-4">
                         <View className="flex flex-col flex-1 gap-1 p-4 border rounded-lg bg-primary/10 border-primary/20">
                             <Text className="tracking-wider uppercase text-md font-display-bold text-primary">Items Out</Text>
                             <Text className="text-4xl text-center font-display-semibold text-primary">02</Text>
@@ -83,6 +87,8 @@ const LeaseScreen = () => {
                         </View>
                     </View>
 
+
+                <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
                     <View className="px-4 pt-2">
                         <Text className="text-2xl font-display-bold">Ongoing Rentals</Text>
                     </View>
@@ -127,33 +133,41 @@ const LeaseScreen = () => {
                                     <Pressable className={`flex-1 p-2 py-3 flex-row rounded-xl  
                                         ${lease.status === 'Overdue' ? 'bg-[#a4a5f5]' : 'bg-[#6769ef]'}  flex items-center justify-center gap-2 shadow-lg shadow-primary/20 `}>
                                         <Ionicons name="calendar" size={16} color="white" />
-                                        <Text className='text-lg text-white font-display-medium'>Extend Lease</Text> 
+                                        <Text className='text-lg text-white font-display-medium'>Extend Lease</Text>
                                     </Pressable>
                                 </View>
                             </View>
                         ))}
                     </View>
 
-                    <View className="px-4 py-4 mt-2">
-                        <View className="flex items-center justify-between mb-4">
-                            <Text className="text-lg font-bold">Recent History</Text>
-                            <Pressable className="text-sm font-bold text-primary">See All</Pressable>
+                    <View className="px-4 py-4 mt-2 mb-5">
+                        <View className="flex-row items-center justify-between mb-4">
+                            <Text className="text-xl font-display-bold">Recent History</Text>
+                            <Pressable>
+                                <Text className="text-lg font-display-bold text-primary">See All</Text>
+                            </Pressable>
                         </View>
-                        <View className="bg-white  rounded-2xl p-4 flex items-center gap-4 border border-[#d0d0e7]/30 opacity-75">
-                            <View className="flex items-center justify-center bg-gray-100 rounded-lg size-12 ">
-                                <Text className="text-gray-400 material-symbols-outlined">photo_camera</Text>
+                        <View className="bg-white  rounded-2xl p-4 flex-row justify-between items-center gap-4 border border-[#d0d0e7]/30 ">
+                            <View className="flex-row items-center justify-center gap-4">
+                                <View className='items-center justify-center bg-gray-100 rounded-lg size-14'>
+                                    <Ionicons name="camera" size={20} color="#4e4f97" />
+                                </View>
+
+                                <View className="flex-col gap-0.5">
+                                    <Text className="text-xl font-display-bold">DSLR Camera Canon</Text>
+                                    <Text className="text-gray-500 text-md">Returned Sept 12</Text>
+                                </View>
                             </View>
-                            <View className="flex-1">
-                                <Text className="text-sm font-bold">DSLR Camera Canon</Text>
-                                <Text className="text-xs text-gray-500">Returned Sept 12</Text>
-                            </View>
+
                             <View className="flex items-center gap-0.5">
-                                <Text className="text-sm text-yellow-400 material-symbols-outlined fill-1" >star</Text>
-                                <Text className="text-xs font-bold">5.0</Text>
+                                <Ionicons name="star" size={16} color="#fbbf24" />
+                                <Text className="text-2xl font-display-bold">5.0</Text>
                             </View>
                         </View>
                     </View>
-                </View>
+
+                </ScrollView>
+
 
             </View>
         </SafeAreaView>
