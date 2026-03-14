@@ -78,5 +78,7 @@ You can also control the size using HTML:
    <img src="https://27gy2ox4et.ucarecd.net/6506bd80-aca5-47e3-a25a-0a744a851695/WhatsAppImage20260313at105615AM.jpeg" alt="Login Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/688ab0c9-734b-4d48-bf8c-7ea4574d9a79/WhatsAppImage20260313at105615AM2.jpeg" alt="Home Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    <img src="https://27gy2ox4et.ucarecd.net/6992c428-8bbc-4373-aa32-bf6e9c036caf/WhatsAppImage20260313at104406PM.jpeg" alt="Product/Item Info" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+    <img src="https://27gy2ox4et.ucarecd.net/db5db565-0a36-492e-997b-5c2efd81c900/WhatsAppImage20260314at123138PM.jpeg" alt="Profile Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
+    <img src="https://27gy2ox4et.ucarecd.net/8562f373-05e6-43d8-84bf-cd36af1ca4ff/WhatsAppImage20260314at123137PM.jpeg" alt="Edit Profile Screen" style="width:200px;height:100%;object-fit:cover;border-radius:8px;">
    
 </div>
