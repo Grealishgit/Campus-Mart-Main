@@ -75,7 +75,8 @@ const HomeScreen = () => {
         </View>
 
         {/* Search Bar */}
-        <View className="flex-row items-center px-4 bg-gray-100 rounded-xl h-11">
+        <Pressable onPress={() => router.navigate('/browse')}
+          className="flex-row items-center px-4 bg-gray-100 rounded-xl h-11">
           <Ionicons name='search' color='#9CA3AF' size={24} />
           <TextInput
             className="flex-1 ml-2 text-md font-display"
@@ -83,7 +84,7 @@ const HomeScreen = () => {
             placeholderTextColor="#9CA3AF"
             editable={false}
           />
-        </View>
+        </Pressable>
       </View>
 
       {/* Main Content */}

@@ -3,15 +3,28 @@ import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 
 const BrowseScreen = () => {
 
+  const router = useRouter();
 
-  const mainFilters = ['Filter', 'Under 5k KES', 'On-Campus', 'Verified'];
+
+  const mainFilters = [
+    'Filter',
+    'Under 5k KES',
+    'On-Campus',
+    'Verified'
+  ];
 
   const recommendedItems = [1, 2, 3, 4, 5, 6];
 
-  const categories = ['TextBooks', 'Electronics', 'Clothing', 'Household'];
+  const categories = [
+    'TextBooks',
+    'Electronics',
+    'Clothing',
+    'Household'
+  ];
 
   const [activeCategory, setActiveCategory] = useState<string>('TextBooks');
 
@@ -34,7 +47,7 @@ const BrowseScreen = () => {
         <View className="sticky top-0 z-10 pt-4 bg-background-light/80 backdrop-blur-md">
 
           <View className="flex-row items-center justify-between px-4 pb-2">
-            <Pressable className="flex items-center justify-start size-12">
+            <Pressable onPress={() => router.navigate('/')} className="flex items-center justify-start size-12">
               <Ionicons name='chevron-back' size={24} color="primary" />
             </Pressable>
             <Text className="text-2xl tracking-tight text-center font-display-bold ">Search</Text>
