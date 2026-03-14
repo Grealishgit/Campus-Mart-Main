@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TextInput, Image, ScrollView } from 'react-native'
+import { View, Text, Pressable, TextInput, Image, ScrollView, Modal } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Conversation } from '@/types';
@@ -75,6 +75,10 @@ const ChatScreen = () => {
         } as any);
     };
 
+
+    const [createMessage, setCreateMessage] = useState<boolean>(false);
+
+
     return (
         <SafeAreaView className='flex-1'>
             <View className="flex-1 flex-col h-full bg-background-light  overflow-hidden">
@@ -87,7 +91,7 @@ const ChatScreen = () => {
                             <Pressable className="flex items-center justify-center size-10 rounded-full bg-gray-100 ">
                                 <Ionicons name="search-outline" size={20} color="black" />
                             </Pressable>
-                            <Pressable className="flex items-center justify-center size-10 rounded-full bg-primary text-white">
+                            <Pressable onPress={() => setCreateMessage(true)} className="flex items-center justify-center size-10 rounded-full bg-primary text-white">
                                 <Ionicons name="create-outline" size={20} color="white" />
                             </Pressable>
                         </View>
@@ -179,6 +183,48 @@ const ChatScreen = () => {
                 </ScrollView>
 
             </View>
+
+            {createMessage && (
+                <Modal transparent animationType="slide" visible={!!createMessage} onRequestClose={() => setCreateMessage(false)}>
+                    <View className="flex-1 items-center justify-end bg-black/50">
+                        <View className="w-full bg-white rounded-t-3xl p-6">
+
+                            <View className="flex-row justify-between w-full items-center">
+                                <Text className='text-xl font-display-bold'>Send New Message</Text>
+                                <View className='bg-gray-100 rounded-full p-2'>
+                                    <Ionicons name="close" size={24} color="black" onPress={() => setCreateMessage(false)} />
+                                </View>
+                            </View>
+
+                            <Text className='text-gray-400 font-display-semibold mb-3'>Select a conversation to start messaging</Text>
+
+                            {conversations.map(conv => (
+                                <Pressable
+                                    key={conv.id}
+                                    className="bg-gray-100 items-center flex-row justify-between w-full gap-2 rounded-lg p-4 mb-2"
+                                    onPress={() => {
+                                        setCreateMessage(false);
+                                        // Handle conversation selection
+                                    }}
+                                >
+                                    <View className="flex-row gap-2 items-center">
+                                        <Image source={{ uri: conv.participant.avatarUrl }} className="size-10 rounded-full mb-2" />
+                                        <View>
+                                            <Text className='text-xl text-gray-600 font-display-bold'>{conv.participant.name}</Text>
+                                            <Text className={`text-sm ${conv.participant.isOnline ? 'text-green-500' : 'text-gray-400'} font-display-medium`}>{conv.participant.isOnline ? 'Online' : 'Offline'}</Text>
+                                        </View>
+
+                                    </View>
+
+                                    <Ionicons name='chatbubble-ellipses-outline' size={20} color="black" />
+
+                                </Pressable>
+                            ))}
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
         </SafeAreaView>
     )
 }

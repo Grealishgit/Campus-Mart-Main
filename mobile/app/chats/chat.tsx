@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image, TextInput, ScrollView } from 'react-native'
+import { View, Text, Pressable, Image, TextInput, ScrollView, Modal } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -86,6 +86,7 @@ const ChatScreen = () => {
         setMessages([...messages, newMessage]);
         setInputValue('');
     };
+
 
 
     return (
@@ -192,6 +193,9 @@ const ChatScreen = () => {
                     </View>
                 </View>
             </View>
+
+
+
         </SafeAreaView>
     )
 }
