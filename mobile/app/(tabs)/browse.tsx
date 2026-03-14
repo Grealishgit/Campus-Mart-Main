@@ -72,7 +72,7 @@ const BrowseScreen = () => {
               {searchValue.length > 0 && (
                 <View className="flex-row items-center pl-4 pr-3 ">
                   <Pressable onPress={handleClearSearchValue} className='p-1 bg-gray-300 rounded-full'>
-                  <Ionicons name='close' size={20} color="#9CA3AF" />
+                    <Ionicons name='close' size={20} color="#9CA3AF" />
                   </Pressable>
                 </View>
               )}
