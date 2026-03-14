@@ -68,7 +68,7 @@ const HomeScreen = () => {
               <Ionicons name='notifications' color='#313941' size={24} />
               <View className="absolute w-2 h-2 rounded-full bg-primary top-2 right-2" />
             </Pressable>
-            <Pressable className="p-2">
+            <Pressable onPress={() => router.navigate('/ai-chat/aichat')} className="p-2">
               <Ionicons name='sparkles-sharp' color='#6769ef' size={24} />
             </Pressable>
           </View>
