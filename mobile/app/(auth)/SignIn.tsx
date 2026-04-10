@@ -1,16 +1,18 @@
-import { View, Text, Pressable, TextInput } from 'react-native'
+import { View, Text, Pressable, TextInput, ActivityIndicator, Alert } from 'react-native'
 import React, { useState } from 'react'
 
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
+import { loginUser } from '@/lib/authService';
 
 const SignInScreen = () => {
 
     const router = useRouter();
 
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState<{ email: string, password: string }>({
         email: '',
@@ -34,10 +36,28 @@ const SignInScreen = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!validate()) return;
-        // TODO: calling API ya kulogin hapa
-        console.log('Form is valid:', formData);
+        
+        setIsLoading(true);
+        try {
+            const response = await loginUser({
+                email: formData.email,
+                password: formData.password,
+            });
+
+            if (response.success) {
+                Alert.alert('Success', `Welcome back, ${response.data?.user?.firstName}!`);
+                router.replace('/(tabs)');
+            } else {
+                Alert.alert('Login Failed', response.error || 'An error occurred during login');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'An unexpected error occurred');
+            console.error('Login error:', error);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -120,11 +140,20 @@ const SignInScreen = () => {
 
 
                     {/* Login Account Button */}
-                    <Pressable onPress={() => router.navigate('/(tabs)')}
-                        className="flex-row items-center justify-center w-full gap-2 py-4 mt-4 bg-primary rounded-xl active:opacity-80"
+                    <Pressable onPress={handleLogin}
+                        disabled={isLoading}
+                        className={`flex-row items-center justify-center w-full gap-2 py-4 mt-4 rounded-xl ${
+                            isLoading ? 'bg-gray-400' : 'bg-primary active:opacity-80'
+                        }`}
                     >
-                        <Text className="text-xl text-white font-display-bold">Login</Text>
-                        <Ionicons name='arrow-forward' size={24} color="#ffffff" />
+                        {isLoading ? (
+                            <ActivityIndicator color="white" size="small" />
+                        ) : (
+                            <>
+                                <Text className="text-xl text-white font-display-bold">Login</Text>
+                                <Ionicons name='arrow-forward' size={24} color="#ffffff" />
+                            </>
+                        )}
                     </Pressable>
 
                     {/* Sign In Link */}
