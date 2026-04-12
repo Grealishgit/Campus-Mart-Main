@@ -1,10 +1,10 @@
 /**
  * QUICK COPY-PASTE SNIPPETS FOR API INTEGRATION
- * 
+ *
  * ⚠️ NOTE: This file contains CODE EXAMPLES/SNIPPETS
  * These are NOT meant to be imported or used directly.
  * Copy the snippets you need into your actual screen components.
- * 
+ *
  * USAGE:
  * 1. Find the snippet you want
  * 2. Copy the code block
@@ -13,7 +13,6 @@
  */
 
 // @ts-nocheck
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 /**
 // 1. SIMPLE DATA FETCH (Browse/Listings Screen)

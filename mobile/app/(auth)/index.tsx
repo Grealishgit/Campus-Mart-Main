@@ -1,17 +1,17 @@
-import {
-  View,
-  Text,
-  Pressable,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { registerUser } from "@/lib/authService";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
-import { registerUser } from "@/lib/authService";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const SignUpScreen = () => {
   const router = useRouter();
@@ -76,17 +76,12 @@ const SignUpScreen = () => {
 
     setIsLoading(true);
     try {
-      // Parse full name into first and last name
-      const nameParts = formData.fullName.trim().split(" ");
-      const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(" ") || formData.fullName;
-
       const response = await registerUser({
+        name: formData.fullName.trim(),
         email: formData.email,
         password: formData.password,
-        phone: formData.phone,
-        firstName,
-        lastName,
+        faculty: formData.faculty || undefined,
+        graduation_year: parseInt(formData.year) || undefined,
       });
 
       if (response.success) {

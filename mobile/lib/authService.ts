@@ -1,9 +1,9 @@
 import {
   apiRequest,
   ApiResponse,
-  setAuthToken,
   clearAuthToken,
   getAuthToken,
+  setAuthToken,
 } from "./apiClient";
 
 // ══════════════════════════════════════════════════════════════
@@ -11,11 +11,11 @@ import {
 // ══════════════════════════════════════════════════════════════
 
 export interface RegisterRequest {
+  name: string;
   email: string;
   password: string;
-  phone: string;
-  firstName: string;
-  lastName: string;
+  faculty?: string;
+  graduation_year?: number;
 }
 
 export interface LoginRequest {
@@ -26,12 +26,14 @@ export interface LoginRequest {
 export interface User {
   id: string;
   email: string;
-  phone: string;
-  firstName: string;
-  lastName: string;
-  avatar?: string;
-  verified?: boolean;
-  createdAt?: string;
+  name: string;
+  role: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+  faculty?: string;
+  graduation_year?: number;
+  rating?: number;
+  created_at?: string;
 }
 
 export interface AuthResponse {
