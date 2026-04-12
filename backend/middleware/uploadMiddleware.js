@@ -1,30 +1,43 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET || process.env.CLOUDINARY_SECRET_KEY;
+
+const missingCloudinaryEnv = [];
+if (!cloudName) missingCloudinaryEnv.push('CLOUDINARY_CLOUD_NAME');
+if (!apiKey) missingCloudinaryEnv.push('CLOUDINARY_API_KEY');
+if (!apiSecret) missingCloudinaryEnv.push('CLOUDINARY_API_SECRET');
+
+if (missingCloudinaryEnv.length > 0) {
+  throw new Error(`Missing Cloudinary env vars: ${missingCloudinaryEnv.join(', ')}`);
 }
 
-// Storage config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+cloudinary.config({
+  cloud_name: cloudName,
+  api_key: apiKey,
+  api_secret: apiSecret,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const folder = file.fieldname === 'avatar' ? 'campus-mart/avatars' : 'campus-mart/listings';
+    return {
+      folder,
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+      public_id: `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+    };
   },
 });
 
-// File filter - images only
+// File filter - image mime types only
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp/;
-  const isValid = allowedTypes.test(path.extname(file.originalname).toLowerCase())
-    && allowedTypes.test(file.mimetype);
+  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const isValid = allowedMimeTypes.includes(file.mimetype);
 
   if (isValid) {
     cb(null, true);

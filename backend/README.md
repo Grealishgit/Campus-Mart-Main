@@ -4,7 +4,7 @@ Node.js + Express + PostgreSQL backend for the Campus Mart mobile app.
 
 ---
 
-## 🚀 Setup
+## Setup
 
 ### 1. Install dependencies
 ```bash
@@ -17,6 +17,15 @@ npm install
 cp .env.example .env
 # Edit .env with your PostgreSQL credentials
 ```
+
+Add Cloudinary credentials for image uploads:
+```env
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+Use an API key that has upload/create permissions (some restricted keys can call Admin API but cannot upload images).
 
 ### 3. Create the PostgreSQL database
 ```bash

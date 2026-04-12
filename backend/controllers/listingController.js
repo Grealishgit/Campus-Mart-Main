@@ -126,7 +126,7 @@ const getListingById = async (req, res) => {
 const createListing = async (req, res) => {
   try {
     const { title, description, price, price_unit, type, category, condition, location } = req.body;
-    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+    const image_url = req.file ? req.file.path : null;
 
     // Validation
     if (!title || !description || !price || !type || !category || !condition || !location) {
@@ -182,7 +182,7 @@ const updateListing = async (req, res) => {
     }
 
     const { title, description, price, price_unit, category, condition, location, is_available } = req.body;
-    const image_url = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const image_url = req.file ? req.file.path : undefined;
 
     const fields = [];
     const values = [];

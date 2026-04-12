@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+const pool = require('./config/db');
 
 const app = express();
 
@@ -30,8 +31,8 @@ app.use('/api/chats', chatRouter);
 app.use('/api/admin', adminRouter);
 
 // ── Health check ────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: '🛒 Campus Mart API is running!', timestamp: new Date() });
+app.get('/', (req, res) => {
+  res.json({ success: true, message: 'Campus Mart API is running!', timestamp: new Date() });
 });
 
 // ── 404 handler ─────────────────────────────────────────────
@@ -41,6 +42,18 @@ app.use((req, res) => {
 
 // ── Global error handler ────────────────────────────────────
 app.use((err, req, res, next) => {
+  const isCloudinaryPermissionError = err?.name === 'UnexpectedResponse'
+    && err?.http_code === 403
+    && /unexpected status code/i.test(err?.message || '');
+
+  if (isCloudinaryPermissionError) {
+    console.error('Unhandled error: Cloudinary key is missing upload create permission.');
+    return res.status(500).json({
+      success: false,
+      message: 'Cloudinary upload failed: API key is missing create/upload permission.',
+    });
+  }
+
   console.error('Unhandled error:', err.message);
   res.status(err.status || 500).json({
     success: false,
@@ -50,7 +63,20 @@ app.use((err, req, res, next) => {
 
 // ── Start server ────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Campus Mart API running on http://localhost:${PORT}`);
-  console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+
+const startServer = async () => {
+  try {
+    // Forces an initial DB connection so status is shown at startup.
+    await pool.query('SELECT 1');
+
+    app.listen(PORT, () => {
+      console.log(`Campus Mart API running on http://localhost:${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (err) {
+    console.error('Failed to connect to PostgreSQL on startup:', err.message);
+    process.exit(1);
+  }
+};
+
+startServer();

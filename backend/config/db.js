@@ -10,11 +10,11 @@ const pool = new Pool({
 });
 
 pool.on('connect', () => {
-  console.log('✅ Connected to PostgreSQL database');
+  console.log('Connected to PostgreSQL database');
 });
 
 pool.on('error', (err) => {
-  console.error('❌ PostgreSQL connection error:', err.message);
+  console.error('PostgreSQL connection error:', err.message);
   process.exit(-1);
 });
 

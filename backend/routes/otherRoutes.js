@@ -28,9 +28,10 @@ chatRouter.post('/:conversationId/messages', protect, sendMessage);
 
 // admin routes
 const adminRouter = express.Router();
-const { getStats, getAllUsers, verifyUser, deleteUser, getAllListings, verifyListing } = require('../controllers/adminController');
+const { loginAdmin, getStats, getAllUsers, verifyUser, deleteUser, getAllListings, verifyListing } = require('../controllers/adminController');
 const { adminOnly } = require('../middleware/authMiddleware');
 
+adminRouter.post('/login', loginAdmin);
 adminRouter.use(protect, adminOnly);
 adminRouter.get('/stats', getStats);
 adminRouter.get('/users', getAllUsers);

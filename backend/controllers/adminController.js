@@ -1,4 +1,56 @@
 const pool = require('../config/db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
+};
+
+
+
+// Admin controller for logging in
+const loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required.' });
+    }
+
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
+    const user = result.rows[0];
+    if (user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin access required.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
+    const token = generateToken(user.id);
+    const { password: _, ...adminWithoutPassword } = user;
+
+    return res.json({
+      success: true,
+      message: 'Admin login successful.',
+      token,
+      user: adminWithoutPassword,
+    });
+
+
+  } catch (error) {
+    console.error('Admin login error:', error.message);
+    res.status(500).json({ success: false, message: 'Server error during admin login.' });
+
+  }
+}
 
 // @desc    Get dashboard stats
 // @route   GET /api/admin/stats
@@ -126,4 +178,4 @@ const verifyListing = async (req, res) => {
   }
 };
 
-module.exports = { getStats, getAllUsers, verifyUser, deleteUser, getAllListings, verifyListing };
+module.exports = { loginAdmin, getStats, getAllUsers, verifyUser, deleteUser, getAllListings, verifyListing };
