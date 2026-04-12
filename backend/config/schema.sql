@@ -7,12 +7,15 @@
 -- Create database (run this separately if needed)
 -- CREATE DATABASE campus_mart;
 
+-- UUID support for user IDs
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- ============================================================
 -- USERS TABLE
 -- Supports both students and vendors (role-based)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS users (
-  id SERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL,
   email VARCHAR(150) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
@@ -67,7 +70,7 @@ CREATE TABLE IF NOT EXISTS listings (
   image_url TEXT,
   is_verified BOOLEAN DEFAULT FALSE,
   is_available BOOLEAN DEFAULT TRUE,
-  seller_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  seller_id UUID REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -78,7 +81,7 @@ CREATE TABLE IF NOT EXISTS listings (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS favorites (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   listing_id INTEGER REFERENCES listings(id) ON DELETE CASCADE,
   created_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(user_id, listing_id)
@@ -90,9 +93,9 @@ CREATE TABLE IF NOT EXISTS favorites (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS orders (
   id SERIAL PRIMARY KEY,
-  buyer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  buyer_id UUID REFERENCES users(id) ON DELETE SET NULL,
   listing_id INTEGER REFERENCES listings(id) ON DELETE SET NULL,
-  seller_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  seller_id UUID REFERENCES users(id) ON DELETE SET NULL,
   amount DECIMAL(10,2) NOT NULL,
   status VARCHAR(30) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
   type VARCHAR(10) NOT NULL CHECK (type IN ('SALE', 'LEASE')),
@@ -108,8 +111,8 @@ CREATE TABLE IF NOT EXISTS orders (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS conversations (
   id SERIAL PRIMARY KEY,
-  buyer_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  seller_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  buyer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  seller_id UUID REFERENCES users(id) ON DELETE CASCADE,
   listing_id INTEGER REFERENCES listings(id) ON DELETE SET NULL,
   type VARCHAR(10) CHECK (type IN ('BUYING', 'SELLING', 'LEASING')),
   last_message TEXT,
@@ -125,7 +128,7 @@ CREATE TABLE IF NOT EXISTS conversations (
 CREATE TABLE IF NOT EXISTS messages (
   id SERIAL PRIMARY KEY,
   conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
-  sender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
   text TEXT NOT NULL,
   is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW()
@@ -137,8 +140,8 @@ CREATE TABLE IF NOT EXISTS messages (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS reviews (
   id SERIAL PRIMARY KEY,
-  reviewer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  reviewed_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  reviewer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   listing_id INTEGER REFERENCES listings(id) ON DELETE SET NULL,
   rating INTEGER CHECK (rating BETWEEN 1 AND 5),
   comment TEXT,
