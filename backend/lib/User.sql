@@ -3,9 +3,12 @@
 -- Source of truth for columns: controllers/authController.js
 -- ============================================================
 
+-- UUID support for user IDs
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- 1) Create users table used by auth and admin flows
 CREATE TABLE IF NOT EXISTS users (
-	id SERIAL PRIMARY KEY,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(150) UNIQUE NOT NULL,
 	password VARCHAR(255) NOT NULL,

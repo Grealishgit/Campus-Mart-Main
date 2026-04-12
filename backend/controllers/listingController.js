@@ -1,5 +1,10 @@
 const pool = require('../config/db');
 
+const resolveUploadedImageUrl = (file) => {
+  if (!file) return undefined;
+  return file.path || file.secure_url || file.url;
+};
+
 // Helper: format listing row to match frontend Listing type
 const formatListing = (row) => ({
   id: String(row.id),
@@ -126,7 +131,7 @@ const getListingById = async (req, res) => {
 const createListing = async (req, res) => {
   try {
     const { title, description, price, price_unit, type, category, condition, location } = req.body;
-    const image_url = req.file ? req.file.path : null;
+    const image_url = resolveUploadedImageUrl(req.file) || null;
 
     // Validation
     if (!title || !description || !price || !type || !category || !condition || !location) {
@@ -182,7 +187,7 @@ const updateListing = async (req, res) => {
     }
 
     const { title, description, price, price_unit, category, condition, location, is_available } = req.body;
-    const image_url = req.file ? req.file.path : undefined;
+    const image_url = resolveUploadedImageUrl(req.file);
 
     const fields = [];
     const values = [];
@@ -267,8 +272,19 @@ const getMyListings = async (req, res) => {
 // @access  Public
 const getCategories = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM categories ORDER BY name');
+    const result = await pool.query('SELECT DISTINCT category FROM listings WHERE category IS NOT NULL ORDER BY category');
     res.json({ success: true, categories: result.rows });
+  } catch (err) {
+    console.error('GetCategories error:', err.message);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
+
+const getConditions = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT DISTINCT condition FROM listings WHERE condition IS NOT NULL ORDER BY condition');
+    res.json({ success: true, conditions: result.rows });
   } catch (err) {
     console.error('GetCategories error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });
@@ -283,4 +299,5 @@ module.exports = {
   deleteListing,
   getMyListings,
   getCategories,
+  getConditions
 };
