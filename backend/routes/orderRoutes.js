@@ -8,11 +8,11 @@ const {
     getMyOrders,
     getSellingOrders,
     updateOrderStatus
-} = require('../controllers/order Controller');
+} = require('../controllers/orderController');
 
-orderRouter.post('/', protect, createOrder);
-orderRouter.get('/my', protect, getMyOrders);
-orderRouter.get('/selling', protect, getSellingOrders);
-orderRouter.put('/:id/status', protect, updateOrderStatus);
+router.post('/', protect, createOrder);
+router.get('/my', protect, getMyOrders);
+router.get('/selling', protect, getSellingOrders);
+router.put('/:id/status', protect, updateOrderStatus);
 
 module.exports = router;
