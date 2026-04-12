@@ -291,6 +291,7 @@ const getConditions = async (req, res) => {
   }
 };
 
+
 module.exports = {
   getListings,
   getListingById,

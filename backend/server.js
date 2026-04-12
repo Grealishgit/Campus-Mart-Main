@@ -21,14 +21,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ── Routes ──────────────────────────────────────────────────
 const authRoutes = require('./routes/authRoutes');
 const listingRoutes = require('./routes/listingRoutes');
-const { favRouter, orderRouter, chatRouter, adminRouter } = require('./routes/otherRoutes');
+const favoriteRoutes = require('./routes/favouriteRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
-app.use('/api/favorites', favRouter);
-app.use('/api/orders', orderRouter);
-app.use('/api/chats', chatRouter);
-app.use('/api/admin', adminRouter);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/chats', chatRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ── Health check ────────────────────────────────────────────
 app.get('/', (req, res) => {
