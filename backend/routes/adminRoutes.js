@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
 
+// Middleware
+const { protect, adminOnly } = require('../middleware/authMiddleware');
+
+// Controllers
 const { 
     loginAdmin,
      getStats,
@@ -10,16 +13,23 @@ const {
        deleteUser, 
        getAllListings, 
        verifyListing
-     } = require('../controllers/adminController');
-const { adminOnly } = require('../middleware/authMiddleware');
+} = require('../controllers/adminController');
 
-router.post('/login', loginAdmin);
+// Validation
+const validateRequest = require('../middleware/validateRequest');
+
+// Error Handling
+const { asyncHandler } = require('../utils/errorHandler');
+
+// ==================== ROUTES ====================
+
+router.post('/login', asyncHandler(loginAdmin));
 router.use(protect, adminOnly);
-router.get('/stats', getStats);
-router.get('/users', getAllUsers);
-router.put('/users/:id/verify', verifyUser);
-router.delete('/users/:id', deleteUser);
-router.get('/listings', getAllListings);
-router.put('/listings/:id/verify', verifyListing);
+router.get('/stats', asyncHandler(getStats));
+router.get('/users', asyncHandler(getAllUsers));
+router.put('/users/:id/verify', asyncHandler(verifyUser));
+router.delete('/users/:id', asyncHandler(deleteUser));
+router.get('/listings', asyncHandler(getAllListings));
+router.put('/listings/:id/verify', asyncHandler(verifyListing));
 
 module.exports = router;

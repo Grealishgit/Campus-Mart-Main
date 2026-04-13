@@ -1,22 +1,61 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const morgan = require('morgan');
 require('dotenv').config();
 const pool = require('./config/db');
+const { apiLimiter, authLimiter, registerLimiter, messageLimiter, listingLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
-// ── Middleware ──────────────────────────────────────────────
+// ── Security Middleware ─────────────────────────────────────
+// Set security HTTP headers
+app.use(helmet());
+
+// CORS Configuration - Whitelist specific origins
 app.use(cors({
-  origin: '*', // Tighten this in production
+  origin: [
+    'http://localhost:5000',      // Local backend
+    'http://localhost:8081',      // Expo dev server (mobile)
+    'http://localhost:3000',      // Potential web frontend
+    'http://192.168.1.100:8081',  // Local network access
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Sanitize data against NoSQL injection
+app.use(mongoSanitize());
+
+// Body parsing middleware with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ── Request Logging ─────────────────────────────────────────
+// Log HTTP requests
+app.use(morgan(':date[iso] :remote-addr :method :url :status :response-time ms'));
+
+// ── Rate Limiting ───────────────────────────────────────────
+// Apply general rate limiter to all routes
+app.use(apiLimiter);
+
+// ── Custom Security Headers ────────────────────────────────
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Content-Security-Policy', "default-src 'self'");
+  next();
+});
 
 // ── Routes ──────────────────────────────────────────────────
 const authRoutes = require('./routes/authRoutes');
@@ -33,6 +72,14 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/admin', adminRoutes);
 
+// ── Debug: List all registered API routes ───────────────────
+if (process.env.NODE_ENV !== 'production') {
+  const listEndpoints = require('express-list-endpoints');
+
+  console.log('\nRegistered API Routes:\n');
+  console.table(listEndpoints(app));
+}
+
 // ── Health check ────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'Campus Mart API is running!', timestamp: new Date() });
@@ -45,22 +92,34 @@ app.use((req, res) => {
 
 // ── Global error handler ────────────────────────────────────
 app.use((err, req, res, next) => {
+  const status = err.statusCode || 500;
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+
+  // Cloudinary specific error handling
   const isCloudinaryPermissionError = err?.name === 'UnexpectedResponse'
     && err?.http_code === 403
     && /unexpected status code/i.test(err?.message || '');
 
   if (isCloudinaryPermissionError) {
-    console.error('Unhandled error: Cloudinary key is missing upload create permission.');
+    console.error('Cloudinary Error: API key missing upload create permission');
     return res.status(500).json({
       success: false,
-      message: 'Cloudinary upload failed: API key is missing create/upload permission.',
+      error_code: 'CLOUDINARY_ERROR',
+      message: 'Image upload service temporarily unavailable',
     });
   }
 
-  console.error('Unhandled error:', err.message);
-  res.status(err.status || 500).json({
+  // Log error for debugging
+  if (isDevelopment) {
+    console.error(`[${status}] ${err.errorCode || 'ERROR'}:`, err.message);
+  }
+
+  // Send error response
+  return res.status(status).json({
     success: false,
-    message: err.message || 'Internal server error.',
+    error_code: err.errorCode || 'INTERNAL_SERVER_ERROR',
+    message: isDevelopment ? err.message : 'An error occurred',
+    ...(isDevelopment && { stack: err.stack }),
   });
 });
 
