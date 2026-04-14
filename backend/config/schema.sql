@@ -57,23 +57,128 @@ ON CONFLICT (name) DO NOTHING;
 -- LISTINGS TABLE
 -- Matches the Listing interface in types/index.ts
 -- ============================================================
-CREATE TABLE IF NOT EXISTS listings (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(200) NOT NULL,
-  description TEXT NOT NULL,
-  price DECIMAL(10,2) NOT NULL,
-  price_unit VARCHAR(20),                          -- e.g. '/day', '/week' for leases
-  type VARCHAR(10) NOT NULL CHECK (type IN ('SALE', 'LEASE')),
-  category VARCHAR(100) NOT NULL,
-  condition VARCHAR(50) NOT NULL CHECK (condition IN ('Brand New', 'Like New', 'Excellent', 'Good', 'Used - Like New', 'Fair')),
-  location VARCHAR(150) NOT NULL,
-  image_url TEXT,
-  is_verified BOOLEAN DEFAULT FALSE,
-  is_available BOOLEAN DEFAULT TRUE,
-  seller_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+-- ================================================================
+-- SALE LISTINGS
+-- One-time purchase, no duration or price_unit needed
+-- ================================================================
+-- ================================================================
+-- ENABLE EXTENSION (run once)
+-- ================================================================
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+
+-- ================================================================
+-- SALE LISTINGS
+-- One-time purchase, no duration or price_unit needed
+-- ================================================================
+CREATE TABLE IF NOT EXISTS sale_listings (
+  id              SERIAL PRIMARY KEY,
+  title           VARCHAR(200)    NOT NULL,
+  description     TEXT            NOT NULL,
+  price           DECIMAL(10,2)   NOT NULL,
+  category        VARCHAR(100)    NOT NULL,
+  condition       VARCHAR(50)     NOT NULL CHECK (condition IN ('Brand New', 'Like New', 'Excellent', 'Good', 'Used - Like New', 'Fair')),
+  location        VARCHAR(150)    NOT NULL,
+  image_url       TEXT,
+  is_verified     BOOLEAN         DEFAULT FALSE,
+  is_available    BOOLEAN         DEFAULT TRUE,
+  is_sold         BOOLEAN         DEFAULT FALSE,
+  sold_at         TIMESTAMP,
+  seller_id       UUID            REFERENCES users(id) ON DELETE CASCADE,
+  created_at      TIMESTAMP       DEFAULT NOW(),
+  updated_at      TIMESTAMP       DEFAULT NOW()
 );
+
+
+-- ================================================================
+-- LEASE LISTINGS
+-- Rentals with duration window and price per time unit
+-- ================================================================
+CREATE TABLE IF NOT EXISTS lease_listings (
+  id                SERIAL PRIMARY KEY,
+  title             VARCHAR(200)    NOT NULL,
+  description       TEXT            NOT NULL,
+  price             DECIMAL(10,2)   NOT NULL,
+  price_unit        VARCHAR(20)     NOT NULL CHECK (price_unit IN ('/hour', '/day', '/week', '/month')),
+  min_duration      INT,
+  max_duration      INT,
+  duration_unit     VARCHAR(10)     CHECK (duration_unit IN ('hours', 'days', 'weeks', 'months')),
+  available_from    DATE            NOT NULL DEFAULT CURRENT_DATE,
+  available_until   DATE,
+  category          VARCHAR(100)    NOT NULL,
+  condition         VARCHAR(50)     NOT NULL CHECK (condition IN ('Brand New', 'Like New', 'Excellent', 'Good', 'Used - Like New', 'Fair')),
+  location          VARCHAR(150)    NOT NULL,
+  image_url         TEXT,
+  is_verified       BOOLEAN         DEFAULT FALSE,
+  is_available      BOOLEAN         DEFAULT TRUE,
+  seller_id         UUID            REFERENCES users(id) ON DELETE CASCADE,
+  created_at        TIMESTAMP       DEFAULT NOW(),
+  updated_at        TIMESTAMP       DEFAULT NOW()
+);
+
+
+-- ================================================================
+-- ORDERS
+-- Unified orders table covering both SALE and LEASE transactions.
+-- Only one of sale_listing_id or lease_listing_id will be set
+-- depending on the order type — enforced by the CHECK constraint.
+-- ================================================================
+CREATE TABLE IF NOT EXISTS orders (
+  id                  SERIAL PRIMARY KEY,
+  buyer_id            UUID            REFERENCES users(id) ON DELETE SET NULL,
+  seller_id           UUID            REFERENCES users(id) ON DELETE SET NULL,
+
+  -- Only one of these will be populated depending on type
+  sale_listing_id     INT             REFERENCES sale_listings(id) ON DELETE SET NULL,
+  lease_listing_id    INT             REFERENCES lease_listings(id) ON DELETE SET NULL,
+
+  type                VARCHAR(10)     NOT NULL CHECK (type IN ('SALE', 'LEASE')),
+  amount              DECIMAL(10,2)   NOT NULL,
+  status              VARCHAR(30)     DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+
+  -- Only populated for LEASE orders
+  lease_start         DATE,
+  lease_end           DATE,
+
+  created_at          TIMESTAMP       DEFAULT NOW(),
+  updated_at          TIMESTAMP       DEFAULT NOW(),
+
+  -- Ensure the correct listing FK is set for the given type
+  CONSTRAINT chk_listing_matches_type CHECK (
+    (type = 'SALE'  AND sale_listing_id  IS NOT NULL AND lease_listing_id IS NULL) OR
+    (type = 'LEASE' AND lease_listing_id IS NOT NULL AND sale_listing_id  IS NULL)
+  ),
+
+  -- Ensure lease dates are provided for LEASE orders
+  CONSTRAINT chk_lease_dates CHECK (
+    (type = 'LEASE' AND lease_start IS NOT NULL AND lease_end IS NOT NULL AND lease_end > lease_start) OR
+    (type = 'SALE'  AND lease_start IS NULL AND lease_end IS NULL)
+  ),
+
+  -- Prevent overlapping active lease orders for the same listing
+  CONSTRAINT no_lease_overlap EXCLUDE USING gist (
+    lease_listing_id WITH =,
+    daterange(lease_start, lease_end, '[]') WITH &&
+  ) WHERE (type = 'LEASE' AND status NOT IN ('cancelled'))
+);
+
+
+-- ================================================================
+-- INDEXES
+-- ================================================================
+CREATE INDEX IF NOT EXISTS idx_sale_listings_seller     ON sale_listings(seller_id);
+CREATE INDEX IF NOT EXISTS idx_sale_listings_category   ON sale_listings(category);
+CREATE INDEX IF NOT EXISTS idx_sale_listings_available  ON sale_listings(is_available, is_sold);
+
+CREATE INDEX IF NOT EXISTS idx_lease_listings_seller    ON lease_listings(seller_id);
+CREATE INDEX IF NOT EXISTS idx_lease_listings_category  ON lease_listings(category);
+CREATE INDEX IF NOT EXISTS idx_lease_listings_dates     ON lease_listings(available_from, available_until);
+
+CREATE INDEX IF NOT EXISTS idx_orders_buyer             ON orders(buyer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_seller            ON orders(seller_id);
+CREATE INDEX IF NOT EXISTS idx_orders_type_status       ON orders(type, status);
+CREATE INDEX IF NOT EXISTS idx_orders_sale_listing      ON orders(sale_listing_id);
+CREATE INDEX IF NOT EXISTS idx_orders_lease_listing     ON orders(lease_listing_id);
 
 -- ============================================================
 -- FAVORITES TABLE
