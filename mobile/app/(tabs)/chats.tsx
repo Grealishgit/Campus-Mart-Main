@@ -1,53 +1,17 @@
-import { View, Text, Pressable, TextInput, Image, ScrollView, Modal } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, Pressable, TextInput, Image, ScrollView, Modal, ActivityIndicator, Alert } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Conversation } from '@/types';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { getConversations } from '@/lib/chatService'
 
 const ChatScreen = () => {
 
-    const conversations: Conversation[] = [
-        {
-            id: '1',
-            participant: {
-                name: 'Alex Rivera',
-                avatarUrl: 'https://i.pravatar.cc/150?u=alex',
-                isOnline: true
-            },
-            lastMessage: 'Is the Organic Chem Textbook still available?',
-            timestamp: '2m ago',
-            unreadCount: 1,
-            listingThumb: 'https://picsum.photos/seed/chem/100',
-            type: 'BUYING'
-        },
-        {
-            id: '2',
-            participant: {
-                name: 'Campus Tech Store',
-                avatarUrl: 'https://i.pravatar.cc/150?u=techstore',
-                isOnline: false, isStore: true
-            },
-            lastMessage: 'Your lease for the Dorm Fridge is confirmed.',
-            timestamp: '11:20 AM',
-            unreadCount: 0,
-            listingThumb: 'https://picsum.photos/seed/fridge/100',
-            type: 'LEASING'
-        },
-        {
-            id: '3',
-            participant: {
-                name: 'Jordan Smith',
-                avatarUrl: 'https://i.pravatar.cc/150?u=jordan',
-                isOnline: false
-            },
-            lastMessage: 'I can meet at the library at 5 PM.',
-            timestamp: 'Yesterday',
-            unreadCount: 0,
-            listingThumb: 'https://picsum.photos/seed/calc/100',
-            type: 'SELLING'
-        }
-    ];
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
 
     const tabs = [
         { label: 'All', value: 'all' },
@@ -56,6 +20,58 @@ const ChatScreen = () => {
     ]
 
     const [activeTab, setActiveTab] = useState<'all' | 'buying' | 'selling'>('all');
+    const [searchValue, setSearchValue] = useState('');
+
+    useFocusEffect(
+      React.useCallback(() => {
+        fetchConversations();
+      }, [])
+    );
+
+    const fetchConversations = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await getConversations();
+        if (result.success && result.data?.conversations) {
+          setConversations(result.data.conversations);
+          filterConversations(result.data.conversations, 'all', '');
+        } else {
+          setError(result.error || 'Failed to load conversations');
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to load conversations');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const filterConversations = (convs: Conversation[], tab: string, search: string) => {
+      let filtered = convs;
+      
+      if (tab !== 'all') {
+        filtered = filtered.filter(c => c.type?.toLowerCase() === tab);
+      }
+      
+      if (search.trim()) {
+        filtered = filtered.filter(c => 
+          c.participant.name.toLowerCase().includes(search.toLowerCase()) ||
+          c.lastMessage?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      
+      setFilteredConversations(filtered);
+    };
+
+    const handleTabChange = (tab: 'all' | 'buying' | 'selling') => {
+      setActiveTab(tab);
+      filterConversations(conversations, tab, searchValue);
+    };
+
+    const handleSearch = (text: string) => {
+      setSearchValue(text);
+      filterConversations(conversations, activeTab, text);
+    };
 
     const handleChatPress = (conv: Conversation) => {
         router.navigate({
@@ -106,6 +122,8 @@ const ChatScreen = () => {
                                 className="flex-1 p-3.5 pl-3 text-xl font-display"
                                 placeholder="Search people ,conversations..."
                                 keyboardType='default'
+                                value={searchValue}
+                                onChangeText={handleSearch}
                             />
 
                         </View>
@@ -119,7 +137,7 @@ const ChatScreen = () => {
                                 key={tab.value}
                                 className={`border-b-2  py-2 px-5   tracking-wider 
                                     ${activeTab === tab.value ? 'border-primary ' : ' border-transparent'}`}
-                                onPress={() => setActiveTab(tab.value as any)}
+                                onPress={() => handleTabChange(tab.value as any)}
                             >
                                 <Text className={`text-lg font-display-medium 
                                     ${activeTab === tab.value ? 'border-primary text-primary' : ' text-gray-400'}`}>
@@ -131,7 +149,20 @@ const ChatScreen = () => {
                 </View>
 
                 <ScrollView className="flex-1 overflow-y-auto px-4 pb-24 space-y-3 pt-2">
-                    {conversations.map(conv => (
+                    {loading ? (
+                      <View className="flex justify-center items-center h-64">
+                        <ActivityIndicator size="large" color="#6769ef" />
+                      </View>
+                    ) : error ? (
+                      <View className="p-4">
+                        <Text className="text-center text-red-500 font-display-bold">{error}</Text>
+                      </View>
+                    ) : filteredConversations.length === 0 ? (
+                      <View className="p-4 mt-10">
+                        <Text className="text-center text-gray-500 font-display">No conversations found</Text>
+                      </View>
+                    ) : (
+                      filteredConversations.map(conv => (
                         <Pressable
                             key={conv.id}
                             onPress={() => handleChatPress(conv)}
@@ -179,7 +210,8 @@ const ChatScreen = () => {
                                 )}
                             </View>
                         </Pressable>
-                    ))}
+                      ))
+                    )}
                 </ScrollView>
 
             </View>

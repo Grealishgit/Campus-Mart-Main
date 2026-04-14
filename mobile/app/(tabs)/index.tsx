@@ -1,11 +1,11 @@
-import { View, Text, TextInput, ScrollView, FlatList, useWindowDimensions } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, TextInput, ScrollView, FlatList, useWindowDimensions, ActivityIndicator, Alert } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Listing, TransactionType } from '@/types';
-import { dummyListing } from '@/lib/dummydata';
+import { getAllListings, getCategories } from '@/lib/listingService';
 import { Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import '../../global.css'
 import ListingCard from '@/components/ListingCard';
@@ -13,40 +13,85 @@ import ListingCard from '@/components/ListingCard';
 const HomeScreen = () => {
 
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'sale' | 'lease'>('sale');
+  const [activeTab, setActiveTab] = useState<'SALE' | 'LEASE'>('SALE');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [listings, setListings] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { width } = useWindowDimensions();
   const cardWidth = (width - 32 - 12) / 2; // 32 = px-4 on both sides, 12 = gap between cards
 
-  const categories = ['All', 'Textbooks', 'Tech', 'Dorm Decor', 'Bikes', 'Leisure'];
+  // Fetch listings and categories on component mount
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [activeTab, selectedCategory])
+  );
 
-  const filteredListings = dummyListing.filter(l => {
-    const matchesTab = activeTab === 'sale' ? l.type === TransactionType.SALE : l.type === TransactionType.LEASE;
-    const matchesCategory = selectedCategory === 'All' || l.category === selectedCategory;
-    return matchesTab && matchesCategory;
-  });
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
+      // Fetch categories
+      const catResponse = await getCategories();
+      if (catResponse.success && catResponse.data?.categories) {
+        // Extract string value from object if needed, then remove duplicates
+        const rawCategories = catResponse.data.categories.map((c: any) =>
+          typeof c === 'object' && c !== null ? c.category : c
+        );
+        const uniqueCategories: string[] = ['All', ...new Set<string>(rawCategories)];
+        setCategories(uniqueCategories);
+      }
 
-  const handleOnClick = (item: Listing) => {
+      // Fetch listings with filters
+      const filters: any = {
+        type: activeTab,
+        page: 1,
+        limit: 20,
+      };
+
+      if (selectedCategory !== 'All') {
+        filters.category = selectedCategory;
+      }
+
+      const response = await getAllListings(filters);
+      if (response.success && response.data?.listings) {
+        setListings(response.data.listings);
+      } else {
+        setError(response.error || 'Failed to load listings');
+      }
+    } catch (err) {
+      setError('An error occurred while loading listings');
+      console.error('Load data error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredListings = listings;
+
+  const handleOnClick = (item: any) => {
     router.push({
       pathname: '/product-item/[id]',
       params: {
         id: item.id,
         title: item.title,
         price: item.price,
-        priceUnit: item.priceUnit ?? '',
+        priceUnit: item.priceUnit || item.price_unit || '',
         type: item.type,
         category: item.category,
         condition: item.condition,
         location: item.location,
-        distance: item.distance,
-        imageUrl: item.imageUrl,
-        isVerified: String(item.isVerified),
+        distance: item.distance || '0 km',
+        imageUrl: item.imageUrl || item.image_url || '',
+        isVerified: String(item.isVerified || item.is_verified || false),
         description: item.description,
-        sellerName: item.seller.name,
-        sellerRating: item.seller.rating,
-        sellerAvatar: item.seller.avatarUrl,
-        sellerVerified: String(item.seller.isVerified),
+        sellerName: item.seller?.name || item.seller_name || 'Unknown',
+        sellerRating: item.seller?.rating || item.seller_rating || 0,
+        sellerAvatar: item.seller?.avatarUrl || item.seller_avatar || '',
+        sellerVerified: String(item.seller?.isVerified || item.seller_verified || false),
       }
     } as any);
   }
@@ -102,9 +147,9 @@ const HomeScreen = () => {
               className="py-2"
             >
               <View className="flex-row gap-2">
-                {categories.map(cat => (
+                {categories.map((cat, index) => (
                   <Pressable
-                    key={cat}
+                    key={`${cat}-${index}`}
                     onPress={() => setSelectedCategory(cat)}
                     className={`px-5 py-2 rounded-full ${selectedCategory === cat
                       ? 'bg-primary'
@@ -127,38 +172,38 @@ const HomeScreen = () => {
           <View className="px-4 py-4">
             <View className="flex-row p-1 bg-gray-100 rounded-xl">
               <Pressable
-                onPress={() => setActiveTab('sale')}
+                onPress={() => setActiveTab('SALE')}
                 style={{
                   flex: 1,
                   paddingVertical: 8,
                   borderRadius: 8,
-                  backgroundColor: activeTab === 'sale' ? '#fff' : 'transparent',
+                  backgroundColor: activeTab === 'SALE' ? '#fff' : 'transparent',
                 }}
               >
                 <Text
                   style={{
                     textAlign: 'center',
                     fontFamily: 'Jost-Bold',
-                    color: activeTab === 'sale' ? '#6769ef' : '#6b7280',
+                    color: activeTab === 'SALE' ? '#6769ef' : '#6b7280',
                   }}
                 >
                   Buy Now
                 </Text>
               </Pressable>
               <Pressable
-                onPress={() => setActiveTab('lease')}
+                onPress={() => setActiveTab('LEASE')}
                 style={{
                   flex: 1,
                   paddingVertical: 8,
                   borderRadius: 8,
-                  backgroundColor: activeTab === 'lease' ? '#fff' : 'transparent',
+                  backgroundColor: activeTab === 'LEASE' ? '#fff' : 'transparent',
                 }}
               >
                 <Text
                   style={{
                     textAlign: 'center',
                     fontFamily: 'Jost-Bold',
-                    color: activeTab === 'lease' ? '#6769ef' : '#6b7280',
+                    color: activeTab === 'LEASE' ? '#6769ef' : '#6b7280',
                   }}
                 >
                   Rent/Lease
@@ -167,13 +212,37 @@ const HomeScreen = () => {
             </View>
           </View>
 
+          {/* Loading State */}
+          {loading && (
+            <View className="flex-1 items-center justify-center py-20">
+              <ActivityIndicator size="large" color="#6769ef" />
+              <Text className="mt-4 text-gray-600">Loading listings...</Text>
+            </View>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <View className="mx-4 p-4 bg-red-50 rounded-lg">
+              <Text className="text-red-600 font-display-medium">Error</Text>
+              <Text className="text-red-500 mt-1">{error}</Text>
+              <Pressable
+                onPress={loadData}
+                className="mt-3 px-4 py-2 bg-red-600 rounded-lg"
+              >
+                <Text className="text-white text-center font-display-medium">Retry</Text>
+              </Pressable>
+            </View>
+          )}
+
           {/* Listings Grid */}
           <View className="px-4">
-            {filteredListings.length > 0 ? (
+            {!loading && !error && filteredListings.length > 0 && (
               <FlatList
                 key={`${activeTab}-${selectedCategory}`}
                 data={filteredListings}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => {
+                  return item.id?.toString() || `${item.title}-${Math.random()}`;
+                }}
                 numColumns={2}
                 scrollEnabled={false}
                 columnWrapperStyle={{ gap: 12, marginBottom: 12 }}
@@ -185,10 +254,17 @@ const HomeScreen = () => {
                   />
                 )}
               />
-            ) : (
-              <View className="items-center w-full py-20">
-                <Text className="text-center text-gray-400">
-                  No items found in this category.
+            )}
+            
+            {/* Empty State */}
+            {!loading && !error && filteredListings.length === 0 && (
+              <View className="items-center justify-center py-20">
+                <Ionicons name="cube-outline" size={64} color="#9CA3AF" />
+                <Text className="mt-4 text-lg text-gray-500 font-display-medium">
+                  No listings found
+                </Text>
+                <Text className="mt-2 text-sm text-gray-400 text-center">
+                  Try changing your filters or check back later
                 </Text>
               </View>
             )}
@@ -199,6 +275,7 @@ const HomeScreen = () => {
       {/* FAB */}
       <Pressable
         className="absolute items-center justify-center rounded-full shadow-lg bottom-6 right-6 w-14 h-14 bg-primary active:opacity-80"
+        onPress={() => router.push('/create-listing')}
       >
         <Text className="text-3xl text-white">+</Text>
       </Pressable>

@@ -1,32 +1,58 @@
-import { View, Text, Pressable, Image, ScrollView } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, Pressable, Image, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
+import { getOrders } from '@/lib/orderService'
+import { useFocusEffect } from 'expo-router'
 
 const LeaseScreen = () => {
-
-
-    const activeLeases = [
-        {
-            id: '1',
-            title: 'Scientific Calculator',
-            seller: 'Alex Rivera',
-            due: 'Oct 24, 2023',
-            status: 'Active',
-            imageUrl: 'https://picsum.photos/seed/calc1/200'
-        },
-        {
-            id: '2',
-            title: 'Electric Scooter',
-            seller: 'Sarah Jenkins',
-            due: 'Oct 15 (4 days ago)',
-            status: 'Overdue',
-            imageUrl: 'https://picsum.photos/seed/scooter/200'
-        },
-    ];
-
-
     const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+    const [orders, setOrders] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [itemsOut, setItemsOut] = useState(0);
+    const [nextReturnDays, setNextReturnDays] = useState(0);
+
+    useFocusEffect(
+      React.useCallback(() => {
+        fetchOrders();
+      }, [activeTab])
+    );
+
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch orders for current tab
+        const endpoint = activeTab === 'active' ? 'my' : 'history';
+        const result = await getOrders(endpoint);
+        
+        if (result.success && result.data?.orders) {
+          setOrders(result.data.orders);
+          
+          // Calculate stats
+          const activeOrders = result.data.orders.filter((o: any) => o.status !== 'completed' && o.status !== 'cancelled');
+          setItemsOut(activeOrders.length);
+          
+          // Find next return date
+          if (activeOrders.length > 0) {
+            const nextReturn = activeOrders.reduce((min: any, order: any) => {
+              const days = Math.ceil((new Date(order.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+              return days < Math.ceil((new Date(min.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) ? order : min;
+            });
+            const daysRemaining = Math.ceil((new Date(nextReturn.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            setNextReturnDays(Math.max(0, daysRemaining));
+          }
+        } else {
+          setError(result.error || 'Failed to load orders');
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to load orders');
+      } finally {
+        setLoading(false);
+      }
+    };
 
     return (
         <SafeAreaView className='flex-1'>
@@ -75,13 +101,13 @@ const LeaseScreen = () => {
                 <View className="flex-row justify-between gap-2 p-4">
                         <View className="flex flex-col flex-1 gap-1 p-4 border rounded-lg bg-primary/10 border-primary/20">
                             <Text className="tracking-wider uppercase text-md font-display-bold text-primary">Items Out</Text>
-                            <Text className="text-4xl text-center font-display-semibold text-primary">02</Text>
+                            <Text className="text-4xl text-center font-display-semibold text-primary">{String(itemsOut).padStart(2, '0')}</Text>
                         </View>
 
                         <View className="flex flex-col flex-1 gap-1 p-4 border border-orange-100 rounded-lg bg-orange-50 ">
                             <Text className="tracking-wider text-orange-600 uppercase text-md font-display-semibold">Next Return</Text>
                             <View className="flex-row justify-center gap-1">
-                                <Text className="text-4xl text-center text-orange-600 font-display-bold">04</Text>
+                                <Text className="text-4xl text-center text-orange-600 font-display-bold">{String(nextReturnDays).padStart(2, '0')}</Text>
                                 <Text className="mt-3 text-md font-display text-end text-orange-600/70">days</Text>
                             </View>
                         </View>
@@ -89,39 +115,62 @@ const LeaseScreen = () => {
 
 
                 <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
-                    <View className="px-4 pt-2">
-                        <Text className="text-2xl font-display-bold">Ongoing Rentals</Text>
-                    </View>
+                    {loading ? (
+                      <View className="flex justify-center items-center h-64">
+                        <ActivityIndicator size="large" color="#6769ef" />
+                      </View>
+                    ) : error ? (
+                      <View className="p-4">
+                        <Text className="text-center text-red-500 font-display-bold">{error}</Text>
+                      </View>
+                    ) : orders.length === 0 ? (
+                      <View className="px-4 pt-8">
+                        <Text className="text-2xl font-display-bold mb-4">
+                          {activeTab === 'active' ? 'Ongoing Rentals' : 'Recent History'}
+                        </Text>
+                        <Text className="text-center text-gray-500 font-display py-10">
+                          No {activeTab === 'active' ? 'active rentals' : 'rental history'} yet
+                        </Text>
+                      </View>
+                    ) : (
+                      <>
+                        <View className="px-4 pt-2">
+                          <Text className="text-2xl font-display-bold">
+                            {activeTab === 'active' ? 'Ongoing Rentals' : 'Recent History'}
+                          </Text>
+                        </View>
 
-                    <View className="flex-col gap-4 p-4">
-                        {activeLeases.map(lease => (
-                            <View key={lease.id}
-                                className={`flex-col gap-2 rounded-lg bg-white p-4 border ${lease.status === 'Overdue' ? 'border-2 border-red-100 ' : 'border-[#d0d0e7]/50'}`}>
+                        <View className="flex-col gap-4 p-4">
+                          {orders.map((order: any) => (
+                            <View key={order.id}
+                                className={`flex-col gap-2 rounded-lg bg-white p-4 border ${order.status === 'overdue' ? 'border-2 border-red-100 ' : 'border-[#d0d0e7]/50'}`}>
 
                                 <View className="flex-row gap-4">
                                     <View className="overflow-hidden border border-gray-100 size-24 rounded-xl">
-                                        <Image src={lease.imageUrl} alt={lease.title} className="object-cover w-full h-full" />
+                                        <Image source={{ uri: order.listing?.imageUrl || 'https://via.placeholder.com/100' }} className="object-cover w-full h-full" />
                                     </View>
 
                                     <View className="flex flex-col justify-between flex-1 py-0.5 min-w-0">
 
                                         <View className="flex-row items-start justify-between gap-2">
                                             <View className="flex-1 min-w-0">
-                                                <Text className="text-lg leading-tight text-black truncate font-display-bold">{lease.title}
+                                                <Text className="text-lg leading-tight text-black truncate font-display-bold">{order.listing?.title || 'Item'}
                                                 </Text>
                                                 <View className="flex-row mt-0.5 items-center gap-1.5 text-[#4e4f97] text-xs">
                                                     <Ionicons name="person" size={16} color="#4e4f97" />
-                                                    <Text className="truncate font-display-medium text-[#4e4f97]">{lease.seller}</Text>
+                                                    <Text className="truncate font-display-medium text-[#4e4f97]">{order.seller?.name || 'Seller'}</Text>
                                                 </View>
                                             </View>
-                                            <Text className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${lease.status === 'Overdue' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
-                                                {lease.status}
+                                            <Text className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${order.status === 'overdue' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                                                {order.status}
                                             </Text>
                                         </View>
 
                                         <View className="flex-row items-center gap-1.5">
-                                            {lease.status === 'Overdue' ? <Ionicons name='warning-outline' color='#ef4444' size={16} /> : <Ionicons name='checkmark-circle' color='#10b981' size={16} />}
-                                            <Text className={`text-md ${lease.status === 'Overdue' ? 'text-red-600' : 'text-green-700'} font-display-medium`}>Due: {lease.due}</Text>
+                                            {order.status === 'overdue' ? <Ionicons name='warning-outline' color='#ef4444' size={16} /> : <Ionicons name='checkmark-circle' color='#10b981' size={16} />}
+                                            <Text className={`text-md ${order.status === 'overdue' ? 'text-red-600' : 'text-green-700'} font-display-medium`}>
+                                              Due: {new Date(order.due_date).toLocaleDateString()}
+                                            </Text>
                                         </View>
                                     </View>
                                 </View>
@@ -131,40 +180,16 @@ const LeaseScreen = () => {
                                         <Text className='text-lg text-center font-display-medium'>Mark Returned</Text>
                                     </Pressable>
                                     <Pressable className={`flex-1 p-2 py-3 flex-row rounded-xl  
-                                        ${lease.status === 'Overdue' ? 'bg-[#a4a5f5]' : 'bg-[#6769ef]'}  flex items-center justify-center gap-2 shadow-lg shadow-primary/20 `}>
+                                        ${order.status === 'overdue' ? 'bg-[#a4a5f5]' : 'bg-[#6769ef]'}  flex items-center justify-center gap-2 shadow-lg shadow-primary/20 `}>
                                         <Ionicons name="calendar" size={16} color="white" />
                                         <Text className='text-lg text-white font-display-medium'>Extend Lease</Text>
                                     </Pressable>
                                 </View>
                             </View>
-                        ))}
-                    </View>
-
-                    <View className="px-4 py-4 mt-2 mb-5">
-                        <View className="flex-row items-center justify-between mb-4">
-                            <Text className="text-xl font-display-bold">Recent History</Text>
-                            <Pressable>
-                                <Text className="text-lg font-display-bold text-primary">See All</Text>
-                            </Pressable>
+                          ))}
                         </View>
-                        <View className="bg-white  rounded-2xl p-4 flex-row justify-between items-center gap-4 border border-[#d0d0e7]/30 ">
-                            <View className="flex-row items-center justify-center gap-4">
-                                <View className='items-center justify-center bg-gray-100 rounded-lg size-14'>
-                                    <Ionicons name="camera" size={20} color="#4e4f97" />
-                                </View>
-
-                                <View className="flex-col gap-0.5">
-                                    <Text className="text-xl font-display-bold">DSLR Camera Canon</Text>
-                                    <Text className="text-gray-500 text-md">Returned Sept 12</Text>
-                                </View>
-                            </View>
-
-                            <View className="flex items-center gap-0.5">
-                                <Ionicons name="star" size={16} color="#fbbf24" />
-                                <Text className="text-2xl font-display-bold">5.0</Text>
-                            </View>
-                        </View>
-                    </View>
+                      </>
+                    )}
 
                 </ScrollView>
 

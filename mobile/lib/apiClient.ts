@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+  process.env.EXPO_PUBLIC_API_BASE_URL || "http://192.168.0.113:5000/api";
 
 export interface ApiResponse<T> {
   success: boolean;

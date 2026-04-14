@@ -138,11 +138,13 @@ const createListing = async (req, res) => {
       return res.status(400).json({ success: false, message: 'All fields are required.' });
     }
 
-    if (!['SALE', 'LEASE'].includes(type.toUpperCase())) {
+    // Ensure type is a string before calling toUpperCase
+    const typeUpper = String(type).toUpperCase().trim();
+    if (!['SALE', 'LEASE'].includes(typeUpper)) {
       return res.status(400).json({ success: false, message: 'Type must be SALE or LEASE.' });
     }
 
-    if (type.toUpperCase() === 'LEASE' && !price_unit) {
+    if (typeUpper === 'LEASE' && !price_unit) {
       return res.status(400).json({ success: false, message: 'Price unit (e.g. /day) is required for leases.' });
     }
 
@@ -150,7 +152,7 @@ const createListing = async (req, res) => {
       `INSERT INTO listings (title, description, price, price_unit, type, category, condition, location, image_url, seller_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [title, description, price, price_unit || null, type.toUpperCase(), category, condition, location, image_url, req.user.id]
+      [title, description, price, price_unit || null, typeUpper, category, condition, location, image_url, req.user.id]
     );
 
     // Update active_listings count for seller
