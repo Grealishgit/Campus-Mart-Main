@@ -9,12 +9,12 @@ export interface Listing {
   title: string;
   description: string;
   price: number;
-  priceUnit?: 'KES' | 'USD'; // Currency
-  type: 'SELLING' | 'BUYING' | 'LEASING';
+  priceUnit?: string;
+  type: 'SALE' | 'LEASE';
   category: string;
-  condition?: 'NEW' | 'LIKE_NEW' | 'GOOD' | 'FAIR';
+  condition?: string;
   location: string;
-  distance?: number;
+  distance?: number | string;
   imageUrl?: string;
   images?: string[];
   userId: string;
@@ -31,10 +31,10 @@ export interface CreateListingRequest {
   title: string;
   description: string;
   price: number;
-  priceUnit?: 'KES' | 'USD';
-  type: 'SELLING' | 'BUYING' | 'LEASING';
+  price_unit?: string;
+  type: 'SALE' | 'LEASE';
   category: string;
-  condition?: 'NEW' | 'LIKE_NEW' | 'GOOD' | 'FAIR';
+  condition: string;
   location: string;
 }
 
@@ -51,6 +51,16 @@ export interface CategoriesResponse {
   data?: string[];
 }
 
+export interface ConditionsResponse {
+  conditions?: string[];
+  data?: string[];
+}
+
+export interface CreateListingResponse {
+  listing?: Listing;
+  message?: string;
+}
+
 // ══════════════════════════════════════════════════════════════
 // LISTING SERVICES
 // ══════════════════════════════════════════════════════════════
@@ -61,7 +71,7 @@ export interface CategoriesResponse {
 export async function getAllListings(
   filters?: {
     category?: string;
-    type?: 'SELLING' | 'BUYING' | 'LEASING';
+    type?: 'SALE' | 'LEASE';
     minPrice?: number;
     maxPrice?: number;
     search?: string;
@@ -109,8 +119,8 @@ export async function getMyListings(): Promise<ApiResponse<ListingsResponse>> {
 /**
  * Create a new listing
  */
-export async function createListing(data: CreateListingRequest): Promise<ApiResponse<Listing>> {
-  return apiRequest<Listing>('/listings', {
+export async function createListing(data: CreateListingRequest): Promise<ApiResponse<CreateListingResponse>> {
+  return apiRequest<CreateListingResponse>('/listings', {
     method: 'POST',
     body: data,
     requiresAuth: true,
@@ -143,6 +153,15 @@ export async function deleteListing(id: string): Promise<ApiResponse<any>> {
  */
 export async function getCategories(): Promise<ApiResponse<CategoriesResponse>> {
   return apiRequest<CategoriesResponse>('/listings/categories', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Get all available item conditions
+ */
+export async function getConditions(): Promise<ApiResponse<ConditionsResponse>> {
+  return apiRequest<ConditionsResponse>('/listings/conditions', {
     method: 'GET',
   });
 }

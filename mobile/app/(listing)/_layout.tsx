@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+
+import { Stack } from 'expo-router'
 
 const ListingLayout = () => {
   return (
-    <View>
-      <Text>Listing Layout</Text>
-    </View>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name='create-listing' />
+      <Stack.Screen name='edit-listing' />
+    </Stack>
   )
 }
 
-export default ListingLayout
+export default ListingLayout;
 
-const styles = StyleSheet.create({})

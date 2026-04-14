@@ -114,6 +114,10 @@ export default function RootLayout() {
           name="(auth)"
           options={{ animation: "slide_from_right" }}
         />
+        <Stack.Screen
+          name="(listing)"
+          options={{ animation: "slide_from_right" }}
+        />
         <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
         <Stack.Screen
           name="product-item/[id]"
