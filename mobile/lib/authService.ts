@@ -141,3 +141,27 @@ export async function isAuthenticated(): Promise<boolean> {
   const token = await getAuthToken();
   return !!token;
 }
+
+/**
+ * Restore auth session on app start by validating the stored token
+ * against backend protected route /api/auth/me.
+ */
+export async function initializeAuthSession(): Promise<boolean> {
+  const token = await getAuthToken();
+
+  if (!token) {
+    return false;
+  }
+
+  const response = await apiRequest<{ user?: User }>("/auth/me", {
+    method: "GET",
+    requiresAuth: true,
+  });
+
+  if (response.success) {
+    return true;
+  }
+
+  await clearAuthToken();
+  return false;
+}

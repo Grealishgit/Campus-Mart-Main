@@ -5,15 +5,16 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, AppState, Text, View } from "react-native";
 import "react-native-reanimated";
 import "../global.css";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { isAuthenticated } from "@/lib/authService";
+import { subscribeToAuthTokenChanges } from "@/lib/apiClient";
+import { initializeAuthSession } from "@/lib/authService";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -21,6 +22,8 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const segments = useSegments();
 
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
@@ -34,11 +37,55 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    (async () => {
-      const authenticated = await isAuthenticated();
-      setIsAuth(authenticated);
-    })();
+    let isMounted = true;
+
+    const bootstrapAuth = async () => {
+      const authenticated = await initializeAuthSession();
+      if (isMounted) {
+        setIsAuth(authenticated);
+      }
+    };
+
+    bootstrapAuth();
+
+    const unsubscribe = subscribeToAuthTokenChanges((token) => {
+      if (isMounted) {
+        setIsAuth(!!token);
+      }
+    });
+
+    const appStateSubscription = AppState.addEventListener(
+      "change",
+      (state) => {
+        if (state === "active") {
+          bootstrapAuth();
+        }
+      },
+    );
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+      appStateSubscription.remove();
+    };
   }, []);
+
+  useEffect(() => {
+    if (isAuth === null) return;
+
+    const rootSegment = segments[0];
+    const isInPublicRoute =
+      rootSegment === "(auth)" || rootSegment === "(onboard)";
+
+    if (isAuth && isInPublicRoute) {
+      router.replace("/(tabs)");
+      return;
+    }
+
+    if (!isAuth && !isInPublicRoute) {
+      router.replace("/(auth)/SignIn");
+    }
+  }, [isAuth, segments, router]);
 
   if (isAuth === null || !fontsLoaded)
     return (
@@ -59,39 +106,31 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: "#ffffff" },
         }}
       >
-        {!isAuth && (
-          <>
-            <Stack.Screen
-              name="(onboard)"
-              options={{ animation: "fade_from_bottom" }}
-            />
-            <Stack.Screen
-              name="(auth)"
-              options={{ animation: "slide_from_right" }}
-            />
-          </>
-        )}
-        {isAuth && (
-          <>
-            <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
-            <Stack.Screen
-              name="product-item/[id]"
-              options={{ animation: "slide_from_right" }}
-            />
-            <Stack.Screen
-              name="chats/chat"
-              options={{ animation: "slide_from_right" }}
-            />
-            <Stack.Screen
-              name="ai-chat/aichat"
-              options={{ animation: "slide_from_right" }}
-            />
-            <Stack.Screen
-              name="settings/settings"
-              options={{ animation: "slide_from_right" }}
-            />
-          </>
-        )}
+        <Stack.Screen
+          name="(onboard)"
+          options={{ animation: "fade_from_bottom" }}
+        />
+        <Stack.Screen
+          name="(auth)"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
+        <Stack.Screen
+          name="product-item/[id]"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="chats/chat"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="ai-chat/aichat"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="settings/settings"
+          options={{ animation: "slide_from_right" }}
+        />
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}

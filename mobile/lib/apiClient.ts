@@ -1,7 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || "http://192.168.0.113:5000/api";
+  process.env.EXPO_PUBLIC_API_BASE_URL || "http://192.168.0.114:5000/api";
+const AUTH_TOKEN_KEY = "authToken";
+
+type AuthTokenListener = (token: string | null) => void;
+const authTokenListeners = new Set<AuthTokenListener>();
+
+function notifyAuthTokenListeners(token: string | null) {
+  authTokenListeners.forEach((listener) => listener(token));
+}
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -30,7 +38,7 @@ export async function apiRequest<T>(
     // Get auth token if required
     let authToken = null;
     if (requiresAuth) {
-      authToken = await AsyncStorage.getItem("authToken");
+      authToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
       if (!authToken) {
         return {
           success: false,
@@ -93,7 +101,8 @@ export async function apiRequest<T>(
  */
 export async function setAuthToken(token: string) {
   try {
-    await AsyncStorage.setItem("authToken", token);
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+    notifyAuthTokenListeners(token);
   } catch (error) {
     console.error("Failed to save auth token:", error);
   }
@@ -104,7 +113,7 @@ export async function setAuthToken(token: string) {
  */
 export async function getAuthToken(): Promise<string | null> {
   try {
-    return await AsyncStorage.getItem("authToken");
+    return await AsyncStorage.getItem(AUTH_TOKEN_KEY);
   } catch (error) {
     console.error("Failed to get auth token:", error);
     return null;
@@ -116,8 +125,19 @@ export async function getAuthToken(): Promise<string | null> {
  */
 export async function clearAuthToken() {
   try {
-    await AsyncStorage.removeItem("authToken");
+    await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+    notifyAuthTokenListeners(null);
   } catch (error) {
     console.error("Failed to clear auth token:", error);
   }
+}
+
+/**
+ * Subscribe to token changes so navigation/auth state can react immediately.
+ */
+export function subscribeToAuthTokenChanges(listener: AuthTokenListener) {
+  authTokenListeners.add(listener);
+  return () => {
+    authTokenListeners.delete(listener);
+  };
 }

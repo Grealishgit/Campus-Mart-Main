@@ -85,10 +85,10 @@ const SignUpScreen = () => {
       });
 
       if (response.success) {
-        Alert.alert("Success", "Account created successfully! Please log in.", [
+        Alert.alert("Success", "Account created successfully!", [
           {
-            text: "OK",
-            onPress: () => router.replace("/(auth)/SignIn"),
+            text: "Continue",
+            onPress: () => router.replace("/(tabs)"),
           },
         ]);
       } else {
