@@ -219,14 +219,6 @@ const ProductItemScreen = () => {
                         <Text className='mt-2 text-lg text-gray-500 font-display'>{description}</Text>
                     </View>
 
-                    {/* Map */}
-                    <View className='relative w-full h-48 mb-4 overflow-hidden bg-blue-100 border border-gray-300 rounded-xl'>
-                        <Image
-                            source={map}
-                            className='absolute inset-0 w-full h-full'
-                            resizeMode='cover'
-                        />
-                    </View>
                 </View>
             </ScrollView>
 
