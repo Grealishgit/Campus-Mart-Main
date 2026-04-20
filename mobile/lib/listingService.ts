@@ -10,6 +10,11 @@ export interface Listing {
   description: string;
   price: number;
   priceUnit?: string;
+  minDuration?: number;
+  maxDuration?: number;
+  durationUnit?: string;
+  availableFrom?: string;
+  availableUntil?: string;
   type: 'SALE' | 'LEASE';
   category: string;
   condition?: string;
@@ -32,6 +37,11 @@ export interface CreateListingRequest {
   description: string;
   price: number;
   price_unit?: string;
+  min_duration?: number;
+  max_duration?: number;
+  duration_unit?: string;
+  available_from?: string;
+  available_until?: string;
   type: 'SALE' | 'LEASE';
   category: string;
   condition: string;

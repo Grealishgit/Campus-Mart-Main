@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import React from 'react'
 
 const EditListing= () => {
@@ -10,5 +10,3 @@ const EditListing= () => {
 }
 
 export default EditListing
-
-const styles = StyleSheet.create({})

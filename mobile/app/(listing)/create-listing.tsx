@@ -34,6 +34,9 @@ const defaultConditions = [
   'Fair',
 ];
 
+const leasePriceUnits = ['/hour', '/day', '/week', '/month'];
+const leaseDurationUnits = ['hours', 'days', 'weeks', 'months'];
+
 const CreateListing = () => {
   const router = useRouter();
 
@@ -48,7 +51,12 @@ const CreateListing = () => {
     title: '',
     description: '',
     price: '',
-    priceUnit: '',
+    priceUnit: '/day',
+    minDuration: '',
+    maxDuration: '',
+    durationUnit: 'days',
+    availableFrom: '',
+    availableUntil: '',
     type: 'SALE' as ListingType,
     category: '',
     condition: '',
@@ -95,7 +103,7 @@ const CreateListing = () => {
             setConditions(Array.from(new Set(conditionItems)));
           }
         }
-      } catch (error) {
+      } catch {
         Alert.alert('Error', 'Failed to load form data. Please try again.');
       } finally {
         setLoadingPage(false);
@@ -128,6 +136,20 @@ const CreateListing = () => {
     if (formData.type === 'LEASE' && !formData.priceUnit.trim()) {
       nextErrors.priceUnit = 'Price unit is required for lease items.';
     }
+    if (formData.type === 'LEASE' && formData.minDuration.trim() && Number(formData.minDuration) <= 0) {
+      nextErrors.minDuration = 'Minimum duration must be greater than zero.';
+    }
+    if (formData.type === 'LEASE' && formData.maxDuration.trim() && Number(formData.maxDuration) <= 0) {
+      nextErrors.maxDuration = 'Maximum duration must be greater than zero.';
+    }
+    if (
+      formData.type === 'LEASE' &&
+      formData.minDuration.trim() &&
+      formData.maxDuration.trim() &&
+      Number(formData.maxDuration) < Number(formData.minDuration)
+    ) {
+      nextErrors.maxDuration = 'Maximum duration must be at least the minimum duration.';
+    }
     if (!formData.category.trim()) nextErrors.category = 'Category is required.';
     if (!formData.condition.trim()) nextErrors.condition = 'Condition is required.';
     if (!formData.location.trim()) nextErrors.location = 'Location is required.';
@@ -153,6 +175,19 @@ const CreateListing = () => {
 
     if (formData.type === 'LEASE') {
       payload.price_unit = formData.priceUnit.trim();
+      if (formData.minDuration.trim()) {
+        payload.min_duration = Number(formData.minDuration);
+      }
+      if (formData.maxDuration.trim()) {
+        payload.max_duration = Number(formData.maxDuration);
+      }
+      payload.duration_unit = formData.durationUnit;
+      if (formData.availableFrom.trim()) {
+        payload.available_from = formData.availableFrom.trim();
+      }
+      if (formData.availableUntil.trim()) {
+        payload.available_until = formData.availableUntil.trim();
+      }
     }
 
     try {
@@ -167,7 +202,7 @@ const CreateListing = () => {
       }
 
       Alert.alert('Failed', response.error || 'Could not create listing.');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'An unexpected error occurred while creating listing.');
     } finally {
       setSubmitting(false);
@@ -272,16 +307,94 @@ const CreateListing = () => {
           {formData.type === 'LEASE' && (
             <>
               <Text style={styles.label}>Price Unit</Text>
-              <TextInput
-                style={[styles.input, errors.priceUnit && styles.inputError]}
-                value={formData.priceUnit}
-                onChangeText={(value) => updateField('priceUnit', value)}
-                placeholder="e.g. per day, per week"
-                placeholderTextColor="#9ca3af"
-              />
+              <View style={styles.suggestionRow}>
+                {leasePriceUnits.map((item) => (
+                  <Pressable
+                    key={item}
+                    onPress={() => updateField('priceUnit', item)}
+                    style={[
+                      styles.chip,
+                      formData.priceUnit === item && styles.chipActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        formData.priceUnit === item && styles.chipTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
               {!!errors.priceUnit && (
                 <Text style={styles.errorText}>{errors.priceUnit}</Text>
               )}
+
+              <Text style={styles.label}>Lease Duration</Text>
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.rowInput, errors.minDuration && styles.inputError]}
+                  value={formData.minDuration}
+                  onChangeText={(value) => updateField('minDuration', value)}
+                  placeholder="Min"
+                  placeholderTextColor="#9ca3af"
+                  keyboardType="number-pad"
+                />
+                <TextInput
+                  style={[styles.input, styles.rowInput, errors.maxDuration && styles.inputError]}
+                  value={formData.maxDuration}
+                  onChangeText={(value) => updateField('maxDuration', value)}
+                  placeholder="Max"
+                  placeholderTextColor="#9ca3af"
+                  keyboardType="number-pad"
+                />
+              </View>
+              {!!errors.minDuration && (
+                <Text style={styles.errorText}>{errors.minDuration}</Text>
+              )}
+              {!!errors.maxDuration && (
+                <Text style={styles.errorText}>{errors.maxDuration}</Text>
+              )}
+
+              <View style={styles.suggestionRow}>
+                {leaseDurationUnits.map((item) => (
+                  <Pressable
+                    key={item}
+                    onPress={() => updateField('durationUnit', item)}
+                    style={[
+                      styles.chip,
+                      formData.durationUnit === item && styles.chipActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        formData.durationUnit === item && styles.chipTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text style={styles.label}>Availability Window</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.availableFrom}
+                onChangeText={(value) => updateField('availableFrom', value)}
+                placeholder="Available from (YYYY-MM-DD)"
+                placeholderTextColor="#9ca3af"
+              />
+              <TextInput
+                style={styles.input}
+                value={formData.availableUntil}
+                onChangeText={(value) => updateField('availableUntil', value)}
+                placeholder="Available until (optional, YYYY-MM-DD)"
+                placeholderTextColor="#9ca3af"
+              />
             </>
           )}
 
@@ -508,10 +621,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
+  chipActive: {
+    backgroundColor: '#6769ef',
+    borderColor: '#6769ef',
+  },
   chipText: {
     color: '#475569',
     fontSize: 13,
     fontFamily: 'Jost-Medium',
+  },
+  chipTextActive: {
+    color: '#ffffff',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  rowInput: {
+    flex: 1,
   },
   submitButton: {
     marginTop: 12,

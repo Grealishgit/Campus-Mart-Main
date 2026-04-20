@@ -1,45 +1,33 @@
 import { apiRequest, ApiResponse } from './apiClient';
 
-// ══════════════════════════════════════════════════════════════
-// CHAT TYPES
-// ══════════════════════════════════════════════════════════════
-
 export interface Message {
   id: string;
-  conversationId: string;
-  senderId: string;
   text: string;
+  sender: 'me' | 'them';
   timestamp: string;
-  read?: boolean;
+  senderName?: string;
+  senderAvatar?: string;
 }
 
 export interface Conversation {
   id: string;
   participant: {
     name: string;
-    avatarUrl?: string;
-    isOnline?: boolean;
+    avatarUrl: string;
+    isOnline: boolean;
     isStore?: boolean;
   };
   lastMessage: string;
   timestamp: string;
-  unreadCount?: number;
-  listingThumb?: string;
-  type?: 'BUYING' | 'SELLING' | 'LEASING';
+  unreadCount: number;
+  listingThumb: string;
+  type: 'BUYING' | 'SELLING' | 'LEASING';
 }
 
 export interface ConversationsResponse {
   conversations?: Conversation[];
-  data?: Conversation[];
 }
 
-// ══════════════════════════════════════════════════════════════
-// CHAT SERVICES
-// ══════════════════════════════════════════════════════════════
-
-/**
- * Get all conversations for current user
- */
 export async function getConversations(): Promise<ApiResponse<ConversationsResponse>> {
   return apiRequest<ConversationsResponse>('/chats', {
     method: 'GET',
@@ -47,44 +35,33 @@ export async function getConversations(): Promise<ApiResponse<ConversationsRespo
   });
 }
 
-/**
- * Get messages for a specific conversation
- */
-export async function getConversationMessages(conversationId: string): Promise<ApiResponse<{ messages: Message[] }>> {
-  return apiRequest<{ messages: Message[] }>(`/chats/${conversationId}`, {
+export async function getConversationMessages(
+  conversationId: string
+): Promise<ApiResponse<{ messages: Message[] }>> {
+  return apiRequest<{ messages: Message[] }>(`/chats/${conversationId}/messages`, {
     method: 'GET',
     requiresAuth: true,
   });
 }
 
-/**
- * Send a message in a conversation
- */
-export async function sendMessage(conversationId: string, text: string): Promise<ApiResponse<Message>> {
-  return apiRequest<Message>(`/chats/${conversationId}`, {
+export async function sendMessage(
+  conversationId: string,
+  text: string
+): Promise<ApiResponse<{ message: Message }>> {
+  return apiRequest<{ message: Message }>(`/chats/${conversationId}/messages`, {
     method: 'POST',
     body: { text },
     requiresAuth: true,
   });
 }
 
-/**
- * Create a new conversation (usually when inquiring about a listing)
- */
-export async function createConversation(listingId: string, message: string): Promise<ApiResponse<Conversation>> {
-  return apiRequest<Conversation>('/chats', {
+export async function createConversation(
+  listingId: string,
+  _message: string
+): Promise<ApiResponse<{ conversation: Conversation }>> {
+  return apiRequest<{ conversation: Conversation }>('/chats/start', {
     method: 'POST',
-    body: { listingId, message },
-    requiresAuth: true,
-  });
-}
-
-/**
- * Mark conversation as read
- */
-export async function markConversationAsRead(conversationId: string): Promise<ApiResponse<any>> {
-  return apiRequest(`/chats/${conversationId}/read`, {
-    method: 'PUT',
+    body: { listing_id: Number(listingId) },
     requiresAuth: true,
   });
 }

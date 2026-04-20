@@ -195,12 +195,21 @@ const SignInScreen = () => {
             <Text className="text-lg text-gray-500 font-display">
               Don&apos;t have an account?{" "}
             </Text>
-            <Pressable onPress={() => router.push("/(auth)")}>
+            <Pressable onPress={() => router.push("/(auth)" as never)}>
               <Text className="text-xl font-display-bold text-primary">
                 Sign Up
               </Text>
             </Pressable>
           </View>
+
+          <Pressable
+            onPress={() => router.push("/admin/login" as never)}
+            className="items-center justify-center rounded-xl border border-slate-300 py-3"
+          >
+            <Text className="text-base text-slate-700 font-display-semibold">
+              Admin login
+            </Text>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>

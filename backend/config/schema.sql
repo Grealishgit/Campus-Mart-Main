@@ -1,18 +1,13 @@
 -- ============================================================
 -- CAMPUS MART DATABASE SCHEMA
--- Run this file in psql or pgAdmin to set up all tables
--- Command: psql -U postgres -d campus_mart -f schema.sql
+-- Single listings table with lease-specific metadata.
 -- ============================================================
 
--- Create database (run this separately if needed)
--- CREATE DATABASE campus_mart;
-
--- UUID support for user IDs
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- ============================================================
--- USERS TABLE
--- Supports both students and vendors (role-based)
+-- USERS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -32,7 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ============================================================
--- CATEGORIES TABLE
+-- CATEGORIES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS categories (
   id SERIAL PRIMARY KEY,
@@ -41,7 +36,6 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Seed default categories
 INSERT INTO categories (name, icon) VALUES
   ('Textbooks', 'book'),
   ('Tech', 'laptop'),
@@ -54,135 +48,74 @@ INSERT INTO categories (name, icon) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================
--- LISTINGS TABLE
--- Matches the Listing interface in types/index.ts
+-- LISTINGS
 -- ============================================================
--- ================================================================
--- SALE LISTINGS
--- One-time purchase, no duration or price_unit needed
--- ================================================================
--- ================================================================
--- ENABLE EXTENSION (run once)
--- ================================================================
-CREATE EXTENSION IF NOT EXISTS btree_gist;
-
-
--- ================================================================
--- SALE LISTINGS
--- One-time purchase, no duration or price_unit needed
--- ================================================================
-CREATE TABLE IF NOT EXISTS sale_listings (
-  id              SERIAL PRIMARY KEY,
-  title           VARCHAR(200)    NOT NULL,
-  description     TEXT            NOT NULL,
-  price           DECIMAL(10,2)   NOT NULL,
-  category        VARCHAR(100)    NOT NULL,
-  condition       VARCHAR(50)     NOT NULL CHECK (condition IN ('Brand New', 'Like New', 'Excellent', 'Good', 'Used - Like New', 'Fair')),
-  location        VARCHAR(150)    NOT NULL,
-  image_url       TEXT,
-  is_verified     BOOLEAN         DEFAULT FALSE,
-  is_available    BOOLEAN         DEFAULT TRUE,
-  is_sold         BOOLEAN         DEFAULT FALSE,
-  sold_at         TIMESTAMP,
-  seller_id       UUID            REFERENCES users(id) ON DELETE CASCADE,
-  created_at      TIMESTAMP       DEFAULT NOW(),
-  updated_at      TIMESTAMP       DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS listings (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  description TEXT NOT NULL,
+  price DECIMAL(10,2) NOT NULL CHECK (price > 0),
+  price_unit VARCHAR(20) CHECK (price_unit IN ('/hour', '/day', '/week', '/month')),
+  min_duration INT CHECK (min_duration IS NULL OR min_duration > 0),
+  max_duration INT CHECK (max_duration IS NULL OR max_duration > 0),
+  duration_unit VARCHAR(10) CHECK (duration_unit IN ('hours', 'days', 'weeks', 'months')),
+  available_from DATE NOT NULL DEFAULT CURRENT_DATE,
+  available_until DATE,
+  type VARCHAR(10) NOT NULL CHECK (type IN ('SALE', 'LEASE')),
+  category VARCHAR(100) NOT NULL,
+  condition VARCHAR(50) NOT NULL CHECK (condition IN ('Brand New', 'Like New', 'Excellent', 'Good', 'Used - Like New', 'Fair')),
+  location VARCHAR(150) NOT NULL,
+  image_url TEXT,
+  is_verified BOOLEAN DEFAULT FALSE,
+  is_available BOOLEAN DEFAULT TRUE,
+  is_sold BOOLEAN DEFAULT FALSE,
+  sold_at TIMESTAMP,
+  seller_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT chk_lease_listing_fields CHECK (
+    (type = 'SALE' AND price_unit IS NULL AND min_duration IS NULL AND max_duration IS NULL AND duration_unit IS NULL) OR
+    (
+      type = 'LEASE'
+      AND price_unit IS NOT NULL
+      AND (available_until IS NULL OR available_until >= available_from)
+    )
+  ),
+  CONSTRAINT chk_listing_duration_range CHECK (
+    max_duration IS NULL OR min_duration IS NULL OR max_duration >= min_duration
+  ),
+  CONSTRAINT chk_listing_availability_window CHECK (
+    available_until IS NULL OR available_until >= available_from
+  )
 );
 
-
--- ================================================================
--- LEASE LISTINGS
--- Rentals with duration window and price per time unit
--- ================================================================
-CREATE TABLE IF NOT EXISTS lease_listings (
-  id                SERIAL PRIMARY KEY,
-  title             VARCHAR(200)    NOT NULL,
-  description       TEXT            NOT NULL,
-  price             DECIMAL(10,2)   NOT NULL,
-  price_unit        VARCHAR(20)     NOT NULL CHECK (price_unit IN ('/hour', '/day', '/week', '/month')),
-  min_duration      INT,
-  max_duration      INT,
-  duration_unit     VARCHAR(10)     CHECK (duration_unit IN ('hours', 'days', 'weeks', 'months')),
-  available_from    DATE            NOT NULL DEFAULT CURRENT_DATE,
-  available_until   DATE,
-  category          VARCHAR(100)    NOT NULL,
-  condition         VARCHAR(50)     NOT NULL CHECK (condition IN ('Brand New', 'Like New', 'Excellent', 'Good', 'Used - Like New', 'Fair')),
-  location          VARCHAR(150)    NOT NULL,
-  image_url         TEXT,
-  is_verified       BOOLEAN         DEFAULT FALSE,
-  is_available      BOOLEAN         DEFAULT TRUE,
-  seller_id         UUID            REFERENCES users(id) ON DELETE CASCADE,
-  created_at        TIMESTAMP       DEFAULT NOW(),
-  updated_at        TIMESTAMP       DEFAULT NOW()
-);
-
-
--- ================================================================
+-- ============================================================
 -- ORDERS
--- Unified orders table covering both SALE and LEASE transactions.
--- Only one of sale_listing_id or lease_listing_id will be set
--- depending on the order type — enforced by the CHECK constraint.
--- ================================================================
+-- ============================================================
 CREATE TABLE IF NOT EXISTS orders (
-  id                  SERIAL PRIMARY KEY,
-  buyer_id            UUID            REFERENCES users(id) ON DELETE SET NULL,
-  seller_id           UUID            REFERENCES users(id) ON DELETE SET NULL,
-
-  -- Only one of these will be populated depending on type
-  sale_listing_id     INT             REFERENCES sale_listings(id) ON DELETE SET NULL,
-  lease_listing_id    INT             REFERENCES lease_listings(id) ON DELETE SET NULL,
-
-  type                VARCHAR(10)     NOT NULL CHECK (type IN ('SALE', 'LEASE')),
-  amount              DECIMAL(10,2)   NOT NULL,
-  status              VARCHAR(30)     DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
-
-  -- Only populated for LEASE orders
-  lease_start         DATE,
-  lease_end           DATE,
-
-  created_at          TIMESTAMP       DEFAULT NOW(),
-  updated_at          TIMESTAMP       DEFAULT NOW(),
-
-  -- Ensure the correct listing FK is set for the given type
-  CONSTRAINT chk_listing_matches_type CHECK (
-    (type = 'SALE'  AND sale_listing_id  IS NOT NULL AND lease_listing_id IS NULL) OR
-    (type = 'LEASE' AND lease_listing_id IS NOT NULL AND sale_listing_id  IS NULL)
+  id SERIAL PRIMARY KEY,
+  buyer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  listing_id INTEGER REFERENCES listings(id) ON DELETE SET NULL,
+  seller_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+  status VARCHAR(30) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+  type VARCHAR(10) NOT NULL CHECK (type IN ('SALE', 'LEASE')),
+  lease_start DATE,
+  lease_end DATE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT chk_order_lease_dates CHECK (
+    (type = 'SALE' AND lease_start IS NULL AND lease_end IS NULL) OR
+    (type = 'LEASE' AND lease_start IS NOT NULL AND lease_end IS NOT NULL AND lease_end > lease_start)
   ),
-
-  -- Ensure lease dates are provided for LEASE orders
-  CONSTRAINT chk_lease_dates CHECK (
-    (type = 'LEASE' AND lease_start IS NOT NULL AND lease_end IS NOT NULL AND lease_end > lease_start) OR
-    (type = 'SALE'  AND lease_start IS NULL AND lease_end IS NULL)
-  ),
-
-  -- Prevent overlapping active lease orders for the same listing
   CONSTRAINT no_lease_overlap EXCLUDE USING gist (
-    lease_listing_id WITH =,
+    listing_id WITH =,
     daterange(lease_start, lease_end, '[]') WITH &&
-  ) WHERE (type = 'LEASE' AND status NOT IN ('cancelled'))
+  ) WHERE (type = 'LEASE' AND status IN ('pending', 'confirmed'))
 );
 
-
--- ================================================================
--- INDEXES
--- ================================================================
-CREATE INDEX IF NOT EXISTS idx_sale_listings_seller     ON sale_listings(seller_id);
-CREATE INDEX IF NOT EXISTS idx_sale_listings_category   ON sale_listings(category);
-CREATE INDEX IF NOT EXISTS idx_sale_listings_available  ON sale_listings(is_available, is_sold);
-
-CREATE INDEX IF NOT EXISTS idx_lease_listings_seller    ON lease_listings(seller_id);
-CREATE INDEX IF NOT EXISTS idx_lease_listings_category  ON lease_listings(category);
-CREATE INDEX IF NOT EXISTS idx_lease_listings_dates     ON lease_listings(available_from, available_until);
-
-CREATE INDEX IF NOT EXISTS idx_orders_buyer             ON orders(buyer_id);
-CREATE INDEX IF NOT EXISTS idx_orders_seller            ON orders(seller_id);
-CREATE INDEX IF NOT EXISTS idx_orders_type_status       ON orders(type, status);
-CREATE INDEX IF NOT EXISTS idx_orders_sale_listing      ON orders(sale_listing_id);
-CREATE INDEX IF NOT EXISTS idx_orders_lease_listing     ON orders(lease_listing_id);
-
 -- ============================================================
--- FAVORITES TABLE
--- For the "Favorites" tab in the profile screen
+-- FAVORITES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS favorites (
   id SERIAL PRIMARY KEY,
@@ -193,26 +126,7 @@ CREATE TABLE IF NOT EXISTS favorites (
 );
 
 -- ============================================================
--- ORDERS TABLE
--- Created when user taps "Buy Now"
--- ============================================================
-CREATE TABLE IF NOT EXISTS orders (
-  id SERIAL PRIMARY KEY,
-  buyer_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  listing_id INTEGER REFERENCES listings(id) ON DELETE SET NULL,
-  seller_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  amount DECIMAL(10,2) NOT NULL,
-  status VARCHAR(30) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
-  type VARCHAR(10) NOT NULL CHECK (type IN ('SALE', 'LEASE')),
-  lease_start DATE,
-  lease_end DATE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- ============================================================
--- CONVERSATIONS TABLE
--- Matches the Conversation interface in types/index.ts
+-- CONVERSATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS conversations (
   id SERIAL PRIMARY KEY,
@@ -227,8 +141,7 @@ CREATE TABLE IF NOT EXISTS conversations (
 );
 
 -- ============================================================
--- MESSAGES TABLE
--- Matches the Message interface in types/index.ts
+-- MESSAGES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS messages (
   id SERIAL PRIMARY KEY,
@@ -240,8 +153,7 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 -- ============================================================
--- REVIEWS TABLE
--- For the "Reviews" tab in the profile screen
+-- REVIEWS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS reviews (
   id SERIAL PRIMARY KEY,
@@ -254,19 +166,24 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 -- ============================================================
--- INDEXES for performance
+-- INDEXES
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_listings_seller ON listings(seller_id);
 CREATE INDEX IF NOT EXISTS idx_listings_category ON listings(category);
 CREATE INDEX IF NOT EXISTS idx_listings_type ON listings(type);
-CREATE INDEX IF NOT EXISTS idx_listings_available ON listings(is_available);
-CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_listings_available ON listings(is_available, is_sold);
+CREATE INDEX IF NOT EXISTS idx_listings_dates ON listings(available_from, available_until);
+
 CREATE INDEX IF NOT EXISTS idx_orders_buyer ON orders(buyer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_seller ON orders(seller_id);
+CREATE INDEX IF NOT EXISTS idx_orders_listing ON orders(listing_id);
+CREATE INDEX IF NOT EXISTS idx_orders_type_status ON orders(type, status);
+
+CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
 
 -- ============================================================
--- FUNCTION: auto-update updated_at timestamp
+-- TIMESTAMP TRIGGERS
 -- ============================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -276,11 +193,17 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+CREATE TRIGGER update_users_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_listings_updated_at BEFORE UPDATE ON listings
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_listings_updated_at ON listings;
+CREATE TRIGGER update_listings_updated_at
+BEFORE UPDATE ON listings
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
+CREATE TRIGGER update_orders_updated_at
+BEFORE UPDATE ON orders
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

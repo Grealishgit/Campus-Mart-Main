@@ -2,9 +2,8 @@ import { View, Text, Pressable, Image, TextInput, ScrollView, ActivityIndicator,
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
-import { Message, Conversation } from '@/types';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { getConversationMessages, sendMessage } from '@/lib/chatService';
+import { Conversation, Message, getConversationMessages, sendMessage } from '@/lib/chatService';
 
 const ChatScreen = () => {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -54,13 +53,7 @@ const ChatScreen = () => {
     };
 
     // Load messages when screen focuses
-    useFocusEffect(
-        useCallback(() => {
-            loadMessages();
-        }, [id])
-    );
-
-    const loadMessages = async () => {
+    const loadMessages = useCallback(async () => {
         if (!id) return;
         try {
             setLoading(true);
@@ -76,7 +69,13 @@ const ChatScreen = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadMessages();
+        }, [loadMessages])
+    );
 
     useEffect(() => {
         if (scrollRef.current && messages.length > 0) {
@@ -92,8 +91,7 @@ const ChatScreen = () => {
             const result = await sendMessage(id, inputValue);
             if (result.success) {
                 setInputValue('');
-                // Reload messages to show the sent message
-                loadMessages();
+                await loadMessages();
             } else {
                 Alert.alert('Error', 'Failed to send message');
             }

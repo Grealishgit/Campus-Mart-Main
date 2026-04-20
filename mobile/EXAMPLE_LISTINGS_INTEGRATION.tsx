@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 interface FilterState {
   category: string;
-  type: "SELLING" | "BUYING" | "LEASING";
+  type: "SALE" | "LEASE";
   search: string;
   page: number;
   limit: number;
@@ -31,7 +31,7 @@ const BrowseScreenExample = () => {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     category: "",
-    type: "SELLING",
+    type: "SALE",
     search: "",
     page: 1,
     limit: 20,
@@ -81,10 +81,10 @@ const BrowseScreenExample = () => {
   };
 
   /**
-   * Handle type filter change (SELLING, BUYING, LEASING)
+   * Handle type filter change (SALE, LEASE)
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleTypeFilter = (type: "SELLING" | "BUYING" | "LEASING") => {
+  const handleTypeFilter = (type: "SALE" | "LEASE") => {
     setFilters((prev) => ({
       ...prev,
       type,

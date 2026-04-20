@@ -23,6 +23,11 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface AdminLoginRequest {
+  email: string;
+  password: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -86,6 +91,24 @@ export async function loginUser(
 }
 
 /**
+ * Login admin user from the separate admin portal.
+ */
+export async function loginAdmin(
+  data: AdminLoginRequest,
+): Promise<ApiResponse<AuthResponse>> {
+  const response = await apiRequest<AuthResponse>("/admin/login", {
+    method: "POST",
+    body: data,
+  });
+
+  if (response.success && response.data?.token) {
+    await setAuthToken(response.data.token);
+  }
+
+  return response;
+}
+
+/**
  * Get current authenticated user
  */
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
@@ -135,6 +158,13 @@ export async function logoutUser(): Promise<void> {
 }
 
 /**
+ * Backward-compatible alias used by existing screens.
+ */
+export async function logout(): Promise<void> {
+  await logoutUser();
+}
+
+/**
  * Check if user is authenticated
  */
 export async function isAuthenticated(): Promise<boolean> {
@@ -164,4 +194,11 @@ export async function initializeAuthSession(): Promise<boolean> {
 
   await clearAuthToken();
   return false;
+}
+
+/**
+ * Backward-compatible alias used by existing screens.
+ */
+export async function getUserProfile(): Promise<ApiResponse<User>> {
+  return getCurrentUser();
 }

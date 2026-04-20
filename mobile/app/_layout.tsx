@@ -73,17 +73,25 @@ export default function RootLayout() {
   useEffect(() => {
     if (isAuth === null) return;
 
-    const rootSegment = segments[0];
+    const rootSegment = segments[0] as string | undefined;
+    const secondSegment = String(segments[1] ?? "");
+    const isAdminLoginRoute =
+      rootSegment === "admin" && secondSegment === "login";
     const isInPublicRoute =
-      rootSegment === "(auth)" || rootSegment === "(onboard)";
+      rootSegment === "(auth)" || rootSegment === "(onboard)" || isAdminLoginRoute;
 
     if (isAuth && isInPublicRoute) {
-      router.replace("/(tabs)");
+      router.replace((isAdminLoginRoute ? "/admin/dashboard" : "/(tabs)") as never);
+      return;
+    }
+
+    if (!isAuth && rootSegment === "admin" && secondSegment !== "login") {
+      router.replace("/admin/login" as never);
       return;
     }
 
     if (!isAuth && !isInPublicRoute) {
-      router.replace("/(auth)/SignIn");
+      router.replace("/(auth)/SignIn" as never);
     }
   }, [isAuth, segments, router]);
 
@@ -133,6 +141,30 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="settings/settings"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="vendor/dashboard"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="vendor/incoming-orders"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/login"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/dashboard"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/users"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/listings"
           options={{ animation: "slide_from_right" }}
         />
         <Stack.Screen

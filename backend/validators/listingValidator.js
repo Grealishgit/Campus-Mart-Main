@@ -9,14 +9,15 @@ const VALID_CATEGORIES = [
   'Tech',
   'Dorm Decor',
   'Bikes',
-  'Sports',
-  'Fashion',
-  'Other',
+  'Leisure',
   'Electronics',
+  'Clothing',
+  'Household',
 ];
 
-const VALID_CONDITIONS = ['New', 'Like New', 'Lightly Used', 'Used', 'Fair'];
-const VALID_PRICE_UNITS = ['Per Day', 'Per Week', 'Per Month'];
+const VALID_CONDITIONS = ['Brand New', 'Like New', 'Excellent', 'Good', 'Used - Like New', 'Fair'];
+const VALID_PRICE_UNITS = ['/hour', '/day', '/week', '/month'];
+const VALID_DURATION_UNITS = ['hours', 'days', 'weeks', 'months'];
 
 const createListingSchema = z.object({
   body: z.object({
@@ -45,10 +46,19 @@ const createListingSchema = z.object({
       .max(200, 'Location too long')
       .trim(),
     price_unit: z.enum(VALID_PRICE_UNITS).optional(),
+    min_duration: z.coerce.number().int().positive().optional(),
+    max_duration: z.coerce.number().int().positive().optional(),
+    duration_unit: z.enum(VALID_DURATION_UNITS).optional(),
+    available_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'available_from must be YYYY-MM-DD format').optional(),
+    available_until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'available_until must be YYYY-MM-DD format').optional(),
   })
   .refine(
     (data) => data.type === 'SALE' || (data.type === 'LEASE' && data.price_unit),
     { message: 'price_unit is required for LEASE listings', path: ['price_unit'] }
+  )
+  .refine(
+    (data) => data.type === 'SALE' || !data.max_duration || !data.min_duration || data.max_duration >= data.min_duration,
+    { message: 'max_duration must be greater than or equal to min_duration', path: ['max_duration'] }
   ),
 });
 
@@ -76,6 +86,12 @@ const updateListingSchema = z.object({
       .trim()
       .optional(),
     price_unit: z.enum(VALID_PRICE_UNITS).optional(),
+    min_duration: z.coerce.number().int().positive().optional(),
+    max_duration: z.coerce.number().int().positive().optional(),
+    duration_unit: z.enum(VALID_DURATION_UNITS).optional(),
+    available_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'available_from must be YYYY-MM-DD format').optional(),
+    available_until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'available_until must be YYYY-MM-DD format').optional(),
+    is_available: z.boolean().optional(),
   }),
 });
 
@@ -98,4 +114,6 @@ module.exports = {
   getListingsSchema,
   VALID_CATEGORIES,
   VALID_CONDITIONS,
+  VALID_PRICE_UNITS,
+  VALID_DURATION_UNITS,
 };

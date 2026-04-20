@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 console.log('🔧 Database configuration:');
@@ -18,6 +19,68 @@ const adminPool = new Pool({
 });
 
 const dbName = process.env.DB_NAME || 'campus_mart';
+
+const DEMO_USERS = [
+  {
+    name: 'Campus Admin',
+    email: 'admin@campusmart.ac.ke',
+    password: 'Admin@123',
+    role: 'admin',
+    faculty: 'Administration',
+    graduation_year: null,
+    is_verified: true,
+  },
+  {
+    name: 'Marketplace Admin',
+    email: 'superadmin@campusmart.ac.ke',
+    password: 'SuperAdmin@123',
+    role: 'admin',
+    faculty: 'Operations',
+    graduation_year: null,
+    is_verified: true,
+  },
+  {
+    name: 'Demo Student',
+    email: 'student@students.campusmart.ac.ke',
+    password: 'Student@123',
+    role: 'student',
+    faculty: 'Engineering',
+    graduation_year: 2027,
+    is_verified: true,
+  },
+];
+
+async function seedDemoUsers(dbPool) {
+  console.log('Seeding demo users...');
+
+  for (const user of DEMO_USERS) {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+
+    await dbPool.query(
+      `INSERT INTO users (name, email, password, role, faculty, graduation_year, is_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (email) DO UPDATE SET
+         name = EXCLUDED.name,
+         password = EXCLUDED.password,
+         role = EXCLUDED.role,
+         faculty = EXCLUDED.faculty,
+         graduation_year = EXCLUDED.graduation_year,
+         is_verified = EXCLUDED.is_verified,
+         updated_at = NOW()`,
+      [
+        user.name,
+        user.email.toLowerCase(),
+        hashedPassword,
+        user.role,
+        user.faculty,
+        user.graduation_year,
+        user.is_verified,
+      ]
+    );
+  }
+
+  console.log('Demo users seeded successfully');
+}
 
 async function setupDatabase() {
   try {
@@ -58,6 +121,8 @@ async function setupDatabase() {
     console.log('📋 Running schema.sql...');
     await dbPool.query(schema);
     console.log('✅ Schema created successfully');
+
+    await seedDemoUsers(dbPool);
 
     await dbPool.end();
   } catch (err) {

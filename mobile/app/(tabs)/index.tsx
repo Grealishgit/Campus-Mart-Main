@@ -1,9 +1,7 @@
-import { View, Text, TextInput, ScrollView, FlatList, useWindowDimensions, ActivityIndicator, Alert } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import { View, Text, TextInput, ScrollView, FlatList, useWindowDimensions, ActivityIndicator, Pressable } from 'react-native'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Listing, TransactionType } from '@/types';
 import { getAllListings, getCategories } from '@/lib/listingService';
-import { Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 
@@ -22,14 +20,7 @@ const HomeScreen = () => {
   const { width } = useWindowDimensions();
   const cardWidth = (width - 32 - 12) / 2; // 32 = px-4 on both sides, 12 = gap between cards
 
-  // Fetch listings and categories on component mount
-  useFocusEffect(
-    React.useCallback(() => {
-      loadData();
-    }, [activeTab, selectedCategory])
-  );
-
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -68,7 +59,14 @@ const HomeScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, selectedCategory]);
+
+  // Fetch listings and categories on component mount
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const filteredListings = listings;
 
