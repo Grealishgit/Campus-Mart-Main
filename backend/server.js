@@ -47,7 +47,7 @@ app.use(morgan(':date[iso] :remote-addr :method :url :status :response-time ms')
 
 // ── Rate Limiting ───────────────────────────────────────────
 // Apply general rate limiter to all routes
-app.use(apiLimiter);
+// app.use(apiLimiter);
 
 // ── Custom Security Headers ────────────────────────────────
 app.use((req, res, next) => {

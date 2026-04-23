@@ -32,6 +32,8 @@ export interface Listing {
   updatedAt?: string;
 }
 
+export type ListingType = 'SALE' | 'LEASE';
+
 export interface CreateListingRequest {
   title: string;
   description: string;
@@ -81,7 +83,7 @@ export interface CreateListingResponse {
 export async function getAllListings(
   filters?: {
     category?: string;
-    type?: 'SALE' | 'LEASE';
+    type?: ListingType;
     minPrice?: number;
     maxPrice?: number;
     search?: string;
@@ -110,8 +112,13 @@ export async function getAllListings(
 /**
  * Get listing by ID
  */
-export async function getListingById(id: string): Promise<ApiResponse<Listing>> {
-  return apiRequest<Listing>(`/listings/${id}`, {
+export async function getListingById(
+  id: string,
+  type?: ListingType,
+): Promise<ApiResponse<Listing>> {
+  const query = type ? `?type=${type}` : '';
+
+  return apiRequest<Listing>(`/listings/${id}${query}`, {
     method: 'GET',
   });
 }
@@ -140,8 +147,14 @@ export async function createListing(data: CreateListingRequest): Promise<ApiResp
 /**
  * Update a listing
  */
-export async function updateListing(id: string, data: Partial<CreateListingRequest>): Promise<ApiResponse<Listing>> {
-  return apiRequest<Listing>(`/listings/${id}`, {
+export async function updateListing(
+  id: string,
+  data: Partial<CreateListingRequest>,
+  type?: ListingType,
+): Promise<ApiResponse<Listing>> {
+  const query = type ? `?type=${type}` : '';
+
+  return apiRequest<Listing>(`/listings/${id}${query}`, {
     method: 'PUT',
     body: data,
     requiresAuth: true,
@@ -151,8 +164,13 @@ export async function updateListing(id: string, data: Partial<CreateListingReque
 /**
  * Delete a listing
  */
-export async function deleteListing(id: string): Promise<ApiResponse<any>> {
-  return apiRequest(`/listings/${id}`, {
+export async function deleteListing(
+  id: string,
+  type?: ListingType,
+): Promise<ApiResponse<any>> {
+  const query = type ? `?type=${type}` : '';
+
+  return apiRequest(`/listings/${id}${query}`, {
     method: 'DELETE',
     requiresAuth: true,
   });

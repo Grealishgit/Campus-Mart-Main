@@ -28,11 +28,19 @@ const BrowseScreen = () => {
     try {
       const response = await getCategories();
       if (response.success && response.data?.categories) {
-        setCategories(['All', ...response.data.categories.map((c: any) => c.category || c)]);
+        const rawCategories = response.data.categories.map((c: any) => c.category || c);
+        const uniqueCategories = ['All', ...new Set<string>(rawCategories)];
+        setCategories(uniqueCategories);
       }
     } catch (err) {
       console.error('Failed to load categories:', err);
     }
+  };
+
+  const getListingKey = (item: any, index: number) => {
+    const type = String(item?.type || 'UNKNOWN');
+    const id = String(item?.id ?? index);
+    return `${type}-${id}`;
   };
 
   // Search listings with current filters
@@ -242,7 +250,7 @@ const BrowseScreen = () => {
                 </Text>
                 <FlatList
                   data={listings}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={(item, index) => getListingKey(item, index)}
                   numColumns={2}
                   scrollEnabled={false}
                   columnWrapperStyle={{ gap: 12, marginBottom: 12 }}
@@ -285,9 +293,9 @@ const BrowseScreen = () => {
                   <Text className="mb-4 ml-4 text-lg tracking-widest uppercase font-display-bold text-primary">Category</Text>
 
                   <View className="px-4 flex-row gap-2 flex-wrap mb-6">
-                    {categories.map(cat => (
+                    {categories.map((cat, index) => (
                       <Pressable onPress={() => handleCategorySelect(cat)}
-                        key={cat} className={`rounded-xl px-5 py-3 
+                        key={`${cat}-${index}`} className={`rounded-xl px-5 py-3 
                          ${activeCategory === cat ? 'bg-primary' : 'bg-slate-100'}`}>
                         <Text className={`${activeCategory === cat ? 'text-white' : 'text-slate-700'} font-display-medium text-md`}>
                           {cat}

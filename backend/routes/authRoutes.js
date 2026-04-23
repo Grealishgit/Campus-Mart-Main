@@ -41,7 +41,8 @@ const { asyncHandler } = require('../utils/errorHandler');
 
 // Public routes
 router.post('/register', registerLimiter, validateRequest(registerSchema), asyncHandler(registerUser));
-router.post('/login', authLimiter, validateRequest(loginSchema), asyncHandler(loginUser));
+// router.post('/login', authLimiter, validateRequest(loginSchema), asyncHandler(loginUser));
+router.post('/login', validateRequest(loginSchema), asyncHandler(loginUser));
 router.post('/verify-email', validateRequest(verifyEmailSchema), asyncHandler(verifyEmail));
 router.post('/refresh', validateRequest(refreshTokenSchema), asyncHandler(refreshAccessToken));
 router.post('/forgot-password', validateRequest(forgotPasswordSchema), asyncHandler(forgotPassword));
