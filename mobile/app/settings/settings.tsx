@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
   const sections = [
@@ -39,10 +40,10 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="mb-8 mt-5 flex-row items-center">
+        <View className="flex-row items-center mt-5 mb-8">
           <Pressable
             onPress={() => router.back()}
-            className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-slate-100"
+            className="items-center justify-center mr-3 rounded-full h-11 w-11 bg-slate-100"
           >
             <Ionicons name="chevron-back" size={24} color="#0f172a" />
           </Pressable>
@@ -66,7 +67,7 @@ export default function SettingsScreen() {
               <Pressable
                 key={item.label}
                 onPress={() => router.push(item.route as never)}
-                className="mb-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4"
+                className="px-4 py-4 mb-3 border rounded-3xl border-slate-200 bg-slate-50"
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1 pr-4">

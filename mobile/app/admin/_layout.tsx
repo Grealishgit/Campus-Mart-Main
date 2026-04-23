@@ -61,6 +61,11 @@ export default function AdminLayout() {
                 }}
             />
             <Tabs.Screen
+                name="orders"
+                options={{ href: null, }}
+
+            />
+            <Tabs.Screen
                 name="login"
                 options={{
                     href: null,

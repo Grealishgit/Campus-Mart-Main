@@ -159,7 +159,7 @@ export default function AdminDashboardScreen() {
                 </Text>
 
                 <Pressable
-                  onPress={() => router.push("/admin/users" as never)}
+                  onPress={() => router.push("/admin/orders" as never)}
                   className="flex-row items-center justify-between px-4 py-4 mt-4 rounded-2xl bg-slate-800"
                 >
                   <View>
