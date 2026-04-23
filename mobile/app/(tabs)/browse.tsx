@@ -1,12 +1,11 @@
-import { View, Text, Pressable, TextInput, ScrollView, Modal, FlatList, ActivityIndicator } from 'react-native'
+import { View, Text, Pressable, TextInput, ScrollView, Modal, FlatList, ActivityIndicator, useWindowDimensions } from 'react-native'
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { getAllListings, getCategories } from '@/lib/listingService'
 import ListingCard from '@/components/ListingCard'
-import { useWindowDimensions } from 'react-native'
 
 const BrowseScreen = () => {
 
@@ -25,12 +24,6 @@ const BrowseScreen = () => {
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [tempPriceRange, setTempPriceRange] = useState([0, 50000]);
 
-  // Fetch categories on mount
-  useEffect(() => {
-    loadCategories();
-    searchListings();
-  }, []);
-
   const loadCategories = async () => {
     try {
       const response = await getCategories();
@@ -43,7 +36,7 @@ const BrowseScreen = () => {
   };
 
   // Search listings with current filters
-  const searchListings = async (search?: string, cat?: string, min?: number, max?: number) => {
+  const searchListings = useCallback(async (search?: string, cat?: string, min?: number, max?: number) => {
     try {
       setLoading(true);
       setError(null);
@@ -88,7 +81,13 @@ const BrowseScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeCategory, priceRange, searchValue]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    loadCategories();
+    searchListings();
+  }, [searchListings]);
 
   const handleClearSearchValue = () => {
     setSearchValue('');

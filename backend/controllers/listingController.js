@@ -5,13 +5,17 @@ const resolveUploadedImageUrl = (file) => {
   return file.path || file.secure_url || file.url;
 };
 
-// Helper: format listing row to match frontend Listing type
 const formatListing = (row) => ({
   id: String(row.id),
   title: row.title,
   description: row.description,
   price: parseFloat(row.price),
   priceUnit: row.price_unit || undefined,
+  minDuration: row.min_duration ?? undefined,
+  maxDuration: row.max_duration ?? undefined,
+  durationUnit: row.duration_unit || undefined,
+  availableFrom: row.available_from || undefined,
+  availableUntil: row.available_until || undefined,
   type: row.type,
   category: row.category,
   condition: row.condition,
@@ -20,6 +24,7 @@ const formatListing = (row) => ({
   imageUrl: row.image_url,
   isVerified: row.is_verified,
   isAvailable: row.is_available,
+  isSold: row.is_sold,
   seller: {
     id: row.seller_id,
     name: row.seller_name,
@@ -28,70 +33,97 @@ const formatListing = (row) => ({
     isVerified: row.seller_verified,
   },
   createdAt: row.created_at,
+  updatedAt: row.updated_at,
 });
 
-// @desc    Get all listings (with filters)
-// @route   GET /api/listings
-// @access  Public
-// Query params: type, category, search, minPrice, maxPrice, condition, page, limit
+const buildListingWhereClause = (query) => {
+  const {
+    type,
+    category,
+    search,
+    minPrice,
+    maxPrice,
+    condition,
+  } = query;
+
+  const conditions = ['l.is_available = true'];
+  const values = [];
+  let idx = 1;
+
+  if (type) {
+    conditions.push(`l.type = $${idx++}`);
+    values.push(String(type).toUpperCase().trim());
+  }
+  if (category && category !== 'All') {
+    conditions.push(`l.category = $${idx++}`);
+    values.push(category);
+  }
+  if (search) {
+    conditions.push(`(l.title ILIKE $${idx} OR l.description ILIKE $${idx})`);
+    values.push(`%${search}%`);
+    idx += 1;
+  }
+  if (minPrice) {
+    conditions.push(`l.price >= $${idx++}`);
+    values.push(minPrice);
+  }
+  if (maxPrice) {
+    conditions.push(`l.price <= $${idx++}`);
+    values.push(maxPrice);
+  }
+  if (condition) {
+    conditions.push(`l.condition = $${idx++}`);
+    values.push(condition);
+  }
+
+  return {
+    whereClause: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '',
+    values,
+    nextIndex: idx,
+  };
+};
+
 const getListings = async (req, res) => {
   try {
-    const {
-      type,
-      category,
-      search,
-      minPrice,
-      maxPrice,
-      condition,
-      page = 1,
-      limit = 20,
-    } = req.query;
+    const { page = 1, limit = 20 } = req.query;
+    const pageNumber = Number(page);
+    const pageSize = Number(limit);
+    const offset = (pageNumber - 1) * pageSize;
 
-    const offset = (page - 1) * limit;
-    const conditions = ['l.is_available = true'];
-    const values = [];
-    let idx = 1;
+    const { whereClause, values, nextIndex } = buildListingWhereClause(req.query);
 
-    if (type) { conditions.push(`l.type = $${idx++}`); values.push(type.toUpperCase()); }
-    if (category && category !== 'All') { conditions.push(`l.category = $${idx++}`); values.push(category); }
-    if (search) { conditions.push(`(l.title ILIKE $${idx++} OR l.description ILIKE $${idx - 1})`); values.push(`%${search}%`); }
-    if (minPrice) { conditions.push(`l.price >= $${idx++}`); values.push(minPrice); }
-    if (maxPrice) { conditions.push(`l.price <= $${idx++}`); values.push(maxPrice); }
-    if (condition) { conditions.push(`l.condition = $${idx++}`); values.push(condition); }
+    const result = await pool.query(
+      `
+        SELECT
+          l.*,
+          u.name AS seller_name,
+          u.rating AS seller_rating,
+          u.avatar_url AS seller_avatar,
+          u.is_verified AS seller_verified
+        FROM listings l
+        JOIN users u ON l.seller_id = u.id
+        ${whereClause}
+        ORDER BY l.created_at DESC
+        LIMIT $${nextIndex} OFFSET $${nextIndex + 1}
+      `,
+      [...values, pageSize, offset]
+    );
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM listings l ${whereClause}`,
+      values
+    );
 
-    const query = `
-      SELECT
-        l.*,
-        u.name AS seller_name,
-        u.rating AS seller_rating,
-        u.avatar_url AS seller_avatar,
-        u.is_verified AS seller_verified
-      FROM listings l
-      JOIN users u ON l.seller_id = u.id
-      ${whereClause}
-      ORDER BY l.created_at DESC
-      LIMIT $${idx++} OFFSET $${idx++}
-    `;
-
-    values.push(parseInt(limit), parseInt(offset));
-
-    const result = await pool.query(query, values);
-
-    // Count total for pagination
-    const countQuery = `SELECT COUNT(*) FROM listings l ${whereClause}`;
-    const countResult = await pool.query(countQuery, values.slice(0, -2));
-    const total = parseInt(countResult.rows[0].count);
+    const total = parseInt(countResult.rows[0].count, 10);
 
     res.json({
       success: true,
       listings: result.rows.map(formatListing),
       pagination: {
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
+        page: pageNumber,
+        limit: pageSize,
+        pages: Math.ceil(total / pageSize),
       },
     });
   } catch (err) {
@@ -100,17 +132,20 @@ const getListings = async (req, res) => {
   }
 };
 
-// @desc    Get single listing by ID
-// @route   GET /api/listings/:id
-// @access  Public
 const getListingById = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT l.*, u.name AS seller_name, u.rating AS seller_rating,
-              u.avatar_url AS seller_avatar, u.is_verified AS seller_verified
-       FROM listings l
-       JOIN users u ON l.seller_id = u.id
-       WHERE l.id = $1`,
+      `
+        SELECT
+          l.*,
+          u.name AS seller_name,
+          u.rating AS seller_rating,
+          u.avatar_url AS seller_avatar,
+          u.is_verified AS seller_verified
+        FROM listings l
+        JOIN users u ON l.seller_id = u.id
+        WHERE l.id = $1
+      `,
       [req.params.id]
     );
 
@@ -125,47 +160,94 @@ const getListingById = async (req, res) => {
   }
 };
 
-// @desc    Create a new listing
-// @route   POST /api/listings
-// @access  Private
+const normalizeLeaseFields = (body, typeUpper) => {
+  if (typeUpper !== 'LEASE') {
+    return {
+      price_unit: null,
+      min_duration: null,
+      max_duration: null,
+      duration_unit: null,
+      available_from: null,
+      available_until: null,
+    };
+  }
+
+  return {
+    price_unit: body.price_unit || null,
+    min_duration: body.min_duration || null,
+    max_duration: body.max_duration || null,
+    duration_unit: body.duration_unit || null,
+    available_from: body.available_from || null,
+    available_until: body.available_until || null,
+  };
+};
+
 const createListing = async (req, res) => {
   try {
-    const { title, description, price, price_unit, type, category, condition, location } = req.body;
+    const {
+      title,
+      description,
+      price,
+      type,
+      category,
+      condition,
+      location,
+    } = req.body;
     const image_url = resolveUploadedImageUrl(req.file) || null;
 
-    // Validation
-    if (!title || !description || !price || !type || !category || !condition || !location) {
-      return res.status(400).json({ success: false, message: 'All fields are required.' });
-    }
-
-    // Ensure type is a string before calling toUpperCase
     const typeUpper = String(type).toUpperCase().trim();
-    if (!['SALE', 'LEASE'].includes(typeUpper)) {
-      return res.status(400).json({ success: false, message: 'Type must be SALE or LEASE.' });
-    }
-
-    if (typeUpper === 'LEASE' && !price_unit) {
-      return res.status(400).json({ success: false, message: 'Price unit (e.g. /day) is required for leases.' });
-    }
+    const leaseFields = normalizeLeaseFields(req.body, typeUpper);
 
     const result = await pool.query(
-      `INSERT INTO listings (title, description, price, price_unit, type, category, condition, location, image_url, seller_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING *`,
-      [title, description, price, price_unit || null, typeUpper, category, condition, location, image_url, req.user.id]
+      `
+        INSERT INTO listings (
+          title, description, price, price_unit, min_duration, max_duration,
+          duration_unit, available_from, available_until, type, category,
+          condition, location, image_url, seller_id
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6,
+          $7, COALESCE($8, CURRENT_DATE), $9, $10, $11,
+          $12, $13, $14, $15
+        )
+        RETURNING *
+      `,
+      [
+        title,
+        description,
+        price,
+        leaseFields.price_unit,
+        leaseFields.min_duration,
+        leaseFields.max_duration,
+        leaseFields.duration_unit,
+        leaseFields.available_from,
+        leaseFields.available_until,
+        typeUpper,
+        category,
+        condition,
+        location,
+        image_url,
+        req.user.id,
+      ]
     );
 
-    // Update active_listings count for seller
-    await pool.query('UPDATE users SET active_listings = active_listings + 1 WHERE id = $1', [req.user.id]);
+    await pool.query(
+      'UPDATE users SET active_listings = active_listings + 1 WHERE id = $1',
+      [req.user.id]
+    );
 
     const listing = result.rows[0];
 
     res.status(201).json({
       success: true,
       message: 'Listing created successfully.',
-      listing: {
-        ...formatListing({ ...listing, seller_name: req.user.name, seller_rating: 0, seller_avatar: req.user.avatar_url, seller_verified: req.user.is_verified }),
-      },
+      listing: formatListing({
+        ...listing,
+        seller_name: req.user.name,
+        seller_rating: req.user.rating || 0,
+        seller_avatar: req.user.avatar_url,
+        seller_verified: req.user.is_verified,
+      }),
     });
   } catch (err) {
     console.error('CreateListing error:', err.message);
@@ -173,39 +255,62 @@ const createListing = async (req, res) => {
   }
 };
 
-// @desc    Update a listing
-// @route   PUT /api/listings/:id
-// @access  Private (owner only)
 const updateListing = async (req, res) => {
   try {
-    const listing = await pool.query('SELECT * FROM listings WHERE id = $1', [req.params.id]);
+    const existingResult = await pool.query('SELECT * FROM listings WHERE id = $1', [req.params.id]);
 
-    if (listing.rows.length === 0) {
+    if (existingResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Listing not found.' });
     }
 
-    if (listing.rows[0].seller_id !== req.user.id && req.user.role !== 'admin') {
+    const existing = existingResult.rows[0];
+
+    if (existing.seller_id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to update this listing.' });
     }
 
-    const { title, description, price, price_unit, category, condition, location, is_available } = req.body;
     const image_url = resolveUploadedImageUrl(req.file);
+    const nextType = req.body.type ? String(req.body.type).toUpperCase().trim() : existing.type;
+
+    const fieldMap = {
+      title: req.body.title,
+      description: req.body.description,
+      price: req.body.price,
+      price_unit: req.body.price_unit,
+      min_duration: req.body.min_duration,
+      max_duration: req.body.max_duration,
+      duration_unit: req.body.duration_unit,
+      available_from: req.body.available_from,
+      available_until: req.body.available_until,
+      type: nextType,
+      category: req.body.category,
+      condition: req.body.condition,
+      location: req.body.location,
+      is_available: req.body.is_available,
+      image_url,
+    };
+
+    if (nextType !== 'LEASE') {
+      fieldMap.price_unit = null;
+      fieldMap.min_duration = null;
+      fieldMap.max_duration = null;
+      fieldMap.duration_unit = null;
+      fieldMap.available_from = existing.available_from;
+      fieldMap.available_until = null;
+    }
 
     const fields = [];
     const values = [];
     let idx = 1;
 
-    if (title) { fields.push(`title = $${idx++}`); values.push(title); }
-    if (description) { fields.push(`description = $${idx++}`); values.push(description); }
-    if (price) { fields.push(`price = $${idx++}`); values.push(price); }
-    if (price_unit !== undefined) { fields.push(`price_unit = $${idx++}`); values.push(price_unit); }
-    if (category) { fields.push(`category = $${idx++}`); values.push(category); }
-    if (condition) { fields.push(`condition = $${idx++}`); values.push(condition); }
-    if (location) { fields.push(`location = $${idx++}`); values.push(location); }
-    if (is_available !== undefined) { fields.push(`is_available = $${idx++}`); values.push(is_available); }
-    if (image_url) { fields.push(`image_url = $${idx++}`); values.push(image_url); }
+    Object.entries(fieldMap).forEach(([key, value]) => {
+      if (value !== undefined) {
+        fields.push(`${key} = $${idx++}`);
+        values.push(value);
+      }
+    });
 
-    if (fields.length === 0) {
+    if (!fields.length) {
       return res.status(400).json({ success: false, message: 'No fields to update.' });
     }
 
@@ -215,16 +320,13 @@ const updateListing = async (req, res) => {
       values
     );
 
-    res.json({ success: true, message: 'Listing updated.', listing: result.rows[0] });
+    res.json({ success: true, message: 'Listing updated.', listing: formatListing(result.rows[0]) });
   } catch (err) {
     console.error('UpdateListing error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 };
 
-// @desc    Delete a listing
-// @route   DELETE /api/listings/:id
-// @access  Private (owner or admin)
 const deleteListing = async (req, res) => {
   try {
     const listing = await pool.query('SELECT * FROM listings WHERE id = $1', [req.params.id]);
@@ -238,7 +340,10 @@ const deleteListing = async (req, res) => {
     }
 
     await pool.query('DELETE FROM listings WHERE id = $1', [req.params.id]);
-    await pool.query('UPDATE users SET active_listings = GREATEST(active_listings - 1, 0) WHERE id = $1', [req.user.id]);
+    await pool.query(
+      'UPDATE users SET active_listings = GREATEST(active_listings - 1, 0) WHERE id = $1',
+      [listing.rows[0].seller_id]
+    );
 
     res.json({ success: true, message: 'Listing deleted successfully.' });
   } catch (err) {
@@ -247,18 +352,21 @@ const deleteListing = async (req, res) => {
   }
 };
 
-// @desc    Get listings by the logged-in user (My Listings)
-// @route   GET /api/listings/my
-// @access  Private
 const getMyListings = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT l.*, u.name AS seller_name, u.rating AS seller_rating,
-              u.avatar_url AS seller_avatar, u.is_verified AS seller_verified
-       FROM listings l
-       JOIN users u ON l.seller_id = u.id
-       WHERE l.seller_id = $1
-       ORDER BY l.created_at DESC`,
+      `
+        SELECT
+          l.*,
+          u.name AS seller_name,
+          u.rating AS seller_rating,
+          u.avatar_url AS seller_avatar,
+          u.is_verified AS seller_verified
+        FROM listings l
+        JOIN users u ON l.seller_id = u.id
+        WHERE l.seller_id = $1
+        ORDER BY l.created_at DESC
+      `,
       [req.user.id]
     );
 
@@ -269,12 +377,11 @@ const getMyListings = async (req, res) => {
   }
 };
 
-// @desc    Get categories
-// @route   GET /api/listings/categories
-// @access  Public
 const getCategories = async (req, res) => {
   try {
-    const result = await pool.query('SELECT DISTINCT category FROM listings WHERE category IS NOT NULL ORDER BY category');
+    const result = await pool.query(
+      'SELECT DISTINCT category FROM listings WHERE category IS NOT NULL ORDER BY category'
+    );
     res.json({ success: true, categories: result.rows });
   } catch (err) {
     console.error('GetCategories error:', err.message);
@@ -282,17 +389,17 @@ const getCategories = async (req, res) => {
   }
 };
 
-
 const getConditions = async (req, res) => {
   try {
-    const result = await pool.query('SELECT DISTINCT condition FROM listings WHERE condition IS NOT NULL ORDER BY condition');
+    const result = await pool.query(
+      'SELECT DISTINCT condition FROM listings WHERE condition IS NOT NULL ORDER BY condition'
+    );
     res.json({ success: true, conditions: result.rows });
   } catch (err) {
-    console.error('GetCategories error:', err.message);
+    console.error('GetConditions error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 };
-
 
 module.exports = {
   getListings,
@@ -302,5 +409,5 @@ module.exports = {
   deleteListing,
   getMyListings,
   getCategories,
-  getConditions
+  getConditions,
 };

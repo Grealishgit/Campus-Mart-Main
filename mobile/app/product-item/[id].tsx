@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, Pressable, Image, ScrollView, ActivityIndicator, Alert, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,13 +6,14 @@ import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/
 import { addFavorite, removeFavorite, isFavorited } from '@/lib/favoriteService'
 import { createConversation } from '@/lib/chatService'
 import { createOrder } from '@/lib/orderService'
-import map from '../../assets/imgs/map.png'
 
 const ProductItemScreen = () => {
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
     const [isFav, setIsFav] = useState(false);
+    const [leaseStart, setLeaseStart] = useState('');
+    const [leaseEnd, setLeaseEnd] = useState('');
 
     const {
         id,
@@ -23,9 +24,7 @@ const ProductItemScreen = () => {
         category,
         condition,
         location,
-        distance,
         imageUrl,
-        isVerified,
         description,
         sellerName,
         sellerRating,
@@ -40,9 +39,7 @@ const ProductItemScreen = () => {
         category: string;
         condition: string;
         location: string;
-        distance: string;
         imageUrl: string;
-        isVerified: string;
         description: string;
         sellerName: string;
         sellerRating: string;
@@ -78,7 +75,7 @@ const ProductItemScreen = () => {
                     Alert.alert('Added', 'Added to favorites');
                 }
             }
-        } catch (err) {
+        } catch {
             Alert.alert('Error', 'Failed to update favorites');
         } finally {
             setLoading(false);
@@ -89,12 +86,13 @@ const ProductItemScreen = () => {
         try {
             // Start a conversation with the seller about this listing
             const result = await createConversation(id, `I'm interested in ${title}`);
-            if (result.success && result.data?.id) {
-                router.push(`/chats/chat?id=${result.data.id}`);
+            const conversation = result.data?.conversation;
+            if (result.success && conversation?.id) {
+                router.push(`/chats/chat?id=${conversation.id}`);
             } else {
                 Alert.alert('Error', 'Failed to start conversation');
             }
-        } catch (err) {
+        } catch {
             Alert.alert('Error', 'Failed to start conversation');
         }
     }
@@ -102,14 +100,24 @@ const ProductItemScreen = () => {
     const handleBuyNow = async () => {
         try {
             setLoading(true);
-            const result = await createOrder({ listingId: id });
-            if (result.success && result.data?.id) {
-                Alert.alert('Success', 'Item added to your leases!', [
+            if (type === 'LEASE' && (!leaseStart.trim() || !leaseEnd.trim())) {
+                Alert.alert('Lease dates required', 'Please enter both the lease start and end dates in YYYY-MM-DD format.');
+                return;
+            }
+
+            const result = await createOrder({
+                listingId: id,
+                leaseStart: type === 'LEASE' ? leaseStart.trim() : undefined,
+                leaseEnd: type === 'LEASE' ? leaseEnd.trim() : undefined,
+            });
+
+            if (result.success && result.data?.order?.id) {
+                Alert.alert('Success', type === 'LEASE' ? 'Lease created successfully.' : 'Order placed successfully.', [
                     { text: 'View Leases', onPress: () => router.push('/(tabs)/leases') },
                     { text: 'Continue Shopping', onPress: () => router.back() }
                 ]);
             } else {
-                Alert.alert('Error', result.message || 'Failed to create order');
+                Alert.alert('Error', result.error || result.message || 'Failed to create order');
             }
         } catch (err: any) {
             Alert.alert('Error', err.message || 'Failed to create order');
@@ -159,7 +167,9 @@ const ProductItemScreen = () => {
                         <Text className='text-4xl text-black font-display-bold'>{title}</Text>
                         <Text className='text-3xl text-primary font-display-bold'>
                             Ksh {price}
-                            <Text className='ml-3 text-lg text-gray-500 font-display-medium'> Final Price</Text>
+                            <Text className='ml-3 text-lg text-gray-500 font-display-medium'>
+                                {type === 'LEASE' ? ` ${priceUnit || ''}` : ' Final Price'}
+                            </Text>
                         </Text>
                     </View>
 
@@ -218,6 +228,30 @@ const ProductItemScreen = () => {
                         <Text className='text-3xl text-black font-display-bold'>ABOUT THIS ITEM</Text>
                         <Text className='mt-2 text-lg text-gray-500 font-display'>{description}</Text>
                     </View>
+
+                    {type === 'LEASE' && (
+                        <View className='w-full px-4 pb-6'>
+                            <Text className='text-2xl text-black font-display-bold'>LEASE DETAILS</Text>
+                            <Text className='mt-1 text-base text-gray-500 font-display'>
+                                Rate: Ksh {price}{priceUnit || ''}. Enter your dates before sending the request.
+                            </Text>
+
+                            <TextInput
+                                value={leaseStart}
+                                onChangeText={setLeaseStart}
+                                placeholder='Lease start (YYYY-MM-DD)'
+                                placeholderTextColor='#9ca3af'
+                                className='mt-4 rounded-2xl border border-gray-300 px-4 py-3 text-base font-display text-gray-900'
+                            />
+                            <TextInput
+                                value={leaseEnd}
+                                onChangeText={setLeaseEnd}
+                                placeholder='Lease end (YYYY-MM-DD)'
+                                placeholderTextColor='#9ca3af'
+                                className='mt-3 rounded-2xl border border-gray-300 px-4 py-3 text-base font-display text-gray-900'
+                            />
+                        </View>
+                    )}
 
                 </View>
             </ScrollView>

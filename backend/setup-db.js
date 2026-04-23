@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 console.log('🔧 Database configuration:');
@@ -11,24 +12,84 @@ console.log(`  Database: ${process.env.DB_NAME || 'campus_mart'}`);
 
 const adminPool = new Pool({
   host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
+  port: parseInt(process.env.DB_PORT) || 5432,
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD,
-  database: 'postgres', // Connect to default postgres db to create new db
+  database: 'postgres',
 });
 
 const dbName = process.env.DB_NAME || 'campus_mart';
+
+const DEMO_USERS = [
+  {
+    name: 'Campus Admin',
+    email: 'admin@campusmart.ac.ke',
+    password: 'Admin@123',
+    role: 'admin',
+    faculty: 'Administration',
+    graduation_year: null,
+    is_verified: true,
+  },
+  {
+    name: 'Marketplace Admin',
+    email: 'superadmin@campusmart.ac.ke',
+    password: 'SuperAdmin@123',
+    role: 'admin',
+    faculty: 'Operations',
+    graduation_year: null,
+    is_verified: true,
+  },
+  {
+    name: 'Demo Student',
+    email: 'student@students.campusmart.ac.ke',
+    password: 'Student@123',
+    role: 'student',
+    faculty: 'Engineering',
+    graduation_year: 2027,
+    is_verified: true,
+  },
+];
+
+async function seedDemoUsers(dbPool) {
+  console.log('🌱 Seeding demo users...');
+
+  for (const user of DEMO_USERS) {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+
+    await dbPool.query(
+      `INSERT INTO users (name, email, password, role, faculty, graduation_year, is_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (email) DO UPDATE SET
+         name = EXCLUDED.name,
+         password = EXCLUDED.password,
+         role = EXCLUDED.role,
+         faculty = EXCLUDED.faculty,
+         graduation_year = EXCLUDED.graduation_year,
+         is_verified = EXCLUDED.is_verified,
+         updated_at = NOW()`,
+      [
+        user.name,
+        user.email.toLowerCase(),
+        hashedPassword,
+        user.role,
+        user.faculty,
+        user.graduation_year,
+        user.is_verified,
+      ]
+    );
+  }
+
+  console.log('✅ Demo users seeded successfully');
+}
 
 async function setupDatabase() {
   try {
     console.log('🔧 Starting database setup...');
 
-    // Test connection first
     console.log('🔌 Testing database connection...');
     await adminPool.query('SELECT NOW()');
     console.log('✅ Connection successful');
 
-    // Step 1: Create database if it doesn't exist
     console.log(`📦 Creating database '${dbName}' if it doesn't exist...`);
     await adminPool.query(`CREATE DATABASE ${dbName}`);
     console.log(`✅ Database '${dbName}' created successfully`);
@@ -37,16 +98,15 @@ async function setupDatabase() {
       console.log(`✅ Database '${dbName}' already exists`);
     } else {
       console.error('❌ Connection error:', err.message);
-      console.error('Error code:', err.code);
+      console.error('   Error code:', err.code);
       process.exit(1);
     }
   }
 
   try {
-    // Step 2: Connect to the new database and run schema
     const dbPool = new Pool({
       host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
+      port: parseInt(process.env.DB_PORT) || 5432,
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD,
       database: dbName,
@@ -59,6 +119,7 @@ async function setupDatabase() {
     await dbPool.query(schema);
     console.log('✅ Schema created successfully');
 
+    await seedDemoUsers(dbPool);
     await dbPool.end();
   } catch (err) {
     console.error('❌ Error running schema:', err.message);

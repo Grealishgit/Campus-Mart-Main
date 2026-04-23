@@ -9,9 +9,6 @@ const createOrderSchema = z.object({
     listing_id: z.coerce.number()
       .int()
       .positive('Listing ID must be valid'),
-    type: z.enum(['SALE', 'LEASE'], {
-      errorMap: () => ({ message: 'Type must be SALE or LEASE' }),
-    }),
     lease_start: z.string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'lease_start must be YYYY-MM-DD format')
       .optional(),
@@ -20,8 +17,8 @@ const createOrderSchema = z.object({
       .optional(),
   })
   .refine(
-    (data) => data.type === 'SALE' || (data.type === 'LEASE' && data.lease_start && data.lease_end),
-    { message: 'lease_start and lease_end required for LEASE orders', path: ['lease_start'] }
+    (data) => !(data.lease_start && !data.lease_end) && !(!data.lease_start && data.lease_end),
+    { message: 'lease_start and lease_end must be provided together', path: ['lease_start'] }
   ),
 });
 

@@ -1,10 +1,9 @@
-import { View, Text, Pressable, TextInput, Image, ScrollView, Modal, ActivityIndicator, Alert } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import { View, Text, Pressable, TextInput, Image, ScrollView, Modal, ActivityIndicator } from 'react-native'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Conversation } from '@/types';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { getConversations } from '@/lib/chatService'
+import { Conversation, getConversations } from '@/lib/chatService'
 
 const ChatScreen = () => {
 
@@ -22,13 +21,7 @@ const ChatScreen = () => {
     const [activeTab, setActiveTab] = useState<'all' | 'buying' | 'selling'>('all');
     const [searchValue, setSearchValue] = useState('');
 
-    useFocusEffect(
-      React.useCallback(() => {
-        fetchConversations();
-      }, [])
-    );
-
-    const fetchConversations = async () => {
+    const fetchConversations = React.useCallback(async () => {
       try {
         setLoading(true);
         setError(null);
@@ -44,7 +37,13 @@ const ChatScreen = () => {
       } finally {
         setLoading(false);
       }
-    };
+    }, []);
+
+    useFocusEffect(
+      React.useCallback(() => {
+        fetchConversations();
+      }, [fetchConversations])
+    );
 
     const filterConversations = (convs: Conversation[], tab: string, search: string) => {
       let filtered = convs;

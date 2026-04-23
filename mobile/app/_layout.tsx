@@ -8,7 +8,7 @@ import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, AppState, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import "react-native-reanimated";
 import "../global.css";
 
@@ -26,6 +26,7 @@ export default function RootLayout() {
   const segments = useSegments();
 
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [fontsLoaded] = useFonts({
     "Jost-Black": require("../assets/fonts/Jost-Black.ttf"),
@@ -40,9 +41,10 @@ export default function RootLayout() {
     let isMounted = true;
 
     const bootstrapAuth = async () => {
-      const authenticated = await initializeAuthSession();
+      const { authenticated, role } = await initializeAuthSession();
       if (isMounted) {
         setIsAuth(authenticated);
+        setUserRole(role ?? null);
       }
     };
 
@@ -54,38 +56,52 @@ export default function RootLayout() {
       }
     });
 
-    const appStateSubscription = AppState.addEventListener(
-      "change",
-      (state) => {
-        if (state === "active") {
-          bootstrapAuth();
-        }
-      },
-    );
+    // const appStateSubscription = AppState.addEventListener(
+    //   "change",
+    //   (state) => {
+    //     if (state === "active") {
+    //       bootstrapAuth();
+    //     }
+    //   },
+    // );
 
     return () => {
       isMounted = false;
       unsubscribe();
-      appStateSubscription.remove();
+      // appStateSubscription.remove();
     };
   }, []);
 
-  useEffect(() => {
-    if (isAuth === null) return;
+ useEffect(() => {
+  if (isAuth === null) return;
 
-    const rootSegment = segments[0];
-    const isInPublicRoute =
-      rootSegment === "(auth)" || rootSegment === "(onboard)";
+  const rootSegment = segments[0] as string | undefined;
+  const secondSegment = String(segments[1] ?? "");
+  const isAdminRoute = rootSegment === "admin";
+  const isAdminLoginRoute = isAdminRoute && secondSegment === "login";
+  const isInPublicRoute = rootSegment === "(auth)" || rootSegment === "(onboard)" || isAdminLoginRoute;
 
-    if (isAuth && isInPublicRoute) {
-      router.replace("/(tabs)");
-      return;
+  if (isAuth && isInPublicRoute) {
+    // Route admin to dashboard, others to tabs
+    if (userRole === "admin") {
+      router.replace("/admin/dashboard" as never);
+    } else {
+      router.replace("/(tabs)" as never);
     }
+    return;
+  }
 
-    if (!isAuth && !isInPublicRoute) {
-      router.replace("/(auth)/SignIn");
-    }
-  }, [isAuth, segments, router]);
+  // Admin trying to access admin routes without auth → admin login
+  if (!isAuth && isAdminRoute && !isAdminLoginRoute) {
+    router.replace("/admin/login" as never);
+    return;
+  }
+
+  // Non-admin unauthenticated → sign in
+  if (!isAuth && !isInPublicRoute && !isAdminRoute) {
+    router.replace("/(auth)/SignIn" as never);
+  }
+}, [isAuth, userRole, segments, router]);
 
   if (isAuth === null || !fontsLoaded)
     return (
@@ -133,6 +149,30 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="settings/settings"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="vendor/dashboard"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="vendor/incoming-orders"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/login"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/dashboard"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/users"
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="admin/listings"
           options={{ animation: "slide_from_right" }}
         />
         <Stack.Screen

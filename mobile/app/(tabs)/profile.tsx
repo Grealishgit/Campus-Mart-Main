@@ -1,7 +1,6 @@
-import { View, Text, Image, ScrollView, Modal, ActivityIndicator, Alert, TextInput } from 'react-native'
+import { View, Text, Image, ScrollView, Modal, ActivityIndicator, Alert, TextInput, Pressable } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Pressable } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getMyListings } from '@/lib/listingService'
@@ -34,18 +33,19 @@ const ProfileScreen = () => {
         // Fetch user profile
         const profileResult = await getUserProfile();
         if (profileResult.success && profileResult.data) {
-          setUserData(profileResult.data);
+          const profileData = profileResult.data as any;
+          setUserData(profileData);
           setListStats([
-            { label: 'Active', val: String(profileResult.data.active_listings || 0) },
-            { label: 'Sold', val: String(profileResult.data.sold_count || 0) },
-            { label: 'Rating', val: String(profileResult.data.rating?.toFixed(1) || '0'), icon: true }
+            { label: 'Active', val: String(profileData.active_listings || 0) },
+            { label: 'Sold', val: String(profileData.sold_count || 0) },
+            { label: 'Rating', val: String(profileData.rating?.toFixed(1) || '0'), icon: true }
           ]);
         }
         
         // Fetch my listings
-        const listingsResult = await getMyListings();
-        if (listingsResult.success && listingsResult.listings) {
-          setMyItems(listingsResult.listings);
+        const listingsResult = await getMyListings() as any;
+        if (listingsResult.success && listingsResult.data?.listings) {
+          setMyItems(listingsResult.data.listings);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
@@ -61,11 +61,11 @@ const ProfileScreen = () => {
     if (activeTab === 'favorites') {
       const fetchFavorites = async () => {
         try {
-          const result = await getFavorites();
-          if (result.success && result.favorites) {
-            setFavorites(result.favorites);
+          const result = await getFavorites() as any;
+          if (result.success && result.data?.favorites) {
+            setFavorites(result.data.favorites);
           }
-        } catch (err: any) {
+        } catch {
           Alert.alert('Error', 'Failed to load favorites');
         }
       };
@@ -76,8 +76,8 @@ const ProfileScreen = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      router.replace('/(auth)/index');
-    } catch (err: any) {
+      router.replace('/(auth)/SignIn' as never);
+    } catch {
       Alert.alert('Error', 'Failed to logout');
     }
   };
@@ -132,7 +132,7 @@ const ProfileScreen = () => {
               const result = await deleteAccount();
               if (result.success) {
                 await logout();
-                router.replace('/(auth)/index');
+                router.replace('/(auth)/SignIn' as never);
               } else {
                 Alert.alert('Error', result.message || 'Failed to delete account');
               }
@@ -160,7 +160,10 @@ const ProfileScreen = () => {
         <View className="sticky top-0 z-30 flex-row items-center justify-between p-4 pb-2 bg-background-light/80 backdrop-blur-md">
           <Text className="flex-1 text-xl tracking-tight font-display-bold">Profile</Text>
           <View className="flex items-center justify-end w-12">
-            <Pressable className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5">
+            <Pressable
+              onPress={() => router.push('/settings/settings')}
+              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5"
+            >
               <Ionicons name="settings-outline" size={25} color="#6769ef" />
             </Pressable>
           </View>
