@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -18,6 +17,7 @@ import {
   verifyAdminUser,
   type AdminUser,
 } from "@/lib/adminService";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdminUsersScreen() {
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function AdminUsersScreen() {
       <View className="flex-row items-center px-5 py-4">
         <Pressable
           onPress={() => router.back()}
-          className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10"
+          className="items-center justify-center mr-3 rounded-full h-11 w-11 bg-white/10"
         >
           <Ionicons name="chevron-back" size={24} color="#fff" />
         </Pressable>
@@ -61,7 +61,7 @@ export default function AdminUsersScreen() {
       </View>
 
       <View className="px-5 pb-4">
-        <View className="flex-row items-center rounded-2xl border border-white/10 bg-slate-900 px-4">
+        <View className="flex-row items-center px-4 border rounded-2xl border-white/10 bg-slate-900">
           <Ionicons name="search-outline" size={20} color="#94a3b8" />
           <TextInput
             className="flex-1 px-3 py-4 text-white font-display"
@@ -76,14 +76,14 @@ export default function AdminUsersScreen() {
 
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 24 }}>
         {loading ? (
-          <View className="mt-20 items-center">
+          <View className="items-center mt-20">
             <ActivityIndicator color="#22d3ee" size="large" />
           </View>
         ) : (
           users.map((user) => (
             <View
               key={user.id}
-              className="mb-4 rounded-3xl border border-white/10 bg-slate-900 p-4"
+              className="p-4 mb-4 border rounded-3xl border-white/10 bg-slate-900"
             >
               <View className="flex-row items-start justify-between">
                 <View className="flex-1 pr-4">
@@ -97,14 +97,14 @@ export default function AdminUsersScreen() {
                     {user.role} · {user.is_verified ? "verified" : "unverified"}
                   </Text>
                 </View>
-                <View className="rounded-full bg-white/5 px-3 py-2">
+                <View className="px-3 py-2 rounded-full bg-white/5">
                   <Text className="text-xs text-cyan-300 font-display-semibold">
                     {user.active_listings ?? 0} active
                   </Text>
                 </View>
               </View>
 
-              <View className="mt-4 flex-row gap-3">
+              <View className="flex-row gap-3 mt-4">
                 {!user.is_verified && (
                   <Pressable
                     onPress={async () => {
@@ -115,7 +115,7 @@ export default function AdminUsersScreen() {
                       }
                       loadUsers();
                     }}
-                    className="flex-1 items-center rounded-2xl bg-cyan-500 py-3"
+                    className="items-center flex-1 py-3 rounded-2xl bg-cyan-500"
                   >
                     <Text className="text-slate-950 font-display-bold">
                       Verify
@@ -147,7 +147,7 @@ export default function AdminUsersScreen() {
                       ],
                     )
                   }
-                  className="flex-1 items-center rounded-2xl border border-red-500/40 bg-red-500/10 py-3"
+                  className="items-center flex-1 py-3 border rounded-2xl border-red-500/40 bg-red-500/10"
                 >
                   <Text className="text-red-300 font-display-bold">Delete</Text>
                 </Pressable>

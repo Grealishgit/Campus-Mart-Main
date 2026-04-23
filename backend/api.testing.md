@@ -1,3 +1,5 @@
+# Creating listings
+
 `http://localhost:5000/api/listings`
 
 `{
@@ -10,7 +12,7 @@
   "location": "Mksu Main Campus, Hostel A"
 }`
 
-`or `
+`or`
 
 `{
   "title": "Canon DSLR Camera",

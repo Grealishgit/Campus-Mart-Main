@@ -63,8 +63,7 @@ export default function AdminDashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
-        <View className="mb-8 mt-5 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between mt-5 mb-8">
           <View>
             <Text className="text-sm uppercase tracking-[0.25em] text-cyan-300 font-display-bold">
               Admin Console
@@ -79,14 +78,16 @@ export default function AdminDashboardScreen() {
               await logoutUser();
               router.replace("/admin/login" as never);
             }}
-            className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
+          className="items-center justify-center rounded-full h-11 w-11 bg-white/10"
           >
             <Ionicons name="log-out-outline" size={22} color="#fff" />
           </Pressable>
         </View>
+      <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 32 }}>
+
 
         {loading ? (
-          <View className="mt-20 items-center">
+          <View className="items-center mt-20">
             <ActivityIndicator color="#22d3ee" size="large" />
             <Text className="mt-4 text-slate-300 font-display-medium">
               Loading admin metrics…
@@ -100,7 +101,7 @@ export default function AdminDashboardScreen() {
                   key={card.label}
                   className="mb-4 w-[48%] rounded-3xl border border-white/10 bg-slate-900 p-4"
                 >
-                  <View className="mb-4 h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10">
+                  <View className="items-center justify-center w-12 h-12 mb-4 rounded-2xl bg-cyan-500/10">
                     <Ionicons name={card.icon} size={24} color="#22d3ee" />
                   </View>
                   <Text className="text-sm uppercase tracking-[0.2em] text-slate-400 font-display-semibold">
@@ -113,41 +114,80 @@ export default function AdminDashboardScreen() {
               ))}
             </View>
 
-            <View className="mt-2 rounded-3xl border border-white/10 bg-slate-900 p-5">
+              <View className="p-5 mt-2 border rounded-3xl border-white/10 bg-slate-900">
               <Text className="text-lg text-white font-display-bold">
                 Management shortcuts
               </Text>
 
               <Pressable
                 onPress={() => router.push("/admin/users" as never)}
-                className="mt-4 flex-row items-center justify-between rounded-2xl bg-slate-800 px-4 py-4"
-              >
-                <View>
-                  <Text className="text-lg text-white font-display-semibold">
-                    User management
-                  </Text>
-                  <Text className="mt-1 text-slate-400 font-display">
-                    Verify, review, or remove marketplace users.
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={22} color="#fff" />
-              </Pressable>
+                  className="flex-row items-center justify-between px-4 py-4 mt-4 rounded-2xl bg-slate-800"
+                >
+                  <View>
+                    <Text className="text-lg text-white font-display-semibold">
+                      User management
+                    </Text>
+                    <Text className="mt-1 text-slate-400 font-display">
+                      Verify, review, or remove marketplace users.
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color="#fff" />
+                </Pressable>
 
-              <Pressable
-                onPress={() => router.push("/admin/listings" as never)}
-                className="mt-3 flex-row items-center justify-between rounded-2xl bg-slate-800 px-4 py-4"
-              >
-                <View>
-                  <Text className="text-lg text-white font-display-semibold">
-                    Listing moderation
-                  </Text>
-                  <Text className="mt-1 text-slate-400 font-display">
-                    Review sellers’ listings and verify marketplace content.
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={22} color="#fff" />
-              </Pressable>
-            </View>
+                <Pressable
+                  onPress={() => router.push("/admin/listings" as never)}
+                  className="flex-row items-center justify-between px-4 py-4 mt-3 rounded-2xl bg-slate-800"
+                >
+                  <View>
+                    <Text className="text-lg text-white font-display-semibold">
+                      Listing moderation
+                    </Text>
+                    <Text className="mt-1 text-slate-400 font-display">
+                      Review sellers’ listings and verify marketplace content.
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color="#fff" />
+                </Pressable>
+              </View>
+
+              <View className="p-5 mt-2 border rounded-3xl border-white/10 bg-slate-900">
+                <Text className="text-lg text-white font-display-bold">
+                  Recent activity
+                </Text>
+                <Text className="mt-1 text-slate-400 font-display">
+                  View recent user signups, listings, and orders.
+                </Text>
+
+                <Pressable
+                  onPress={() => router.push("/admin/users" as never)}
+                  className="flex-row items-center justify-between px-4 py-4 mt-4 rounded-2xl bg-slate-800"
+                >
+                  <View>
+                    <Text className="text-lg text-white font-display-semibold">
+                      Orders
+                    </Text>
+                    <Text className="mt-1 text-slate-400 font-display">
+                      Recent orders
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color="#fff" />
+                </Pressable>
+
+                <Pressable
+                  onPress={() => router.push("/admin/listings" as never)}
+                  className="flex-row items-center justify-between px-4 py-4 mt-3 rounded-2xl bg-slate-800"
+                >
+                  <View>
+                    <Text className="text-lg text-white font-display-semibold">
+                      Listings
+                    </Text>
+                    <Text className="mt-1 text-slate-400 font-display">
+                      View recently added listings
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color="#fff" />
+                </Pressable>
+              </View>
           </>
         )}
       </ScrollView>

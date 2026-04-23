@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   View,
@@ -16,6 +15,7 @@ import {
   verifyAdminListing,
   type AdminListing,
 } from "@/lib/adminService";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdminListingsScreen() {
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ export default function AdminListingsScreen() {
       <View className="flex-row items-center px-5 py-4">
         <Pressable
           onPress={() => router.back()}
-          className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10"
+          className="items-center justify-center mr-3 rounded-full h-11 w-11 bg-white/10"
         >
           <Ionicons name="chevron-back" size={24} color="#fff" />
         </Pressable>
@@ -59,14 +59,14 @@ export default function AdminListingsScreen() {
 
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 24 }}>
         {loading ? (
-          <View className="mt-20 items-center">
+          <View className="items-center mt-20">
             <ActivityIndicator color="#22d3ee" size="large" />
           </View>
         ) : (
           listings.map((listing) => (
             <View
               key={`${listing.type || "LISTING"}-${listing.id}`}
-              className="mb-4 rounded-3xl border border-white/10 bg-slate-900 p-4"
+              className="p-4 mb-4 border rounded-3xl border-white/10 bg-slate-900"
             >
               <View className="flex-row items-start justify-between">
                 <View className="flex-1 pr-4">
@@ -78,14 +78,14 @@ export default function AdminListingsScreen() {
                     {listing.seller_email || "No email"}
                   </Text>
                 </View>
-                <View className="rounded-full bg-white/5 px-3 py-2">
+                <View className="px-3 py-2 rounded-full bg-white/5">
                   <Text className="text-xs uppercase tracking-[0.2em] text-cyan-300 font-display-semibold">
                     {listing.type || "listing"}
                   </Text>
                 </View>
               </View>
 
-              <View className="mt-3 flex-row flex-wrap">
+              <View className="flex-row flex-wrap mt-3">
                 <Text className="mr-3 text-slate-400 font-display">
                   {listing.category || "Uncategorized"}
                 </Text>
@@ -115,7 +115,7 @@ export default function AdminListingsScreen() {
                     }
                     loadListings();
                   }}
-                  className="mt-4 items-center rounded-2xl bg-cyan-500 py-3"
+                  className="items-center py-3 mt-4 rounded-2xl bg-cyan-500"
                 >
                   <Text className="text-slate-950 font-display-bold">
                     Verify listing

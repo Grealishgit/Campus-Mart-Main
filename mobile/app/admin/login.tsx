@@ -5,13 +5,13 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  SafeAreaView,
   Text,
   TextInput,
   View,
 } from "react-native";
 
 import { loginAdmin } from "@/lib/authService";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdminLoginScreen() {
   const [email, setEmail] = useState("");
