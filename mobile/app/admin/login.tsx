@@ -41,7 +41,7 @@ export default function AdminLoginScreen() {
         return;
       }
 
-      router.replace("/admin/dashboard" as never);
+      router.replace("/dashboard");
     } catch {
       Alert.alert("Admin login failed", "Please try again.");
     } finally {

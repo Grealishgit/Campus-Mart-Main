@@ -4,7 +4,6 @@ import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   View,
@@ -12,6 +11,7 @@ import {
 
 import { getAdminStats } from "@/lib/adminService";
 import { logoutUser } from "@/lib/authService";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdminDashboardScreen() {
   const [loading, setLoading] = useState(true);
@@ -23,9 +23,12 @@ export default function AdminDashboardScreen() {
   });
 
   const loadDashboard = async () => {
+    console.log('🔄 loadDashboard fired');
     setLoading(true);
     const response = await getAdminStats();
 
+
+    
     if (response.success && response.data?.stats) {
       setStats(response.data.stats);
     }

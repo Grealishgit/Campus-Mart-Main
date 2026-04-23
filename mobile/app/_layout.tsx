@@ -8,7 +8,7 @@ import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, AppState, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import "react-native-reanimated";
 import "../global.css";
 
@@ -26,6 +26,7 @@ export default function RootLayout() {
   const segments = useSegments();
 
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [fontsLoaded] = useFonts({
     "Jost-Black": require("../assets/fonts/Jost-Black.ttf"),
@@ -40,9 +41,10 @@ export default function RootLayout() {
     let isMounted = true;
 
     const bootstrapAuth = async () => {
-      const authenticated = await initializeAuthSession();
+      const { authenticated, role } = await initializeAuthSession();
       if (isMounted) {
         setIsAuth(authenticated);
+        setUserRole(role ?? null);
       }
     };
 
@@ -54,46 +56,52 @@ export default function RootLayout() {
       }
     });
 
-    const appStateSubscription = AppState.addEventListener(
-      "change",
-      (state) => {
-        if (state === "active") {
-          bootstrapAuth();
-        }
-      },
-    );
+    // const appStateSubscription = AppState.addEventListener(
+    //   "change",
+    //   (state) => {
+    //     if (state === "active") {
+    //       bootstrapAuth();
+    //     }
+    //   },
+    // );
 
     return () => {
       isMounted = false;
       unsubscribe();
-      appStateSubscription.remove();
+      // appStateSubscription.remove();
     };
   }, []);
 
-  useEffect(() => {
-    if (isAuth === null) return;
+ useEffect(() => {
+  if (isAuth === null) return;
 
-    const rootSegment = segments[0] as string | undefined;
-    const secondSegment = String(segments[1] ?? "");
-    const isAdminLoginRoute =
-      rootSegment === "admin" && secondSegment === "login";
-    const isInPublicRoute =
-      rootSegment === "(auth)" || rootSegment === "(onboard)" || isAdminLoginRoute;
+  const rootSegment = segments[0] as string | undefined;
+  const secondSegment = String(segments[1] ?? "");
+  const isAdminRoute = rootSegment === "admin";
+  const isAdminLoginRoute = isAdminRoute && secondSegment === "login";
+  const isInPublicRoute = rootSegment === "(auth)" || rootSegment === "(onboard)" || isAdminLoginRoute;
 
-    if (isAuth && isInPublicRoute) {
-      router.replace((isAdminLoginRoute ? "/admin/dashboard" : "/(tabs)") as never);
-      return;
+  if (isAuth && isInPublicRoute) {
+    // Route admin to dashboard, others to tabs
+    if (userRole === "admin") {
+      router.replace("/admin/dashboard" as never);
+    } else {
+      router.replace("/(tabs)" as never);
     }
+    return;
+  }
 
-    if (!isAuth && rootSegment === "admin" && secondSegment !== "login") {
-      router.replace("/admin/login" as never);
-      return;
-    }
+  // Admin trying to access admin routes without auth → admin login
+  if (!isAuth && isAdminRoute && !isAdminLoginRoute) {
+    router.replace("/admin/login" as never);
+    return;
+  }
 
-    if (!isAuth && !isInPublicRoute) {
-      router.replace("/(auth)/SignIn" as never);
-    }
-  }, [isAuth, segments, router]);
+  // Non-admin unauthenticated → sign in
+  if (!isAuth && !isInPublicRoute && !isAdminRoute) {
+    router.replace("/(auth)/SignIn" as never);
+  }
+}, [isAuth, userRole, segments, router]);
 
   if (isAuth === null || !fontsLoaded)
     return (

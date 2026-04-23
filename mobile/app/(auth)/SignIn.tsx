@@ -42,32 +42,40 @@ const SignInScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = async () => {
-    if (!validate()) return;
+ const handleLogin = async () => {
+  if (!validate()) return;
 
-    setIsLoading(true);
-    try {
-      const response = await loginUser({
-        email: formData.email,
-        password: formData.password,
-      });
+  setIsLoading(true);
+  try {
+    const response = await loginUser({
+      email: formData.email,
+      password: formData.password,
+    });
 
-      if (response.success) {
-        Alert.alert("Success", `Welcome back, ${response.data?.user?.name}!`);
-        router.replace("/(tabs)");
+    if (response.success) {
+      const user = response.data?.user;
+      Alert.alert("Success", `Welcome back, ${user?.name}!`);
+      console.log("Logged in user:", user?.role);
+
+      // Route based on role
+      if (user?.role === "admin") {
+        router.replace("/admin/dashboard" as never);
       } else {
-        Alert.alert(
-          "Login Failed",
-          response.error || "An error occurred during login",
-        );
+        router.replace("/(tabs)");
       }
-    } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred");
-      console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
+    } else {
+      Alert.alert(
+        "Login Failed",
+        response.error || "An error occurred during login",
+      );
     }
-  };
+  } catch (error) {
+    Alert.alert("Error", "An unexpected error occurred");
+    console.error("Login error:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -203,7 +211,7 @@ const SignInScreen = () => {
           </View>
 
           <Pressable
-            onPress={() => router.push("/admin/login" as never)}
+            onPress={() => router.push("/admin/login" as any)}
             className="items-center justify-center rounded-xl border border-slate-300 py-3"
           >
             <Text className="text-base text-slate-700 font-display-semibold">
