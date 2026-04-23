@@ -19,35 +19,48 @@ const isUniversityEmail = (email) => {
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role = 'student', faculty, graduation_year } = req.body;
+  try {
+    const { name, email, password, role = 'student', faculty, graduation_year, year } = req.body;
+    const normalizedGraduationYear = graduation_year ?? year ?? null;
+    // Check if email already exists
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      throw new AppError('An account with this email already exists.', 409, 'EMAIL_EXISTS');
+    }
 
-  // Check if email already exists
-  const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-  if (existing.rows.length > 0) {
-    throw new AppError('An account with this email already exists.', 409, 'EMAIL_EXISTS');
-  }
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Create user
-  const result = await pool.query(
-    `INSERT INTO users (name, email, password, role, faculty, graduation_year)
+    // Create user
+    const result = await pool.query(
+      `INSERT INTO users (name, email, password, role, faculty, graduation_year)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, name, email, role, avatar_url, is_verified, faculty, graduation_year, rating, created_at`,
-    [name, email.toLowerCase(), hashedPassword, role, faculty || null, graduation_year || null]
-  );
+      [name, email.toLowerCase(), hashedPassword, role, faculty || null, normalizedGraduationYear]
+    );
 
-  const user = result.rows[0];
-  const token = generateToken(user.id);
+    const user = result.rows[0];
+    const token = generateToken(user.id);
 
-  res.status(201).json({
-    success: true,
-    message: 'Account created successfully.',
-    token,
-    user,
-  });
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully.',
+      token,
+      user,
+    });
+  } catch (error) {
+    console.error('Registration Failed! Please try Again:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error_code: error.errorCode || 'INTERNAL_SERVER_ERROR',
+      message: error.message || 'An error occurred during registration.',
+    });
+
+  }
+
+
+
 });
 
 // @desc    Login user

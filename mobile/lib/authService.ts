@@ -15,6 +15,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   faculty?: string;
+  year?: string | number;
+  phone?: string;
   graduation_year?: number;
 }
 

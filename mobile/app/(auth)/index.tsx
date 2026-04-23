@@ -6,12 +6,93 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const FACULTY_OPTIONS = [
+  "Engineering",
+  "Education",
+  "Business",
+  "Medicine",
+  "Science",
+  "Law",
+  "Arts",
+  "Agriculture",
+  "Architecture",
+  "ICT",
+  "Other",
+];
+
+const YEAR_OPTIONS = Array.from({ length: 25 }, (_, index) =>
+  String(2015 + index),
+);
+
+type OptionPickerModalProps = {
+  visible: boolean;
+  title: string;
+  options: string[];
+  selectedValue: string;
+  onSelect: (value: string) => void;
+  onClose: () => void;
+};
+
+const OptionPickerModal = ({
+  visible,
+  title,
+  options,
+  selectedValue,
+  onSelect,
+  onClose,
+}: OptionPickerModalProps) => (
+  <Modal
+    visible={visible}
+    animationType="slide"
+    transparent
+    onRequestClose={onClose}
+  >
+    <View className="justify-end flex-1 bg-black/40">
+      <View className="rounded-t-3xl bg-white px-4 pt-5 pb-6 max-h-[70%]">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-xl text-gray-800 font-display-bold">{title}</Text>
+          <Pressable onPress={onClose} className="px-3 py-2 rounded-lg bg-gray-100">
+            <Text className="text-gray-700 font-display-medium">Close</Text>
+          </Pressable>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {options.map((option) => {
+            const isSelected = selectedValue === option;
+            return (
+              <Pressable
+                key={option}
+                onPress={() => {
+                  onSelect(option);
+                  onClose();
+                }}
+                className={`mb-2 flex-row items-center justify-between rounded-xl border px-4 py-3 ${
+                  isSelected ? "border-primary bg-primary/10" : "border-gray-200 bg-white"
+                }`}
+              >
+                <Text
+                  className={`text-base ${isSelected ? "text-primary font-display-semibold" : "text-gray-700 font-display"}`}
+                >
+                  {option}
+                </Text>
+                {isSelected && <Ionicons name="checkmark" size={18} color="#6769ef" />}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </View>
+  </Modal>
+);
 
 const SignUpScreen = () => {
   const router = useRouter();
@@ -19,6 +100,8 @@ const SignUpScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [facultyPickerOpen, setFacultyPickerOpen] = useState(false);
+  const [yearPickerOpen, setYearPickerOpen] = useState(false);
 
   const [formData, setFormData] = useState<{
     fullName: string;
@@ -40,6 +123,7 @@ const SignUpScreen = () => {
 
   const validate = (): boolean => {
     const newErrors: Partial<typeof formData> = {};
+    const normalizedPhone = formData.phone.replace(/\s+/g, "");
 
     if (!formData.fullName.trim())
       newErrors.fullName = "Full name is required.";
@@ -52,8 +136,8 @@ const SignUpScreen = () => {
 
     if (!formData.year.trim()) newErrors.year = "Year of study is required.";
 
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
-    else if (!/^\+?[0-9]{9,13}$/.test(formData.phone))
+    if (!normalizedPhone.trim()) newErrors.phone = "Phone number is required.";
+    else if (!/^[0-9]{9,13}$/.test(normalizedPhone))
       newErrors.phone = "Enter a valid phone number.";
 
     if (!formData.password) newErrors.password = "Password is required.";
@@ -76,12 +160,17 @@ const SignUpScreen = () => {
 
     setIsLoading(true);
     try {
+      const normalizedPhone = formData.phone.replace(/\s+/g, "");
+      const selectedYear = parseInt(formData.year, 10);
+
       const response = await registerUser({
         name: formData.fullName.trim(),
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         faculty: formData.faculty || undefined,
-        graduation_year: parseInt(formData.year) || undefined,
+        year: formData.year || undefined,
+        phone: normalizedPhone || undefined,
+        graduation_year: Number.isNaN(selectedYear) ? undefined : selectedYear,
       });
 
       if (response.success) {
@@ -196,18 +285,19 @@ const SignUpScreen = () => {
               <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
                 Faculty
               </Text>
-              <View
+              <Pressable
+                onPress={() => setFacultyPickerOpen(true)}
                 className={`bg-white border rounded-xl ${errors.faculty ? "border-red-400" : "border-gray-400"}`}
               >
-                <TextInput
-                  className="p-4 text-base font-display"
-                  placeholder="Select"
-                  value={formData.faculty}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, faculty: text })
-                  }
-                />
-              </View>
+                <View className="flex-row items-center justify-between p-4">
+                  <Text
+                    className={`text-base ${formData.faculty ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
+                  >
+                    {formData.faculty || "Select faculty"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={18} color="#6b7280" />
+                </View>
+              </Pressable>
               {errors.faculty && (
                 <Text className="ml-1 text-sm text-red-500">
                   {errors.faculty}
@@ -216,20 +306,21 @@ const SignUpScreen = () => {
             </View>
             <View className="flex-1 space-y-2">
               <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-                Year
+                Graduation Year
               </Text>
-              <View
+              <Pressable
+                onPress={() => setYearPickerOpen(true)}
                 className={`bg-white border rounded-xl ${errors.year ? "border-red-400" : "border-gray-400"}`}
               >
-                <TextInput
-                  className="p-4 text-base font-display"
-                  placeholder="Year"
-                  value={formData.year}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, year: text })
-                  }
-                />
-              </View>
+                <View className="flex-row items-center justify-between p-4">
+                  <Text
+                    className={`text-base ${formData.year ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
+                  >
+                    {formData.year || "Select year"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={18} color="#6b7280" />
+                </View>
+              </Pressable>
               {errors.year && (
                 <Text className="ml-1 text-sm text-red-500">{errors.year}</Text>
               )}
@@ -253,7 +344,7 @@ const SignUpScreen = () => {
                 keyboardType="phone-pad"
                 value={formData.phone}
                 onChangeText={(text) =>
-                  setFormData({ ...formData, phone: text })
+                  setFormData({ ...formData, phone: text.replace(/[^0-9\s]/g, "") })
                 }
               />
             </View>
@@ -359,6 +450,30 @@ const SignUpScreen = () => {
           </View>
         </View>
       </View>
+
+      <OptionPickerModal
+        visible={facultyPickerOpen}
+        title="Select Faculty"
+        options={FACULTY_OPTIONS}
+        selectedValue={formData.faculty}
+        onClose={() => setFacultyPickerOpen(false)}
+        onSelect={(value) => {
+          setFormData({ ...formData, faculty: value });
+          setErrors({ ...errors, faculty: undefined });
+        }}
+      />
+
+      <OptionPickerModal
+        visible={yearPickerOpen}
+        title="Select Year"
+        options={YEAR_OPTIONS}
+        selectedValue={formData.year}
+        onClose={() => setYearPickerOpen(false)}
+        onSelect={(value) => {
+          setFormData({ ...formData, year: value });
+          setErrors({ ...errors, year: undefined });
+        }}
+      />
     </SafeAreaView>
   );
 };

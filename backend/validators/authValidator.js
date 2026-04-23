@@ -22,7 +22,9 @@ const registerSchema = z.object({
       .regex(/[0-9]/, 'Password must contain number')
       .regex(/[^A-Za-z0-9]/, 'Password must contain special character'),
     faculty: z.string().max(100).optional(),
-    graduation_year: z.coerce.number().int().min(2024).max(2030).optional(),
+    year: z.coerce.number().int().min(2000).max(2100).optional(),
+    graduation_year: z.coerce.number().int().min(2000).max(2100).optional(),
+    phone: z.string().min(7).max(20).optional(),
   }),
 });
 
@@ -42,7 +44,7 @@ const updateProfileSchema = z.object({
       .max(100, 'Name cannot exceed 100 characters')
       .optional(),
     faculty: z.string().max(100).optional(),
-    graduation_year: z.coerce.number().int().min(2024).max(2030).optional(),
+    graduation_year: z.coerce.number().int().min(2000).max(2100).optional(),
   }),
 });
 
