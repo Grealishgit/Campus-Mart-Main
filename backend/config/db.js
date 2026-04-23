@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-console.log('🔧 Database configuration:');
-console.log(`  Host: ${process.env.DB_HOST || 'localhost'}`);
-console.log(`  Port: ${process.env.DB_PORT || 5432}`);
-console.log(`  User: ${process.env.DB_USER || 'postgres'}`);
-console.log(`  Database: ${process.env.DB_NAME || 'campus_mart'}`);
+// console.log('  Database configuration:');
+// console.log(`  Host: ${process.env.DB_HOST || 'localhost'}`);
+// console.log(`  Port: ${process.env.DB_PORT || 5432}`);
+// console.log(`  User: ${process.env.DB_USER || 'postgres'}`);
+// console.log(`  Database: ${process.env.DB_NAME || 'campus_mart'}`);
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',

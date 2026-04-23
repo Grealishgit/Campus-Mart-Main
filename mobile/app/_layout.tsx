@@ -50,9 +50,19 @@ export default function RootLayout() {
 
     bootstrapAuth();
 
-    const unsubscribe = subscribeToAuthTokenChanges((token) => {
+    const unsubscribe = subscribeToAuthTokenChanges(async (token) => {
+      if (!isMounted) return;
+
+      if (!token) {
+        setIsAuth(false);
+        setUserRole(null);
+        return;
+      }
+
+      const { authenticated, role } = await initializeAuthSession();
       if (isMounted) {
-        setIsAuth(!!token);
+        setIsAuth(authenticated);
+        setUserRole(role ?? null);
       }
     });
 
@@ -72,36 +82,45 @@ export default function RootLayout() {
     };
   }, []);
 
- useEffect(() => {
-  if (isAuth === null) return;
+  useEffect(() => {
+    if (isAuth === null) return;
 
-  const rootSegment = segments[0] as string | undefined;
-  const secondSegment = String(segments[1] ?? "");
-  const isAdminRoute = rootSegment === "admin";
-  const isAdminLoginRoute = isAdminRoute && secondSegment === "login";
-  const isInPublicRoute = rootSegment === "(auth)" || rootSegment === "(onboard)" || isAdminLoginRoute;
+    const rootSegment = segments[0] as string | undefined;
+    const secondSegment = String(segments[1] ?? "");
+    const isAdminRoute = rootSegment === "admin";
+    const isAdminLoginRoute = isAdminRoute && secondSegment === "login";
+    const isInPublicRoute =
+      rootSegment === "(auth)" || rootSegment === "(onboard)" || isAdminLoginRoute;
 
-  if (isAuth && isInPublicRoute) {
-    // Route admin to dashboard, others to tabs
-    if (userRole === "admin") {
-      router.replace("/admin/dashboard" as never);
-    } else {
-      router.replace("/(tabs)" as never);
+    if (isAuth) {
+      // Wait until role is known before deciding where authenticated users should land.
+      if (!userRole) return;
+
+      if (isInPublicRoute) {
+        if (userRole === "admin") {
+          router.replace("/admin/dashboard" as never);
+        } else {
+          router.replace("/(tabs)" as never);
+        }
+        return;
+      }
+
+      // Prevent non-admin accounts from accessing admin screens.
+      if (isAdminRoute && userRole !== "admin") {
+        router.replace("/(tabs)" as never);
+      }
+      return;
     }
-    return;
-  }
 
-  // Admin trying to access admin routes without auth → admin login
-  if (!isAuth && isAdminRoute && !isAdminLoginRoute) {
-    router.replace("/admin/login" as never);
-    return;
-  }
+    if (isAdminRoute && !isAdminLoginRoute) {
+      router.replace("/admin/login" as never);
+      return;
+    }
 
-  // Non-admin unauthenticated → sign in
-  if (!isAuth && !isInPublicRoute && !isAdminRoute) {
-    router.replace("/(auth)/SignIn" as never);
-  }
-}, [isAuth, userRole, segments, router]);
+    if (!isInPublicRoute) {
+      router.replace("/(auth)/SignIn" as never);
+    }
+  }, [isAuth, userRole, segments, router]);
 
   if (isAuth === null || !fontsLoaded)
     return (
@@ -159,22 +178,7 @@ export default function RootLayout() {
           name="vendor/incoming-orders"
           options={{ animation: "slide_from_right" }}
         />
-        <Stack.Screen
-          name="admin/login"
-          options={{ animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="admin/dashboard"
-          options={{ animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="admin/users"
-          options={{ animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="admin/listings"
-          options={{ animation: "slide_from_right" }}
-        />
+        <Stack.Screen name="admin" options={{ animation: "slide_from_right" }} />
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}

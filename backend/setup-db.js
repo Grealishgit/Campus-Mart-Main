@@ -4,7 +4,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-console.log('🔧 Database configuration:');
+console.log('  Database configuration:');
 console.log(`  Host: ${process.env.DB_HOST || 'localhost'}`);
 console.log(`  Port: ${process.env.DB_PORT || 5432}`);
 console.log(`  User: ${process.env.DB_USER || 'postgres'}`);
@@ -51,7 +51,7 @@ const DEMO_USERS = [
 ];
 
 async function seedDemoUsers(dbPool) {
-  console.log('🌱 Seeding demo users...');
+  console.log('Seeding demo users...');
 
   for (const user of DEMO_USERS) {
     const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -79,25 +79,25 @@ async function seedDemoUsers(dbPool) {
     );
   }
 
-  console.log('✅ Demo users seeded successfully');
+  console.log('Demo users seeded successfully');
 }
 
 async function setupDatabase() {
   try {
-    console.log('🔧 Starting database setup...');
+    console.log('Starting database setup...');
 
     console.log('🔌 Testing database connection...');
     await adminPool.query('SELECT NOW()');
-    console.log('✅ Connection successful');
+    console.log('Connection successful');
 
-    console.log(`📦 Creating database '${dbName}' if it doesn't exist...`);
+    console.log(`Creating database '${dbName}' if it doesn't exist...`);
     await adminPool.query(`CREATE DATABASE ${dbName}`);
-    console.log(`✅ Database '${dbName}' created successfully`);
+    console.log(`Database '${dbName}' created successfully`);
   } catch (err) {
     if (err.code === '42P04') {
-      console.log(`✅ Database '${dbName}' already exists`);
+      console.log(`Database '${dbName}' already exists`);
     } else {
-      console.error('❌ Connection error:', err.message);
+      console.error('Connection error:', err.message);
       console.error('   Error code:', err.code);
       process.exit(1);
     }
@@ -115,19 +115,19 @@ async function setupDatabase() {
     const schemaPath = path.join(__dirname, 'config', 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
 
-    console.log('📋 Running schema.sql...');
+    console.log('Running schema.sql...');
     await dbPool.query(schema);
-    console.log('✅ Schema created successfully');
+    console.log('Schema created successfully');
 
     await seedDemoUsers(dbPool);
     await dbPool.end();
   } catch (err) {
-    console.error('❌ Error running schema:', err.message);
+    console.error('Error running schema:', err.message);
     process.exit(1);
   }
 
   await adminPool.end();
-  console.log('✨ Database setup complete!');
+  console.log('Database setup complete!');
   process.exit(0);
 }
 

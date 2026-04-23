@@ -77,8 +77,13 @@ export async function getAdminListings(): Promise<
 
 export async function verifyAdminListing(
   listingId: string,
+  listingType?: string,
 ): Promise<ApiResponse<{ listing: AdminListing }>> {
-  return apiRequest<{ listing: AdminListing }>(`/admin/listings/${listingId}/verify`, {
+  const query = listingType
+    ? `?type=${encodeURIComponent(listingType)}`
+    : "";
+
+  return apiRequest<{ listing: AdminListing }>(`/admin/listings/${listingId}/verify${query}`, {
     method: "PUT",
     requiresAuth: true,
   });

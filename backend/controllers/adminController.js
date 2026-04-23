@@ -8,6 +8,22 @@ const generateToken = (id) => {
   });
 };
 
+const getListingsStorage = async () => {
+  const result = await pool.query(`
+    SELECT
+      to_regclass('public.listings') AS listings_table,
+      to_regclass('public.sale_listings') AS sale_listings_table,
+      to_regclass('public.lease_listings') AS lease_listings_table
+  `);
+
+  const row = result.rows[0] || {};
+  return {
+    hasUnifiedListings: Boolean(row.listings_table),
+    hasSaleListings: Boolean(row.sale_listings_table),
+    hasLeaseListings: Boolean(row.lease_listings_table),
+  };
+};
+
 
 
 // Admin controller for logging in
@@ -57,18 +73,39 @@ const loginAdmin = async (req, res) => {
 // @access  Admin
 const getStats = async (req, res) => {
   try {
-    const [users, listings, orders, revenue] = await Promise.all([
+    const storage = await getListingsStorage();
+
+    const [users, orders, revenue] = await Promise.all([
       pool.query('SELECT COUNT(*) FROM users'),
-      pool.query('SELECT COUNT(*) FROM listings'),
       pool.query('SELECT COUNT(*) FROM orders'),
       pool.query("SELECT COALESCE(SUM(amount), 0) FROM orders WHERE status = 'completed'"),
     ]);
+
+    let totalListings = 0;
+
+    if (storage.hasUnifiedListings) {
+      const listings = await pool.query('SELECT COUNT(*) FROM listings');
+      totalListings = parseInt(listings.rows[0].count, 10);
+    } else {
+      const [saleListings, leaseListings] = await Promise.all([
+        storage.hasSaleListings
+          ? pool.query('SELECT COUNT(*) FROM sale_listings')
+          : Promise.resolve({ rows: [{ count: '0' }] }),
+        storage.hasLeaseListings
+          ? pool.query('SELECT COUNT(*) FROM lease_listings')
+          : Promise.resolve({ rows: [{ count: '0' }] }),
+      ]);
+
+      totalListings =
+        parseInt(saleListings.rows[0].count, 10) +
+        parseInt(leaseListings.rows[0].count, 10);
+    }
 
     res.json({
       success: true,
       stats: {
         totalUsers: parseInt(users.rows[0].count),
-        totalListings: parseInt(listings.rows[0].count),
+        totalListings,
         totalOrders: parseInt(orders.rows[0].count),
         totalRevenue: parseFloat(revenue.rows[0].coalesce),
       },
@@ -145,12 +182,59 @@ const deleteUser = async (req, res) => {
 // @access  Admin
 const getAllListings = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT l.*, u.name AS seller_name, u.email AS seller_email
-       FROM listings l JOIN users u ON l.seller_id = u.id
-       ORDER BY l.created_at DESC`
+    const storage = await getListingsStorage();
+
+    if (storage.hasUnifiedListings) {
+      const result = await pool.query(
+        `SELECT l.*, u.name AS seller_name, u.email AS seller_email
+         FROM listings l JOIN users u ON l.seller_id = u.id
+         ORDER BY l.created_at DESC`
+      );
+      return res.json({ success: true, listings: result.rows });
+    }
+
+    const [saleRows, leaseRows] = await Promise.all([
+      storage.hasSaleListings
+        ? pool.query(
+          `SELECT
+               s.id,
+               s.title,
+               s.category,
+               'SALE' AS type,
+               s.price,
+               s.is_verified,
+               s.is_available,
+               u.name AS seller_name,
+               u.email AS seller_email,
+               s.created_at
+             FROM sale_listings s
+             JOIN users u ON s.seller_id = u.id`
+        )
+        : Promise.resolve({ rows: [] }),
+      storage.hasLeaseListings
+        ? pool.query(
+          `SELECT
+               l.id,
+               l.title,
+               l.category,
+               'LEASE' AS type,
+               l.price,
+               l.is_verified,
+               l.is_available,
+               u.name AS seller_name,
+               u.email AS seller_email,
+               l.created_at
+             FROM lease_listings l
+             JOIN users u ON l.seller_id = u.id`
+        )
+        : Promise.resolve({ rows: [] }),
+    ]);
+
+    const listings = [...saleRows.rows, ...leaseRows.rows].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-    res.json({ success: true, listings: result.rows });
+
+    res.json({ success: true, listings });
   } catch (err) {
     console.error('GetAllListings error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });
@@ -162,16 +246,61 @@ const getAllListings = async (req, res) => {
 // @access  Admin
 const verifyListing = async (req, res) => {
   try {
-    const result = await pool.query(
-      'UPDATE listings SET is_verified = true WHERE id = $1 RETURNING *',
-      [req.params.id]
+    const storage = await getListingsStorage();
+    const listingId = req.params.id;
+    const listingType = typeof req.query.type === 'string'
+      ? req.query.type.toUpperCase()
+      : null;
+
+    if (storage.hasUnifiedListings) {
+      const result = await pool.query(
+        'UPDATE listings SET is_verified = true WHERE id = $1 RETURNING *',
+        [listingId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Listing not found.' });
+      }
+
+      return res.json({ success: true, message: 'Listing verified.', listing: result.rows[0] });
+    }
+
+    const updateSaleListing = async () => pool.query(
+      'UPDATE sale_listings SET is_verified = true WHERE id = $1 RETURNING *',
+      [listingId]
+    );
+    const updateLeaseListing = async () => pool.query(
+      'UPDATE lease_listings SET is_verified = true WHERE id = $1 RETURNING *',
+      [listingId]
     );
 
-    if (result.rows.length === 0) {
+    let result = { rows: [] };
+
+    if (listingType === 'SALE' && storage.hasSaleListings) {
+      result = await updateSaleListing();
+    } else if (listingType === 'LEASE' && storage.hasLeaseListings) {
+      result = await updateLeaseListing();
+    } else {
+      if (storage.hasSaleListings) {
+        result = await updateSaleListing();
+      }
+      if (!result.rows.length && storage.hasLeaseListings) {
+        result = await updateLeaseListing();
+      }
+    }
+
+    if (!result.rows.length) {
       return res.status(404).json({ success: false, message: 'Listing not found.' });
     }
 
-    res.json({ success: true, message: 'Listing verified.', listing: result.rows[0] });
+    return res.json({
+      success: true,
+      message: 'Listing verified.',
+      listing: {
+        ...result.rows[0],
+        type: listingType || result.rows[0].type,
+      },
+    });
   } catch (err) {
     console.error('VerifyListing error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });

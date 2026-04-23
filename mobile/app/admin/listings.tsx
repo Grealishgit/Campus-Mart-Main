@@ -65,7 +65,7 @@ export default function AdminListingsScreen() {
         ) : (
           listings.map((listing) => (
             <View
-              key={listing.id}
+              key={`${listing.type || "LISTING"}-${listing.id}`}
               className="mb-4 rounded-3xl border border-white/10 bg-slate-900 p-4"
             >
               <View className="flex-row items-start justify-between">
@@ -102,7 +102,10 @@ export default function AdminListingsScreen() {
               {!listing.is_verified && (
                 <Pressable
                   onPress={async () => {
-                    const response = await verifyAdminListing(String(listing.id));
+                    const response = await verifyAdminListing(
+                      String(listing.id),
+                      listing.type,
+                    );
                     if (!response.success) {
                       Alert.alert(
                         "Verification failed",

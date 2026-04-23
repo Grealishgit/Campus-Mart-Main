@@ -1,5 +1,5 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -18,6 +18,8 @@ export default function AdminLoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   const handleAdminLogin = async () => {
     if (!email.trim() || !password) {
@@ -41,7 +43,7 @@ export default function AdminLoginScreen() {
         return;
       }
 
-      router.replace("/dashboard");
+      router.replace("/admin/dashboard" as never);
     } catch {
       Alert.alert("Admin login failed", "Please try again.");
     } finally {
@@ -55,7 +57,7 @@ export default function AdminLoginScreen() {
         <View className="flex-row items-center justify-between">
           <Pressable
             onPress={() => router.replace("/(auth)/SignIn" as never)}
-            className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
+            className="items-center justify-center rounded-full h-11 w-11 bg-white/10"
           >
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
@@ -78,7 +80,7 @@ export default function AdminLoginScreen() {
           <Text className="mb-2 text-sm uppercase tracking-[0.2em] text-slate-400 font-display-semibold">
             Admin Email
           </Text>
-          <View className="mb-5 flex-row items-center rounded-2xl border border-white/10 bg-slate-800 px-4">
+          <View className="flex-row items-center px-4 mb-5 border rounded-2xl border-white/10 bg-slate-800">
             <Ionicons name="mail-outline" size={20} color="#94a3b8" />
             <TextInput
               className="flex-1 px-3 py-4 text-white font-display"
@@ -94,7 +96,7 @@ export default function AdminLoginScreen() {
           <Text className="mb-2 text-sm uppercase tracking-[0.2em] text-slate-400 font-display-semibold">
             Password
           </Text>
-          <View className="mb-6 flex-row items-center rounded-2xl border border-white/10 bg-slate-800 px-4">
+          <View className="flex-row items-center px-4 mb-6 border rounded-2xl border-white/10 bg-slate-800">
             <MaterialIcons name="password" size={22} color="#94a3b8" />
             <TextInput
               className="flex-1 px-3 py-4 text-white font-display"
@@ -131,7 +133,7 @@ export default function AdminLoginScreen() {
 
           <Pressable
             onPress={() => router.replace("/(auth)/SignIn" as never)}
-            className="mt-5 items-center"
+            className="items-center mt-5"
           >
             <Text className="text-sm text-slate-400 font-display-medium">
               Back to student/vendor login
