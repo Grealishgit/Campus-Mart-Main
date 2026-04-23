@@ -102,6 +102,8 @@ export default function AdminLoginScreen() {
               className="flex-1 px-3 py-4 text-white font-display"
               placeholder="••••••••"
               placeholderTextColor="#64748b"
+              autoCapitalize="none"
+              keyboardType="default"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
