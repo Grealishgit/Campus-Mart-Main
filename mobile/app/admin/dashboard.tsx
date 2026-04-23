@@ -23,7 +23,7 @@ export default function AdminDashboardScreen() {
   });
 
   const loadDashboard = async () => {
-    console.log('🔄 loadDashboard fired');
+    // console.log('🔄 loadDashboard fired');
     setLoading(true);
     const response = await getAdminStats();
 

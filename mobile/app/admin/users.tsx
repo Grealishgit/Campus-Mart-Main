@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   deleteAdminUser,
@@ -17,29 +18,101 @@ import {
   verifyAdminUser,
   type AdminUser,
 } from "@/lib/adminService";
-import { SafeAreaView } from "react-native-safe-area-context";
+
+type UserFilter = "all" | "today" | "unverified";
+
+function isRegisteredToday(createdAt?: string) {
+  if (!createdAt) {
+    return false;
+  }
+
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+
+  return (
+    created.getFullYear() === now.getFullYear() &&
+    created.getMonth() === now.getMonth() &&
+    created.getDate() === now.getDate()
+  );
+}
 
 export default function AdminUsersScreen() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [activeFilter, setActiveFilter] = useState<UserFilter>("all");
 
-  const loadUsers = useCallback(async (term?: string) => {
-    setLoading(true);
-    const response = await getAdminUsers(term ?? search);
+  const loadUsers = useCallback(
+    async (term?: string) => {
+      setLoading(true);
 
-    if (response.success && response.data?.users) {
-      setUsers(response.data.users);
-    }
+      try {
+        const response = await getAdminUsers(term ?? search);
 
-    setLoading(false);
-  }, [search]);
+        if (response.success && response.data?.users) {
+          setUsers(response.data.users);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [search],
+  );
 
   useFocusEffect(
     useCallback(() => {
       loadUsers();
     }, [loadUsers]),
   );
+
+  const totalUsers = users.length;
+  const usersToday = useMemo(
+    () => users.filter((user) => isRegisteredToday(user.created_at)).length,
+    [users],
+  );
+  const unverifiedUsers = useMemo(
+    () => users.filter((user) => !user.is_verified).length,
+    [users],
+  );
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      if (activeFilter === "today") {
+        return isRegisteredToday(user.created_at);
+      }
+
+      if (activeFilter === "unverified") {
+        return !user.is_verified;
+      }
+
+      return true;
+    });
+  }, [activeFilter, users]);
+
+  const filterCards = [
+    {
+      key: "all" as const,
+      label: "Total users",
+      value: totalUsers,
+      icon: "people-outline" as const,
+    },
+    {
+      key: "today" as const,
+      label: "Registered today",
+      value: usersToday,
+      icon: "today-outline" as const,
+    },
+    {
+      key: "unverified" as const,
+      label: "Unverified",
+      value: unverifiedUsers,
+      icon: "alert-circle-outline" as const,
+    },
+  ];
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
@@ -61,6 +134,42 @@ export default function AdminUsersScreen() {
       </View>
 
       <View className="px-5 pb-4">
+        <View className="flex-row gap-3">
+          {filterCards.map((card) => {
+            const isActive = activeFilter === card.key;
+
+            return (
+              <Pressable
+                key={card.key}
+                onPress={() => setActiveFilter(card.key)}
+                className={`flex-1 rounded-3xl border p-4 ${isActive
+                    ? "border-cyan-400/60 bg-cyan-500/10"
+                    : "border-white/10 bg-slate-900"
+                  }`}
+              >
+                <View className="items-center justify-center mb-3 w-11 h-11 rounded-2xl bg-white/5">
+                  <Ionicons
+                    name={card.icon}
+                    size={22}
+                    color={isActive ? "#22d3ee" : "#cbd5e1"}
+                  />
+                </View>
+                <Text className="text-xs uppercase tracking-[0.18em] text-slate-400 font-display-semibold">
+                  {card.label}
+                </Text>
+                <Text className="mt-2 text-2xl text-white font-display-bold">
+                  {card.value}
+                </Text>
+                <Text className="mt-1 text-xs text-slate-500 font-display">
+                  Tap to filter
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View className="px-5 pb-4">
         <View className="flex-row items-center px-4 border rounded-2xl border-white/10 bg-slate-900">
           <Ionicons name="search-outline" size={20} color="#94a3b8" />
           <TextInput
@@ -74,13 +183,25 @@ export default function AdminUsersScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView
+        className="flex-1 px-5"
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
         {loading ? (
           <View className="items-center mt-20">
             <ActivityIndicator color="#22d3ee" size="large" />
           </View>
+        ) : filteredUsers.length === 0 ? (
+          <View className="items-center justify-center mt-20">
+            <Text className="text-lg text-white font-display-semibold">
+              No users found
+            </Text>
+            <Text className="mt-2 text-center text-slate-400 font-display">
+              Try a different filter or search term.
+            </Text>
+          </View>
         ) : (
-          users.map((user) => (
+              filteredUsers.map((user) => (
             <View
               key={user.id}
               className="p-4 mb-4 border rounded-3xl border-white/10 bg-slate-900"
@@ -110,7 +231,10 @@ export default function AdminUsersScreen() {
                     onPress={async () => {
                       const response = await verifyAdminUser(user.id);
                       if (!response.success) {
-                        Alert.alert("Unable to verify", response.error || "Try again.");
+                        Alert.alert(
+                          "Unable to verify",
+                          response.error || "Try again.",
+                        );
                         return;
                       }
                       loadUsers();
