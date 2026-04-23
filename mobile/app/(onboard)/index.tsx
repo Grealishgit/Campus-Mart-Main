@@ -12,6 +12,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 const OnboardingScreen = () => {
 
     const [step, setStep] = useState(0);
+    const [onboarded, setOnborded] = useState(false);
 
     const router = useRouter();
 
