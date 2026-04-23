@@ -41,6 +41,7 @@ export interface User {
   graduation_year?: number;
   rating?: number;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthResponse {
@@ -113,8 +114,8 @@ export async function loginAdmin(
 /**
  * Get current authenticated user
  */
-export async function getCurrentUser(): Promise<ApiResponse<User>> {
-  return apiRequest<User>("/auth/me", {
+export async function getCurrentUser(): Promise<ApiResponse<{ user: User }>> {
+  return apiRequest<{ user: User }>("/auth/me", {
     method: "GET",
     requiresAuth: true,
   });
@@ -126,9 +127,9 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
 export async function updateProfile(
   data: Partial<User>,
   avatarFile?: File,
-): Promise<ApiResponse<User>> {
+): Promise<ApiResponse<{ user: User }>> {
   // Handle file upload separately if needed
-  return apiRequest<User>("/auth/profile", {
+  return apiRequest<{ user: User }>("/auth/profile", {
     method: "PUT",
     body: data,
     requiresAuth: true,
@@ -202,6 +203,6 @@ export async function initializeAuthSession(): Promise<{
 /**
  * Backward-compatible alias used by existing screens.
  */
-export async function getUserProfile(): Promise<ApiResponse<User>> {
+export async function getUserProfile(): Promise<ApiResponse<{ user: User }>> {
   return getCurrentUser();
 }

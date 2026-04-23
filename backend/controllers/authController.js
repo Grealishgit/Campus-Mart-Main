@@ -102,7 +102,7 @@ const loginUser = asyncHandler(async (req, res) => {
 const getCurrentUser = asyncHandler(async (req, res) => {
   const result = await pool.query(
     `SELECT id, name, email, role, avatar_url, is_verified, faculty, graduation_year,
-            rating, total_sales, active_listings, created_at
+            rating, total_sales, active_listings, created_at, updated_at
      FROM users WHERE id = $1`,
     [req.user.id]
   );
@@ -137,7 +137,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   values.push(req.user.id);
   const result = await pool.query(
     `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx}
-     RETURNING id, name, email, role, avatar_url, is_verified, faculty, graduation_year, rating`,
+     RETURNING id, name, email, role, avatar_url, is_verified, faculty, graduation_year, rating, total_sales, active_listings, created_at, updated_at`,
     values
   );
 
