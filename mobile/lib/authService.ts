@@ -30,6 +30,11 @@ export interface AdminLoginRequest {
   password: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -131,6 +136,19 @@ export async function updateProfile(
   // Handle file upload separately if needed
   return apiRequest<{ user: User }>("/auth/profile", {
     method: "PUT",
+    body: data,
+    requiresAuth: true,
+  });
+}
+
+/**
+ * Change user password
+ */
+export async function changePassword(
+  data: ChangePasswordRequest,
+): Promise<ApiResponse<{ message?: string }>> {
+  return apiRequest<{ message?: string }>("/auth/change-password", {
+    method: "POST",
     body: data,
     requiresAuth: true,
   });

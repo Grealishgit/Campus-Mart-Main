@@ -7,6 +7,7 @@ const {
   loginUser,
   getCurrentUser,
   updateProfile,
+  changePassword,
   deleteAccount,
   logoutUser,
   verifyEmail,
@@ -30,6 +31,7 @@ const {
   updateProfileSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  changePasswordSchema,
   verifyEmailSchema,
   refreshTokenSchema,
 } = require('../validators/authValidator');
@@ -51,6 +53,7 @@ router.post('/reset-password', validateRequest(resetPasswordSchema), asyncHandle
 // Protected routes
 router.get('/me', protect, asyncHandler(getCurrentUser));
 router.put('/profile', protect, upload.single('avatar'), validateRequest(updateProfileSchema), asyncHandler(updateProfile));
+router.post('/change-password', protect, validateRequest(changePasswordSchema), asyncHandler(changePassword));
 router.post('/logout', protect, asyncHandler(logoutUser));
 router.delete('/account', protect, asyncHandler(deleteAccount));
 

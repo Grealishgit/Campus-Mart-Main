@@ -148,6 +148,28 @@ const updateProfile = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Profile updated.', user: result.rows[0] });
 });
 
+// @desc    Change user password
+// @route   POST /api/auth/change-password
+// @access  Private
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const result = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+  if (!result.rows[0]) {
+    throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, result.rows[0].password);
+  if (!isMatch) {
+    throw new AppError('Current password is incorrect.', 401, 'INVALID_PASSWORD');
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, req.user.id]);
+
+  res.json({ success: true, message: 'Password updated successfully.' });
+});
+
 // @desc    Delete account
 // @route   DELETE /api/auth/account
 // @access  Private
@@ -269,6 +291,7 @@ module.exports = {
   loginUser,
   getCurrentUser,
   updateProfile,
+  changePassword,
   deleteAccount,
   verifyEmail,
   refreshAccessToken,
