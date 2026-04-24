@@ -98,19 +98,16 @@ export default function AdminUsersScreen() {
       key: "all" as const,
       label: "Total users",
       value: totalUsers,
-      icon: "people-outline" as const,
     },
     {
       key: "today" as const,
       label: "Registered today",
       value: usersToday,
-      icon: "today-outline" as const,
     },
     {
       key: "unverified" as const,
       label: "Unverified",
       value: unverifiedUsers,
-      icon: "alert-circle-outline" as const,
     },
   ];
 
@@ -147,17 +144,11 @@ export default function AdminUsersScreen() {
                     : "border-white/10 bg-slate-900"
                   }`}
               >
-                <View className="items-center justify-center mb-3 w-11 h-11 rounded-2xl bg-white/5">
-                  <Ionicons
-                    name={card.icon}
-                    size={22}
-                    color={isActive ? "#22d3ee" : "#cbd5e1"}
-                  />
-                </View>
-                <Text className="text-xs uppercase tracking-[0.18em] text-slate-400 font-display-semibold">
+               
+                <Text className="text-xs  tracking-[0.18em] text-slate-400 font-display-semibold">
                   {card.label}
                 </Text>
-                <Text className="mt-2 text-2xl text-white font-display-bold">
+                <Text className="mt-2 text-2xl text-center text-white font-display-bold">
                   {card.value}
                 </Text>
                 <Text className="mt-1 text-xs text-slate-500 font-display">

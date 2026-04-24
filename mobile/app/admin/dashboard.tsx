@@ -64,19 +64,19 @@ export default function AdminDashboardScreen() {
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
       <View className="flex-row items-center justify-between mt-5 mb-8">
-          <View>
+          <View className='p-2'>
             <Text className="text-sm uppercase tracking-[0.25em] text-cyan-300 font-display-bold">
-              Admin Console
+              Admin Dashboard
             </Text>
-            <Text className="mt-2 text-3xl text-white font-display-bold">
-              Marketplace control center
+            <Text className="mt-2 text-md text-white font-display-bold">
+              Welcome back,
             </Text>
           </View>
 
           <Pressable
             onPress={async () => {
               await logoutUser();
-              router.replace("/admin/login" as never);
+              router.replace("/(auth)" as never);
             }}
           className="items-center justify-center rounded-full h-11 w-11 bg-white/10"
           >

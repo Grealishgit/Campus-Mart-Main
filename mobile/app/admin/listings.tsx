@@ -84,25 +84,21 @@ export default function AdminListingsScreen() {
       key: "all" as const,
       label: "Total listings",
       value: totalListings,
-      icon: "albums-outline" as const,
     },
     {
       key: "lease" as const,
       label: "Lease listings",
       value: totalLeaseListings,
-      icon: "home-outline" as const,
     },
     {
       key: "sale" as const,
       label: "Sale listings",
       value: totalSaleListings,
-      icon: "pricetag-outline" as const,
     },
     {
       key: "unverified" as const,
       label: "Unverified",
       value: unverifiedListings,
-      icon: "alert-circle-outline" as const,
     },
   ];
 
@@ -139,13 +135,7 @@ export default function AdminListingsScreen() {
                     : "border-white/10 bg-slate-900"
                   }`}
               >
-                <View className="items-center justify-center mb-3 w-11 h-11 rounded-2xl bg-white/5">
-                  <Ionicons
-                    name={card.icon}
-                    size={22}
-                    color={isActive ? "#22d3ee" : "#cbd5e1"}
-                  />
-                </View>
+                
                 <Text className="text-xs uppercase tracking-[0.18em] text-slate-400 font-display-semibold">
                   {card.label}
                 </Text>

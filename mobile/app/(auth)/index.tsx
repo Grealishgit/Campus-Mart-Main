@@ -101,6 +101,7 @@ const SignUpScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [facultyPickerOpen, setFacultyPickerOpen] = useState(false);
   const [yearPickerOpen, setYearPickerOpen] = useState(false);
+  const [error,setError] = useState("");
 
   const [formData, setFormData] = useState<{
     fullName: string;
@@ -184,10 +185,12 @@ const SignUpScreen = () => {
           "Registration Failed",
           response.error || "An error occurred during registration",
         );
+        setError(response.error || "An error occurred during registration");
       }
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred");
       console.error("Registration error:", error);
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -220,6 +223,7 @@ const SignUpScreen = () => {
             <Text className="mt-2 text-center text-gray-500 text-md font-display">
               Join thousands of students at your university.
             </Text>
+          
           </View>
 
           {/* Form */}
@@ -396,6 +400,10 @@ const SignUpScreen = () => {
                 </Text>
               )}
             </View>
+
+              <Text className="mt-1 text-center text-red-500 text-md font-display">
+                {error}
+            </Text>
 
             {/* Terms Checkbox */}
             <Pressable

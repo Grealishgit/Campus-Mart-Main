@@ -21,7 +21,7 @@ app.use(cors({
     'http://localhost:5000',      // Local backend
     'http://localhost:8081',      // Expo dev server (mobile)
     'http://localhost:3000',      // Potential web frontend
-    'http://192.168.0.105:8081',  // Local network access
+    'http://192.168.0.108:8081',  // Local network access
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -133,7 +133,7 @@ const startServer = async () => {
     await pool.query('SELECT 1');
 
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://192.168.0.105:${PORT}`);
+      console.log(`Server running on http://192.168.0.108:${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`Server accessible from other devices on the network`);
     });

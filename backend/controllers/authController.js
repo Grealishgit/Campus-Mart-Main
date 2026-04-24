@@ -72,7 +72,11 @@ const loginUser = asyncHandler(async (req, res) => {
   // Find user
   const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
   if (result.rows.length === 0) {
-    throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
+   return res.status(401).json({
+      success: false,
+      error_code: 'INVALID_CREDENTIALS',
+      message: 'Invalid email or password.',
+    });
   }
 
   const user = result.rows[0];
