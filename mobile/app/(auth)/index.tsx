@@ -75,9 +75,8 @@ const OptionPickerModal = ({
                   onSelect(option);
                   onClose();
                 }}
-                className={`mb-2 flex-row items-center justify-between rounded-xl border px-4 py-3 ${
-                  isSelected ? "border-primary bg-primary/10" : "border-gray-200 bg-white"
-                }`}
+                className={`mb-2 flex-row items-center justify-between rounded-xl border px-4 py-3 ${isSelected ? "border-primary bg-primary/10" : "border-gray-200 bg-white"
+                  }`}
               >
                 <Text
                   className={`text-base ${isSelected ? "text-primary font-display-semibold" : "text-gray-700 font-display"}`}
@@ -209,271 +208,277 @@ const SignUpScreen = () => {
         </Text>
       </View>
 
-      <View className="flex-1 px-4">
-        {/* Title Section */}
-        <View className="pt-6 pb-8">
-          <Text className="text-3xl text-center font-display-bold">
-            Create Your Account
-          </Text>
-          <Text className="mt-2 text-center text-gray-500 text-md font-display">
-            Join thousands of students at your university.
-          </Text>
-        </View>
 
-        {/* Form */}
-        <View className="space-y-6">
-          <View className="space-y-2">
-            <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-              Full Name
+      <ScrollView>
+
+        <View className="flex-1 px-4">
+          {/* Title Section */}
+          <View className="pt-6 pb-8">
+            <Text className="text-3xl text-center font-display-bold">
+              Create Your Account
             </Text>
-            <View
-              className={`flex-row items-center bg-white border rounded-xl ${errors.fullName ? "border-red-400" : "border-gray-400"}`}
-            >
-              <View className="pl-4">
-                <Ionicons name="person" size={20} color="#9ca3af" />
-              </View>
-              <TextInput
-                className="flex-1 p-4 pl-2 text-base font-display"
-                placeholder="e.g. John Doe"
-                value={formData.fullName}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, fullName: text })
-                }
-              />
-            </View>
-            {errors.fullName && (
-              <Text className="ml-1 text-sm text-red-500">
-                {errors.fullName}
-              </Text>
-            )}
+            <Text className="mt-2 text-center text-gray-500 text-md font-display">
+              Join thousands of students at your university.
+            </Text>
           </View>
 
-          {/* University Email */}
-          <View className="mt-4 space-y-2">
-            <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-              University Email
-            </Text>
-            <View
-              className={`flex-row items-center bg-white border rounded-xl ${errors.email ? "border-red-400" : "border-gray-400"}`}
-            >
-              <View className="pl-4">
-                <Ionicons name="school" size={20} color="#9ca3af" />
-              </View>
-              <TextInput
-                className="flex-1 p-4 pl-2 text-base font-display"
-                placeholder="john.doe@uonbi.ac.ke"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={formData.email}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, email: text })
-                }
-              />
-            </View>
-            {errors.email ? (
-              <Text className="ml-1 text-sm text-red-500">{errors.email}</Text>
-            ) : (
-              <Text className="mt-3 ml-1 font-medium text-md text-primary">
-                Must end in .ac.ke or .edu
-              </Text>
-            )}
-          </View>
-
-          {/* Faculty and Year Row */}
-          <View className="flex-row gap-4 mt-4">
-            <View className="flex-1 space-y-2">
+          {/* Form */}
+          <View className="space-y-6">
+            <View className="space-y-2">
               <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-                Faculty
+                Full Name
               </Text>
-              <Pressable
-                onPress={() => setFacultyPickerOpen(true)}
-                className={`bg-white border rounded-xl ${errors.faculty ? "border-red-400" : "border-gray-400"}`}
+              <View
+                className={`flex-row items-center bg-white border rounded-xl ${errors.fullName ? "border-red-400" : "border-gray-400"}`}
               >
-                <View className="flex-row items-center justify-between p-4">
-                  <Text
-                    className={`text-base ${formData.faculty ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
-                  >
-                    {formData.faculty || "Select faculty"}
-                  </Text>
-                  <Ionicons name="chevron-down" size={18} color="#6b7280" />
+                <View className="pl-4">
+                  <Ionicons name="person" size={20} color="#9ca3af" />
                 </View>
-              </Pressable>
-              {errors.faculty && (
-                <Text className="ml-1 text-sm text-red-500">
-                  {errors.faculty}
-                </Text>
-              )}
-            </View>
-            <View className="flex-1 space-y-2">
-              <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-                Graduation Year
-              </Text>
-              <Pressable
-                onPress={() => setYearPickerOpen(true)}
-                className={`bg-white border rounded-xl ${errors.year ? "border-red-400" : "border-gray-400"}`}
-              >
-                <View className="flex-row items-center justify-between p-4">
-                  <Text
-                    className={`text-base ${formData.year ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
-                  >
-                    {formData.year || "Select year"}
-                  </Text>
-                  <Ionicons name="chevron-down" size={18} color="#6b7280" />
-                </View>
-              </Pressable>
-              {errors.year && (
-                <Text className="ml-1 text-sm text-red-500">{errors.year}</Text>
-              )}
-            </View>
-          </View>
-
-          {/* Phone Number */}
-          <View className="mt-4 space-y-2">
-            <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-              Phone Number
-            </Text>
-            <View
-              className={`flex-row items-center bg-white border rounded-xl ${errors.phone ? "border-red-400" : "border-gray-400"}`}
-            >
-              <View className="flex-row items-center pl-4 pr-3 border-r border-gray-400">
-                <Text className="text-sm font-bold text-gray-500">+254</Text>
-              </View>
-              <TextInput
-                className="flex-1 p-4 pl-3 text-base font-display"
-                placeholder="712 345 678"
-                keyboardType="phone-pad"
-                value={formData.phone}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, phone: text.replace(/[^0-9\s]/g, "") })
-                }
-              />
-            </View>
-            {errors.phone && (
-              <Text className="ml-1 text-sm text-red-500">{errors.phone}</Text>
-            )}
-          </View>
-
-          {/* Password */}
-          <View className="mt-5 space-y-2">
-            <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-              Password
-            </Text>
-            <View
-              className={`flex-row items-center bg-white border rounded-xl ${errors.password ? "border-red-400" : "border-gray-400"}`}
-            >
-              <View className="pl-4">
-                <MaterialIcons name="password" size={24} color="#9ca3af" />
-              </View>
-              <TextInput
-                className="flex-1 p-4 pl-2 text-base font-display"
-                placeholder="••••••••"
-                secureTextEntry={!showPassword}
-                value={formData.password}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, password: text })
-                }
-              />
-              <Pressable
-                onPress={() => setShowPassword(!showPassword)}
-                className="pr-4"
-              >
-                <Text className="text-xl text-gray-400">
-                  {
-                    <Ionicons
-                      name={showPassword ? "eye" : "eye-off"}
-                      size={24}
-                      color="#9ca3af"
-                    />
+                <TextInput
+                  className="flex-1 p-4 pl-2 text-base font-display"
+                  placeholder="e.g. John Doe"
+                  value={formData.fullName}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, fullName: text })
                   }
+                />
+              </View>
+              {errors.fullName && (
+                <Text className="ml-1 text-sm text-red-500">
+                  {errors.fullName}
                 </Text>
-              </Pressable>
+              )}
             </View>
-            {errors.password && (
-              <Text className="ml-1 text-sm text-red-500">
-                {errors.password}
+
+            {/* University Email */}
+            <View className="mt-4 space-y-2">
+              <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
+                University Email
               </Text>
-            )}
-          </View>
-
-          {/* Terms Checkbox */}
-          <Pressable
-            onPress={() => setAgreeToTerms(!agreeToTerms)}
-            className="flex-row items-start gap-3 px-1 py-2 mt-5"
-          >
-            <View
-              className={`w-5 h-5 rounded border-2 items-center justify-center mt-0.5 ${
-                agreeToTerms ? "bg-primary border-primary" : "border-gray-300"
-              }`}
-            >
-              {agreeToTerms && <Text className="text-xs text-white">✓</Text>}
-            </View>
-            <Text className="flex-1 text-lg text-gray-600 font-display-medium">
-              I agree to the{" "}
-              <Text className="font-semibold text-primary">
-                Terms & Conditions
-              </Text>{" "}
-              and{" "}
-              <Text className="font-semibold text-primary">Privacy Policy</Text>
-            </Text>
-          </Pressable>
-
-          {/* Create Account Button */}
-          <Pressable
-            onPress={handleSignUp}
-            disabled={isLoading}
-            className={`flex-row items-center justify-center w-full gap-2 py-4 mt-4 rounded-xl ${
-              isLoading ? "bg-gray-400" : "bg-primary active:opacity-80"
-            }`}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <>
-                <Text className="text-lg font-bold text-white">
-                  Create Account
+              <View
+                className={`flex-row items-center bg-white border rounded-xl ${errors.email ? "border-red-400" : "border-gray-400"}`}
+              >
+                <View className="pl-4">
+                  <Ionicons name="school" size={20} color="#9ca3af" />
+                </View>
+                <TextInput
+                  className="flex-1 p-4 pl-2 text-base font-display"
+                  placeholder="john.doe@uonbi.ac.ke"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={formData.email}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, email: text })
+                  }
+                />
+              </View>
+              {errors.email ? (
+                <Text className="ml-1 text-sm text-red-500">{errors.email}</Text>
+              ) : (
+                <Text className="mt-3 ml-1 font-medium text-md text-primary">
+                  Must end in .ac.ke or .edu
                 </Text>
-                <Ionicons name="arrow-forward" size={24} color="#ffffff" />
-              </>
-            )}
-          </Pressable>
+              )}
+            </View>
 
-          {/* Sign In Link */}
-          <View className="flex-row items-center justify-center py-4 mt-3">
-            <Text className="text-lg text-gray-500 font-display">
-              Already have an account?{" "}
-            </Text>
-            <Pressable onPress={() => router.push("/(auth)/SignIn")}>
-              <Text className="text-xl font-display-bold text-primary">
-                Sign In
+            {/* Faculty and Year Row */}
+            <View className="flex-row gap-4 mt-4">
+              <View className="flex-1 space-y-2">
+                <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
+                  Faculty
+                </Text>
+                <Pressable
+                  onPress={() => setFacultyPickerOpen(true)}
+                  className={`bg-white border rounded-xl ${errors.faculty ? "border-red-400" : "border-gray-400"}`}
+                >
+                  <View className="flex-row items-center justify-between p-4">
+                    <Text
+                      className={`text-base ${formData.faculty ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
+                    >
+                      {formData.faculty || "Select faculty"}
+                    </Text>
+                    <Ionicons name="chevron-down" size={18} color="#6b7280" />
+                  </View>
+                </Pressable>
+                {errors.faculty && (
+                  <Text className="ml-1 text-sm text-red-500">
+                    {errors.faculty}
+                  </Text>
+                )}
+              </View>
+              <View className="flex-1 space-y-2">
+                <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
+                  Graduation Year
+                </Text>
+                <Pressable
+                  onPress={() => setYearPickerOpen(true)}
+                  className={`bg-white border rounded-xl ${errors.year ? "border-red-400" : "border-gray-400"}`}
+                >
+                  <View className="flex-row items-center justify-between p-4">
+                    <Text
+                      className={`text-base ${formData.year ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
+                    >
+                      {formData.year || "Select year"}
+                    </Text>
+                    <Ionicons name="chevron-down" size={18} color="#6b7280" />
+                  </View>
+                </Pressable>
+                {errors.year && (
+                  <Text className="ml-1 text-sm text-red-500">{errors.year}</Text>
+                )}
+              </View>
+            </View>
+
+            {/* Phone Number */}
+            <View className="mt-4 space-y-2">
+              <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
+                Phone Number
+              </Text>
+              <View
+                className={`flex-row items-center bg-white border rounded-xl ${errors.phone ? "border-red-400" : "border-gray-400"}`}
+              >
+                <View className="flex-row items-center pl-4 pr-3 border-r border-gray-400">
+                  <Text className="text-sm font-bold text-gray-500">+254</Text>
+                </View>
+                <TextInput
+                  className="flex-1 p-4 pl-3 text-base font-display"
+                  placeholder="712 345 678"
+                  keyboardType="phone-pad"
+                  value={formData.phone}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, phone: text.replace(/[^0-9\s]/g, "") })
+                  }
+                />
+              </View>
+              {errors.phone && (
+                <Text className="ml-1 text-sm text-red-500">{errors.phone}</Text>
+              )}
+            </View>
+
+            {/* Password */}
+            <View className="mt-5 space-y-2">
+              <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
+                Password
+              </Text>
+              <View
+                className={`flex-row items-center bg-white border rounded-xl ${errors.password ? "border-red-400" : "border-gray-400"}`}
+              >
+                <View className="pl-4">
+                  <MaterialIcons name="password" size={24} color="#9ca3af" />
+                </View>
+                <TextInput
+                  className="flex-1 p-4 pl-2 text-base font-display"
+                  placeholder="••••••••"
+                  secureTextEntry={!showPassword}
+                  value={formData.password}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, password: text })
+                  }
+                />
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  className="pr-4"
+                >
+                  <Text className="text-xl text-gray-400">
+                    {
+                      <Ionicons
+                        name={showPassword ? "eye" : "eye-off"}
+                        size={24}
+                        color="#9ca3af"
+                      />
+                    }
+                  </Text>
+                </Pressable>
+              </View>
+              {errors.password && (
+                <Text className="ml-1 text-sm text-red-500">
+                  {errors.password}
+                </Text>
+              )}
+            </View>
+
+            {/* Terms Checkbox */}
+            <Pressable
+              onPress={() => setAgreeToTerms(!agreeToTerms)}
+              className="flex-row items-start gap-3 px-1 py-2 mt-5"
+            >
+              <View
+                className={`w-5 h-5 rounded border-2 items-center justify-center mt-0.5 ${agreeToTerms ? "bg-primary border-primary" : "border-gray-300"
+                  }`}
+              >
+                {agreeToTerms && <Text className="text-xs text-white">✓</Text>}
+              </View>
+              <Text className="flex-1 text-lg text-gray-600 font-display-medium">
+                I agree to the{" "}
+                <Text className="font-semibold text-primary">
+                  Terms & Conditions
+                </Text>{" "}
+                and{" "}
+                <Text className="font-semibold text-primary">Privacy Policy</Text>
               </Text>
             </Pressable>
+
+            {/* Create Account Button */}
+            <Pressable
+              onPress={handleSignUp}
+              disabled={isLoading}
+              className={`flex-row items-center justify-center w-full gap-2 py-4 mt-4 rounded-xl ${isLoading ? "bg-gray-400" : "bg-primary active:opacity-80"
+                }`}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <>
+                  <Text className="text-lg font-bold text-white">
+                    Create Account
+                  </Text>
+                  <Ionicons name="arrow-forward" size={24} color="#ffffff" />
+                </>
+              )}
+            </Pressable>
+
+            {/* Sign In Link */}
+            <View className="flex-row items-center justify-center py-4 mt-3">
+              <Text className="text-lg text-gray-500 font-display">
+                Already have an account?{" "}
+              </Text>
+              <Pressable onPress={() => router.push("/(auth)/SignIn")}>
+                <Text className="text-xl font-display-bold text-primary">
+                  Sign In
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-      </View>
 
-      <OptionPickerModal
-        visible={facultyPickerOpen}
-        title="Select Faculty"
-        options={FACULTY_OPTIONS}
-        selectedValue={formData.faculty}
-        onClose={() => setFacultyPickerOpen(false)}
-        onSelect={(value) => {
-          setFormData({ ...formData, faculty: value });
-          setErrors({ ...errors, faculty: undefined });
-        }}
-      />
+        <OptionPickerModal
+          visible={facultyPickerOpen}
+          title="Select Faculty"
+          options={FACULTY_OPTIONS}
+          selectedValue={formData.faculty}
+          onClose={() => setFacultyPickerOpen(false)}
+          onSelect={(value) => {
+            setFormData({ ...formData, faculty: value });
+            setErrors({ ...errors, faculty: undefined });
+          }}
+        />
 
-      <OptionPickerModal
-        visible={yearPickerOpen}
-        title="Select Year"
-        options={YEAR_OPTIONS}
-        selectedValue={formData.year}
-        onClose={() => setYearPickerOpen(false)}
-        onSelect={(value) => {
-          setFormData({ ...formData, year: value });
-          setErrors({ ...errors, year: undefined });
-        }}
-      />
+        <OptionPickerModal
+          visible={yearPickerOpen}
+          title="Select Year"
+          options={YEAR_OPTIONS}
+          selectedValue={formData.year}
+          onClose={() => setYearPickerOpen(false)}
+          onSelect={(value) => {
+            setFormData({ ...formData, year: value });
+            setErrors({ ...errors, year: undefined });
+          }}
+        />
+
+
+      </ScrollView>
+
+
     </SafeAreaView>
   );
 };

@@ -21,7 +21,7 @@ const upload = require('../middleware/uploadMiddleware');
 
 // Validation & Rate Limiting
 const validateRequest = require('../middleware/validateRequest');
-const { authLimiter, registerLimiter } = require('../middleware/rateLimiter');
+// const { authLimiter, registerLimiter } = require('../middleware/rateLimiter');
 
 // Validators
 const {
@@ -40,7 +40,7 @@ const { asyncHandler } = require('../utils/errorHandler');
 // ==================== ROUTES ====================
 
 // Public routes
-router.post('/register', registerLimiter, validateRequest(registerSchema), asyncHandler(registerUser));
+router.post('/register', validateRequest(registerSchema), asyncHandler(registerUser));
 // router.post('/login', authLimiter, validateRequest(loginSchema), asyncHandler(loginUser));
 router.post('/login', validateRequest(loginSchema), asyncHandler(loginUser));
 router.post('/verify-email', validateRequest(verifyEmailSchema), asyncHandler(verifyEmail));
