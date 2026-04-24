@@ -26,7 +26,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onClick, onFavoriteP
             }}
         >
             {/* Image Container */}
-            <View className="relative w-full bg-gray-200" style={{ flex: 3 }}>
+            <View className="relative w-full bg-gray-200" style={{ flex: 2 }}>
                 <Image
                     source={{ uri: listing.imageUrl }}
                     className="w-full h-full"
@@ -58,7 +58,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onClick, onFavoriteP
             <View className="p-3" style={{ flex: 1 }}>
                 {/* Price Row */}
                 <View className="flex-row items-center gap-1 mb-1">
-                    <Text className="text-lg font-display-bold text-primary">
+                    <Text className="text-sm font-display-bold text-primary">
                         Ksh {listing.price}{listing.priceUnit}
                     </Text>
                     {listing.isVerified && (
@@ -78,7 +78,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onClick, onFavoriteP
                 <View className="flex-row items-center gap-1 mt-1">
                     <Ionicons name="location-outline" size={12} color="#6b7280" />
                     <Text className="text-xs text-gray-500 font-display" numberOfLines={1}>
-                        {listing.location} • {listing.distance}
+                        {listing.location}
                     </Text>
                 </View>
             </View>
