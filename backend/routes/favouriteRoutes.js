@@ -11,20 +11,42 @@ const { getFavorites, addFavorite, removeFavorite } = require('../controllers/fa
 // Validation
 const validateRequest = require('../middleware/validateRequest');
 
-// Validator for listing ID parameter
-const listingIdSchema = z.object({
+// Error Handling
+const { asyncHandler } = require('../utils/errorHandler');
+
+// ---------------------------------------------------------------------------
+// Validators
+// ---------------------------------------------------------------------------
+
+// :type must be 'sale' or 'lease'; :listingId must be a positive integer.
+const listingParamsSchema = z.object({
   params: z.object({
+    type: z.enum(['sale', 'lease'], {
+      errorMap: () => ({ message: "type must be 'sale' or 'lease'" }),
+    }),
     listingId: z.coerce.number().int().positive('Invalid listing ID'),
   }),
 });
 
-// Error Handling
-const { asyncHandler } = require('../utils/errorHandler');
-
 // ==================== ROUTES ====================
 
+// GET    /api/favorites                     → all favorites for current user
 router.get('/', protect, asyncHandler(getFavorites));
-router.post('/:listingId', protect, validateRequest(listingIdSchema), asyncHandler(addFavorite));
-router.delete('/:listingId', protect, validateRequest(listingIdSchema), asyncHandler(removeFavorite));
+
+// POST   /api/favorites/:type/:listingId    → add a listing to favorites
+// DELETE /api/favorites/:type/:listingId    → remove a listing from favorites
+router.post(
+  '/:type/:listingId',
+  protect,
+  validateRequest(listingParamsSchema),
+  asyncHandler(addFavorite),
+);
+
+router.delete(
+  '/:type/:listingId',
+  protect,
+  validateRequest(listingParamsSchema),
+  asyncHandler(removeFavorite),
+);
 
 module.exports = router;
