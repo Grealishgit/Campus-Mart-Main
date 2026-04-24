@@ -29,3 +29,12 @@
   "available_from": "2026-04-25",
   "available_until": "2026-05-30"
 }`
+
+
+`
+GET    /api/favorites
+POST   /api/favorites/sale/3
+POST   /api/favorites/lease/7
+DELETE /api/favorites/sale/3
+DELETE /api/favorites/lease/7
+`
