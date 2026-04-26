@@ -230,7 +230,7 @@ const ProfileScreen = () => {
   const ListingCard = ({ item }: { item: any }) => (
     <Pressable
       className="flex-col w-[48%] gap-2"
-      onPress={() => router.push(`/product-item/${item.id}`)}
+      onPress={() => router.push('/(tabs)/browse')}
     >
       <View className="relative overflow-hidden rounded-2xl aspect-square bg-slate-100">
         <Image source={{ uri: item.imageUrl }} className="object-cover w-full h-full" />

@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import Foundation from '@expo/vector-icons/Foundation';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Entypo from '@expo/vector-icons/Entypo';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 const TabLabel = ({ label, focused, color }: { label: string; focused: boolean; color: string }) => (
@@ -50,12 +51,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="browse"
+        name="orders"
         options={{
-          title: 'Browse',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="compass-outline" color={color} />,
-          tabBarLabel: ({ focused, color }) => <TabLabel label="Browse" focused={focused} color={color} />,
+          title: 'Orders',
+          tabBarIcon: ({ color }) => <AntDesign size={28} name="code-sandbox" color={color} />,
+          tabBarLabel: ({ focused, color }) => <TabLabel label="Orders" focused={focused} color={color} />,
         }}
+      />
+      <Tabs.Screen
+        name="browse"
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="leases"

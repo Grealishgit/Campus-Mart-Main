@@ -1,90 +1,80 @@
-import { View, Text, Pressable, Image, ScrollView, ActivityIndicator, Alert, TextInput } from 'react-native'
+import {
+    View, Text, Pressable, Image, ScrollView,
+    ActivityIndicator, Alert, Platform,
+} from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { addFavorite, removeFavorite, isFavorited } from '@/lib/favoriteService'
 import { createConversation } from '@/lib/chatService'
 import { createOrder } from '@/lib/orderService'
+import { getCurrentUser } from '@/lib/authService'
+
+// ─── helpers ─────────────────────────────────────────────────
+const fmt = (date: Date) => date.toISOString().split('T')[0];
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 
 const ProductItemScreen = () => {
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
     const [isFav, setIsFav] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    // lease date state
     const [leaseStart, setLeaseStart] = useState('');
     const [leaseEnd, setLeaseEnd] = useState('');
+    const [showStartPicker, setShowStartPicker] = useState(false);
+    const [showEndPicker, setShowEndPicker] = useState(false);
 
     const {
-        id,
-        title,
-        price,
-        priceUnit,
-        type,
-        category,
-        condition,
-        location,
-        imageUrl,
-        description,
-        sellerName,
-        sellerRating,
-        sellerAvatar,
-        sellerVerified,
+        id, title, price, priceUnit, type,
+        category, condition, location, imageUrl,
+        description, sellerName, sellerRating,
+        sellerAvatar, sellerVerified, sellerId,
     } = useLocalSearchParams<{
-        id: string;
-        title: string;
-        price: string;
-        priceUnit: string;
-        type: string;
-        category: string;
-        condition: string;
-        location: string;
-        imageUrl: string;
-        description: string;
-        sellerName: string;
-        sellerRating: string;
-        sellerAvatar: string;
-        sellerVerified: string;
+        id: string; title: string; price: string;
+        priceUnit: string; type: string; category: string;
+        condition: string; location: string; imageUrl: string;
+        description: string; sellerName: string; sellerRating: string;
+        sellerAvatar: string; sellerVerified: string; sellerId: string;
     }>();
 
+    const isOwner = currentUserId && sellerId && currentUserId === sellerId;
+    // console.log('current logged in user', currentUserId);
+    // console.log("product seller", sellerId)
+
     useEffect(() => {
-        const checkFavoriteStatus = async () => {
-            if (id) {
-                const favorited = await isFavorited(id);
-                setIsFav(favorited);
-            }
+        const init = async () => {
+            if (id) setIsFav(await isFavorited(id));
+            const me = await getCurrentUser();
+            const user = (me.data as any)?.user ?? me.data;
+            if (user?.id) setCurrentUserId(String(user.id));
         };
-        checkFavoriteStatus();
+        init();
     }, [id]);
 
     const handleLikeProduct = async () => {
         try {
             setLoading(true);
             if (isFav) {
-                // Remove from favorites
-                const result = await removeFavorite(id);
-                if (result.success) {
-                    setIsFav(false);
-                    Alert.alert('Removed', 'Removed from favorites');
-                }
+                const r = await removeFavorite(id);
+                if (r.success) setIsFav(false);
             } else {
-                // Add to favorites
-                const result = await addFavorite(id);
-                if (result.success) {
-                    setIsFav(true);
-                    Alert.alert('Added', 'Added to favorites');
-                }
+                const r = await addFavorite(id);
+                if (r.success) setIsFav(true);
             }
         } catch {
             Alert.alert('Error', 'Failed to update favorites');
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     const handleMessageSeller = async () => {
         try {
-            // Start a conversation with the seller about this listing
             const result = await createConversation(id, `I'm interested in ${title}`);
             const conversation = result.data?.conversation;
             if (result.success && conversation?.id) {
@@ -95,192 +85,327 @@ const ProductItemScreen = () => {
         } catch {
             Alert.alert('Error', 'Failed to start conversation');
         }
-    }
+    };
 
     const handleBuyNow = async () => {
         try {
             setLoading(true);
-            if (type === 'LEASE' && (!leaseStart.trim() || !leaseEnd.trim())) {
-                Alert.alert('Lease dates required', 'Please enter both the lease start and end dates in YYYY-MM-DD format.');
+            if (type === 'LEASE' && (!leaseStart || !leaseEnd)) {
+                Alert.alert('Select dates', 'Please pick both lease start and end dates.');
                 return;
             }
 
             const result = await createOrder({
                 listingId: id,
-                leaseStart: type === 'LEASE' ? leaseStart.trim() : undefined,
-                leaseEnd: type === 'LEASE' ? leaseEnd.trim() : undefined,
+                type: type as 'SALE' | 'LEASE',
+                leaseStart: type === 'LEASE' ? leaseStart : undefined,
+                leaseEnd: type === 'LEASE' ? leaseEnd : undefined,
             });
 
             if (result.success && result.data?.order?.id) {
-                Alert.alert('Success', type === 'LEASE' ? 'Lease created successfully.' : 'Order placed successfully.', [
-                    { text: 'View Leases', onPress: () => router.push('/(tabs)/leases') },
-                    { text: 'Continue Shopping', onPress: () => router.back() }
-                ]);
+                Alert.alert(
+                    'Success',
+                    type === 'LEASE' ? 'Lease created successfully.' : 'Order placed successfully.',
+                    [
+                        { text: type === 'LEASE' ? 'View Leases' : 'View Orders', onPress: () => router.push('/(tabs)/leases') },
+                        { text: 'Continue Shopping', onPress: () => router.back() },
+                    ]
+                );
             } else {
-                Alert.alert('Error', result.error || result.message || 'Failed to create order');
+                Alert.alert('Error', result.error || (result as any).message || 'Failed to create order');
             }
         } catch (err: any) {
             Alert.alert('Error', err.message || 'Failed to create order');
         } finally {
             setLoading(false);
         }
-    }
+    };
+
+    // ─── detail pills ─────────────────────────────────────────
+    const details = [
+        { icon: <Feather name="box" size={20} color="#6769ef" />, label: 'Condition', value: condition },
+        { icon: <Ionicons name="location-outline" size={20} color="#6769ef" />, label: 'Pickup', value: location },
+        { icon: <MaterialCommunityIcons name="tag-outline" size={20} color="#6769ef" />, label: 'Category', value: category },
+    ];
 
     return (
-        <SafeAreaView className='relative flex-1 bg-white'>
-            {/* Header Buttons */}
-            <View className='absolute z-50 flex-row items-center justify-between w-full gap-4 px-4 py-3 top-8'>
-                <Pressable onPress={() => router.back()} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
-                    <Ionicons name="chevron-back" size={24} color="#6769ef" />
+        <SafeAreaView className="flex-1 bg-white">
+            {/* ── Floating header ────────────────────────────────── */}
+            <View className="absolute z-50 flex-row items-center justify-between w-full px-4 py-3 top-8">
+                <Pressable
+                    onPress={() => router.back()}
+                    className="items-center justify-center bg-white rounded-full shadow-sm w-11 h-11 active:bg-gray-50"
+                >
+                    <Ionicons name="chevron-back" size={22} color="#6769ef" />
                 </Pressable>
 
-                <View className='flex-row items-center gap-2'>
-                    <Pressable onPress={() => {}} className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'>
-                        <Ionicons name="download-outline" size={24} color="#6769ef" />
-                    </Pressable>
-
-                    <Pressable 
-                        onPress={handleLikeProduct} 
-                        disabled={loading}
-                        className='items-center justify-center w-12 h-12 p-1 bg-white rounded-full active:bg-gray-100'
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="#6769ef" />
-                        ) : (
-                            <Ionicons 
-                                name={isFav ? "heart" : "heart-outline"} 
-                                size={24} 
-                                color={isFav ? "#6769ef" : "gray"} 
-                            />
-                        )}
-                    </Pressable>
+                <View className="flex-row items-center gap-2">
+                    {isOwner ? (
+                        <Pressable
+                            onPress={() => router.push(`/listing/edit?id=${id}&type=${type}` as never)}
+                            className="flex-row items-center gap-1.5 px-4 py-2 bg-primary rounded-full shadow-sm"
+                        >
+                            <Ionicons name="create-outline" size={16} color="white" />
+                            <Text className="text-sm text-white font-display-semibold">Edit</Text>
+                        </Pressable>
+                    ) : (
+                        <>
+                            <Pressable
+                                onPress={() => { }}
+                                className="items-center justify-center bg-white rounded-full shadow-sm w-11 h-11 active:bg-gray-50"
+                            >
+                                <Ionicons name="share-social-outline" size={20} color="#6769ef" />
+                            </Pressable>
+                            <Pressable
+                                onPress={handleLikeProduct}
+                                disabled={loading}
+                                    className="items-center justify-center bg-white rounded-full shadow-sm w-11 h-11 active:bg-gray-50"
+                                >
+                                    {loading
+                                        ? <ActivityIndicator color="#6769ef" size="small" />
+                                        : <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? '#f43f5e' : '#6769ef'} />
+                                    }
+                                </Pressable>
+                        </>
+                    )}
                 </View>
             </View>
 
-            <ScrollView className='flex flex-col w-full'>
-                {/* Product Image */}
-                <Image source={{ uri: imageUrl }} className='w-full h-[450px]' resizeMode='cover' />
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
 
-                <View className='flex flex-col w-full p-2'>
-                    {/* Title and Price */}
-                    <View className='flex flex-col w-full gap-2 p-2 mt-3'>
-                        <Text className='text-4xl text-black font-display-bold'>{title}</Text>
-                        <Text className='text-3xl text-primary font-display-bold'>
-                            Ksh {price}
-                            <Text className='ml-3 text-lg text-gray-500 font-display-medium'>
-                                {type === 'LEASE' ? ` ${priceUnit || ''}` : ' Final Price'}
-                            </Text>
+                {/* ── Hero image ──────────────────────────────────── */}
+                <View className="relative">
+                    <Image
+                        source={{ uri: imageUrl || 'https://via.placeholder.com/400x450' }}
+                        className="w-full"
+                        style={{ height: 420 }}
+                        resizeMode="cover"
+                    />
+                    {/* Type badge */}
+                    <View
+                        className="absolute px-3 py-1.5 rounded-full bottom-4 left-4"
+                        style={{ backgroundColor: type === 'LEASE' ? '#6769ef' : '#10b981' }}
+                    >
+                        <Text className="text-xs tracking-widest text-white uppercase font-display-bold">
+                            {type === 'LEASE' ? 'Lease' : 'For Sale'}
                         </Text>
                     </View>
+                </View>
 
-                    {/* Seller Info */}
-                    <View className='flex-row justify-between w-full gap-2 p-4 mt-3 bg-white shadow-lg rounded-2xl'>
-                        <View className='flex-col gap-1'>
-                            <Image source={{ uri: sellerAvatar }} className='rounded-full w-14 h-14' />
-                        </View>
+                <View className="px-4 pt-5">
 
-                        <View className='flex-col flex-1 gap-1 ml-5'>
-                            <Text className='text-3xl text-gray-900 font-display-semibold'>
-                                {sellerName}
-                                {sellerVerified === "true" && (
-                                    <MaterialIcons name="verified" size={20} color="#3b82f6" className='mt-1 ml-2' />
-                                )}
-                            </Text>
-                            <Text className={`text-xl font-display-semibold ${sellerVerified === "true" ? "text-primary" : "text-gray-500"}`}>
-                                {sellerVerified === "true" ? "Verified Seller" : "Unverified Seller"}
-                            </Text>
-                        </View>
+                    {/* ── Title + price ───────────────────────────── */}
+                    <Text className="text-3xl leading-tight text-gray-900 font-display-bold" numberOfLines={2}>
+                        {title}
+                    </Text>
 
-                        <View className='flex-col items-end gap-1 p-1'>
-                            <View className='flex-row gap-2 p-1 mr-2 bg-yellow-100 rounded-lg'>
-                                <Ionicons name="star" size={16} color="#fbbf24" />
-                                <Text className='text-orange-900 text-md font-display-semibold' numberOfLines={1}>
-                                    {sellerRating}
-                                </Text>
+                    <View className="flex-row items-baseline gap-1.5 mt-2">
+                        <Text className="text-xs text-gray-400 font-display">Ksh</Text>
+                        <Text className="text-3xl text-primary font-display-bold">
+                            {Number(price).toLocaleString()}
+                        </Text>
+                        {type === 'LEASE' && priceUnit && (
+                            <Text className="text-sm text-gray-400 font-display">{priceUnit}</Text>
+                        )}
+                        {type === 'SALE' && (
+                            <Text className="text-sm text-gray-400 font-display">· Final price</Text>
+                        )}
+                    </View>
+
+                    {/* ── Detail pills ────────────────────────────── */}
+                    <View className="flex-row flex-wrap gap-2 mt-4">
+                        {details.map(d => (
+                            <View
+                                key={d.label}
+                                className="flex-row items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full"
+                            >
+                                {d.icon}
+                                <Text className="text-xs text-gray-500 font-display-medium">{d.label}: </Text>
+                                <Text className="text-xs text-gray-800 font-display-semibold">{d.value}</Text>
                             </View>
-                            <Text className='text-sm italic text-gray-500 font-display'>Responds in &lt; 1 hour</Text>
+                        ))}
+                    </View>
+
+                    {/* ── Seller card ─────────────────────────────── */}
+                    <View className="flex-row items-center gap-3 p-4 mt-5 border border-gray-100 bg-gray-50 rounded-2xl">
+                        {sellerAvatar ? (
+                            <Image source={{ uri: sellerAvatar }} className="w-12 h-12 rounded-full" />
+                        ) : (
+                            <View className="items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                                <Ionicons name="person" size={22} color="#6769ef" />
+                            </View>
+                        )}
+
+                        <View className="flex-1">
+                            <View className="flex-row items-center gap-1">
+                                <Text className="text-base text-gray-900 font-display-semibold">
+                                    {isOwner ? 'Posted by you' : sellerName}
+                                </Text>
+                                {sellerVerified === 'true' && (
+                                    <MaterialIcons name="verified" size={15} color="#3b82f6" />
+                                )}
+                            </View>
+                            <Text className="text-xs mt-0.5 font-display" style={{ color: sellerVerified === 'true' ? '#6769ef' : '#9ca3af' }}>
+                                {isOwner ? 'You can edit this listing' : sellerVerified === 'true' ? 'Verified Seller' : 'Unverified Seller'}
+                            </Text>
+                        </View>
+
+                        <View className="flex-row items-center gap-1 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-xl">
+                            <Ionicons name="star" size={13} color="#f59e0b" />
+                            <Text className="text-sm text-amber-700 font-display-semibold">{sellerRating}</Text>
                         </View>
                     </View>
 
-                    {/* Product Details Grid */}
-                    <View className='flex-row justify-between w-full gap-1 p-2 mt-3'>
-                        <View className='flex-col items-center justify-center flex-1 p-2 bg-white border border-gray-300 rounded-lg shadow-xl'>
-                            <Feather name="box" size={24} color="#6769ef" />
-                            <Text className='text-xl font-display-bold text-primary'>Condition</Text>
-                            <Text className='text-sm text-gray-400 font-display-medium'>{condition}</Text>
-                        </View>
-
-                        <View className='flex-col items-center justify-center flex-1 p-2 bg-white border border-gray-300 rounded-lg shadow-xl'>
-                            <Ionicons name="location-outline" size={24} color="#6769ef" />
-                            <Text className='text-xl font-display-bold text-primary'>Pickup</Text>
-                            <Text className='text-sm text-gray-500 font-display-medium'>{location}</Text>
-                        </View>
-
-                        <View className='flex-col items-center justify-center flex-1 p-2 bg-white border border-gray-300 rounded-lg shadow-xl'>
-                            <MaterialCommunityIcons name="progress-helper" size={24} color="#6769ef" />
-                            <Text className='text-xl font-display-bold text-primary'>Availability</Text>
-                            <Text className='text-sm text-gray-500 font-display-medium'>{category}</Text>
-                        </View>
+                    {/* ── Description ─────────────────────────────── */}
+                    <View className="mt-5">
+                        <Text className="mb-2 text-base text-gray-900 font-display-bold">About this item</Text>
+                        <Text className="text-base leading-relaxed text-gray-500 font-display">{description}</Text>
                     </View>
 
-                    {/* Description */}
-                    <View className='flex-col w-full p-4 mt-2'>
-                        <Text className='text-3xl text-black font-display-bold'>ABOUT THIS ITEM</Text>
-                        <Text className='mt-2 text-lg text-gray-500 font-display'>{description}</Text>
-                    </View>
-
-                    {type === 'LEASE' && (
-                        <View className='w-full px-4 pb-6'>
-                            <Text className='text-2xl text-black font-display-bold'>LEASE DETAILS</Text>
-                            <Text className='mt-1 text-base text-gray-500 font-display'>
-                                Rate: Ksh {price}{priceUnit || ''}. Enter your dates before sending the request.
+                    {/* ── Lease date pickers ───────────────────────── */}
+                    {type === 'LEASE' && !isOwner && (
+                        <View className="p-4 mt-6 border bg-primary/5 border-primary/20 rounded-2xl">
+                            <Text className="mb-1 text-base text-gray-900 font-display-bold">Select Lease Dates</Text>
+                            <Text className="mb-4 text-xs text-gray-500 font-display">
+                                Rate: Ksh {Number(price).toLocaleString()}{priceUnit || ''}
                             </Text>
 
-                            <TextInput
-                                value={leaseStart}
-                                onChangeText={setLeaseStart}
-                                placeholder='Lease start (YYYY-MM-DD)'
-                                placeholderTextColor='#9ca3af'
-                                className='mt-4 rounded-2xl border border-gray-300 px-4 py-3 text-base font-display text-gray-900'
-                            />
-                            <TextInput
-                                value={leaseEnd}
-                                onChangeText={setLeaseEnd}
-                                placeholder='Lease end (YYYY-MM-DD)'
-                                placeholderTextColor='#9ca3af'
-                                className='mt-3 rounded-2xl border border-gray-300 px-4 py-3 text-base font-display text-gray-900'
-                            />
+                            {/* Start date */}
+                            <Pressable
+                                onPress={() => setShowStartPicker(true)}
+                                className="flex-row items-center gap-3 px-4 py-3 mb-3 bg-white border border-gray-200 rounded-xl"
+                            >
+                                <Ionicons name="calendar-outline" size={18} color="#6769ef" />
+                                <View className="flex-1">
+                                    <Text className="text-xs text-gray-400 font-display">Start date</Text>
+                                    <Text className={`text-sm font-display-semibold ${leaseStart ? 'text-gray-900' : 'text-gray-300'}`}>
+                                        {leaseStart || 'Tap to select'}
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color="#d1d5db" />
+                            </Pressable>
+
+                            {showStartPicker && (
+                                <DateTimePicker
+                                    value={leaseStart ? new Date(leaseStart) : today()}
+                                    mode="date"
+                                    minimumDate={today()}
+                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                    onChange={(event, date) => {
+                                        if (Platform.OS === 'android') setShowStartPicker(false);
+                                        if (event.type === 'dismissed') { setShowStartPicker(false); return; }
+                                        if (date) { setLeaseStart(fmt(date)); setLeaseEnd(''); }
+                                        if (Platform.OS === 'ios') setShowStartPicker(false);
+                                    }}
+                                />
+                            )}
+
+                            {/* End date */}
+                            <Pressable
+                                onPress={() => { if (!leaseStart) { Alert.alert('Pick start date first'); return; } setShowEndPicker(true); }}
+                                className="flex-row items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl"
+                            >
+                                <Ionicons name="calendar-outline" size={18} color="#6769ef" />
+                                <View className="flex-1">
+                                    <Text className="text-xs text-gray-400 font-display">End date</Text>
+                                    <Text className={`text-sm font-display-semibold ${leaseEnd ? 'text-gray-900' : 'text-gray-300'}`}>
+                                        {leaseEnd || 'Tap to select'}
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color="#d1d5db" />
+                            </Pressable>
+
+                            {showEndPicker && (
+                                <DateTimePicker
+                                    value={leaseEnd ? new Date(leaseEnd) : (leaseStart ? new Date(leaseStart) : today())}
+                                    mode="date"
+                                    minimumDate={leaseStart ? new Date(leaseStart) : today()}
+                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                    onChange={(event, date) => {
+                                        if (Platform.OS === 'android') setShowEndPicker(false);
+                                        if (event.type === 'dismissed') { setShowEndPicker(false); return; }
+                                        if (date) setLeaseEnd(fmt(date));
+                                        if (Platform.OS === 'ios') setShowEndPicker(false);
+                                    }}
+                                />
+                            )}
+
+                            {/* Duration summary */}
+                            {leaseStart && leaseEnd && (
+                                <View className="flex-row items-center gap-2 px-3 py-2 mt-3 bg-primary/10 rounded-xl">
+                                    <Ionicons name="time-outline" size={14} color="#6769ef" />
+                                    <Text className="text-xs text-primary font-display-semibold">
+                                        {Math.ceil((new Date(leaseEnd).getTime() - new Date(leaseStart).getTime()) / 86400000)} day(s) ·{' '}
+                                        Est. Ksh {(Math.ceil((new Date(leaseEnd).getTime() - new Date(leaseStart).getTime()) / 86400000) * Number(price)).toLocaleString()}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                     )}
 
+                    {/* Owner-only actions */}
+                    {isOwner && (
+                        <View className="flex-row gap-3 mt-6">
+                            <Pressable
+                                onPress={() => router.push(`/listing/edit?id=${id}&type=${type}` as never)}
+                                className="flex-row items-center justify-center flex-1 gap-2 py-3 border border-primary rounded-xl"
+                            >
+                                <Ionicons name="create-outline" size={18} color="#6769ef" />
+                                <Text className="text-base text-primary font-display-semibold">Edit Listing</Text>
+                            </Pressable>
+                            <Pressable
+                                onPress={() => Alert.alert('Delete', 'Delete this listing?', [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: 'Delete', style: 'destructive', onPress: () => router.back() },
+                                ])}
+                                className="flex-row items-center justify-center flex-1 gap-2 py-3 border border-red-200 bg-red-50 rounded-xl"
+                            >
+                                <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                                <Text className="text-base text-red-500 font-display-semibold">Delete</Text>
+                            </Pressable>
+                        </View>
+                    )}
                 </View>
             </ScrollView>
 
-            {/* Bottom Action Buttons */}
-            <View className='fixed bottom-0 flex-row w-full gap-2 p-2 px-5 bg-white border-t border-gray-200'>
-                <Pressable 
-                    onPress={handleMessageSeller}
-                    className='items-center justify-center px-4 py-3 border border-gray-400 w-[30%] rounded-2xl'
+            {/* ── Bottom bar — hidden for owner ───────────────────── */}
+            {!isOwner && (
+                <View
+                    className="absolute bottom-0 left-0 right-0 flex-row gap-3 px-4 py-3 bg-white border-t border-gray-100"
+                    style={{ paddingBottom: 20 }}
                 >
-                    <Ionicons name="chatbubble-ellipses-outline" size={24} color="gray" />
-                </Pressable>
-                
-                <Pressable 
-                    onPress={handleBuyNow}
-                    disabled={loading}
-                    className='items-center justify-center px-8 py-3 w-[70%] rounded-2xl bg-primary'
-                >
-                    {loading ? (
-                        <ActivityIndicator color="white" />
-                    ) : (
-                        <Text className='text-xl text-white font-display-bold'>
-                            {type === 'LEASE' ? 'Rent Now' : 'Buy Now'}
-                        </Text>
-                    )}
-                </Pressable>
-            </View>
-        </SafeAreaView>
-    )
-}
+                    <Pressable
+                        onPress={handleMessageSeller}
+                        className="items-center justify-center border border-gray-200 w-14 h-14 rounded-2xl"
+                    >
+                        <Ionicons name="chatbubble-ellipses-outline" size={22} color="#6769ef" />
+                    </Pressable>
 
-export default ProductItemScreen
+                    <Pressable
+                        onPress={handleBuyNow}
+                        disabled={loading}
+                        className="items-center justify-center flex-1 py-4 rounded-2xl bg-primary active:opacity-80"
+                    >
+                        {loading
+                            ? <ActivityIndicator color="white" />
+                            : (
+                                <View className="flex-row items-center gap-2">
+                                    <Ionicons
+                                        name={type === 'LEASE' ? 'time-outline' : 'bag-check-outline'}
+                                        size={18}
+                                        color="white"
+                                    />
+                                    <Text className="text-base text-white font-display-bold">
+                                        {type === 'LEASE' ? 'Rent Now' : 'Buy Now'}
+                                    </Text>
+                                </View>
+                            )
+                        }
+                    </Pressable>
+                </View>
+            )}
+        </SafeAreaView>
+    );
+};
+
+export default ProductItemScreen;

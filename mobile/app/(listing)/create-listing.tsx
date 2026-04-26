@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Image } from 'react-native';
 import {
   ActivityIndicator,
@@ -53,7 +54,10 @@ const CreateListing = () => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showUntilPicker, setShowUntilPicker] = useState(false);
 
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
   const handlePickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -204,14 +208,15 @@ const CreateListing = () => {
       body.append('condition', formData.condition.trim());
       body.append('location', formData.location.trim());
 
-    if (formData.type === 'LEASE') {
-      body.append('price_unit', formData.priceUnit);
-      body.append('duration_unit', formData.durationUnit);
-      if (formData.minDuration) body.append('min_duration', formData.minDuration);
-      if (formData.maxDuration) body.append('max_duration', formData.maxDuration);
-      if (formData.availableFrom) body.append('available_from', formData.availableFrom.trim());
-      if (formData.availableUntil) body.append('available_until', formData.availableUntil.trim());
-    }
+
+      if (formData.type === 'LEASE') {
+        body.append('price_unit', formData.priceUnit);
+        body.append('duration_unit', formData.durationUnit);
+        if (formData.minDuration) body.append('min_duration', formData.minDuration);
+        if (formData.maxDuration) body.append('max_duration', formData.maxDuration);
+        if (formData.availableFrom) body.append('available_from', formData.availableFrom.trim());
+        if (formData.availableUntil) body.append('available_until', formData.availableUntil.trim());
+      }
 
       // Image — appended last, only if picked
       if (imageUri) {
@@ -228,7 +233,7 @@ const CreateListing = () => {
 
       const token = await getAuthToken(); // import from apiClient
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/listings`,
+        `${process.env.EXPO_PUBLIC_API_BASE_URL}/listings`,
         {
           method: 'POST',
           headers: {
@@ -248,45 +253,25 @@ const CreateListing = () => {
         return;
       }
 
-      // Field-level validation errors from backend
-      if (response.status === 400 && data.errors) {
-        const backendErrors: Record<string, string> = {};
-        for (const err of data.errors) {
-          if (err.path) backendErrors[err.path] = err.message;
-        }
-        setErrors(backendErrors);
-        Alert.alert('Validation Error', 'Please fix the highlighted fields.');
-        return;
-      }
+      console.log('Validation details:', JSON.stringify(data.details, null, 2));
+      console.log('location value:', JSON.stringify(formData.location));
+      console.log('location length:', formData.location.trim().length);
 
-      // Rate limit
-      if (response.status === 429) {
-        Alert.alert('Slow down', 'You are creating listings too quickly. Please wait a moment.');
-        return;
+      if (!response.ok) {
+        console.error('Listing creation failed:', {
+          status: response.status,
+          message: data.message,
+          errors: data.errors,
+          data,
+        });
       }
-
-      // Auth expired
-      if (response.status === 401) {
-        Alert.alert('Session expired', 'Please sign in again.', [
-          { text: 'Sign In', onPress: () => router.replace('/(auth)/login') },
-        ]);
-        return;
-      }
-
-      Alert.alert('Failed', data.message || 'Could not create listing. Please try again.');
 
     } catch (error: any) {
-      // Network / timeout
-      if (error?.message?.includes('Network request failed')) {
-        Alert.alert('No connection', 'Check your internet and try again.');
-        return;
-      }
-      // JSON parse failure (e.g. server returned HTML error page)
-      if (error instanceof SyntaxError) {
-        Alert.alert('Server error', 'Unexpected response from server. Please try again later.');
-        return;
-      }
-      Alert.alert('Error', error?.message || 'An unexpected error occurred.');
+      console.error('Listing creation exception:', {
+        message: error?.message,
+        stack: error?.stack,
+        error,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -520,20 +505,64 @@ const CreateListing = () => {
               </View>
 
               <Text style={styles.label}>Availability Window</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.availableFrom}
-                onChangeText={(value) => updateField('availableFrom', value)}
-                placeholder="Available from (YYYY-MM-DD)"
-                placeholderTextColor="#9ca3af"
-              />
-              <TextInput
-                style={styles.input}
-                value={formData.availableUntil}
-                onChangeText={(value) => updateField('availableUntil', value)}
-                placeholder="Available until (optional, YYYY-MM-DD)"
-                placeholderTextColor="#9ca3af"
-              />
+
+              {/* Available From */}
+              <Pressable
+                onPress={() => setShowFromPicker(true)}
+                style={[styles.input, { justifyContent: 'center' }]}
+              >
+                <Text style={{
+                  color: formData.availableFrom ? '#111827' : '#9ca3af',
+                  fontFamily: 'Jost-Regular',
+                  fontSize: 15,
+                }}>
+                  {formData.availableFrom || 'Available from (tap to pick)'}
+                </Text>
+              </Pressable>
+
+              {showFromPicker && (
+                <DateTimePicker
+                  value={formData.availableFrom ? new Date(formData.availableFrom) : new Date()}
+                  mode="date"
+                  minimumDate={new Date()}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selectedDate) => {
+                    setShowFromPicker(Platform.OS === 'ios'); // keep open on iOS
+                    if (event.type === 'dismissed') { setShowFromPicker(false); return; }
+                    if (selectedDate) updateField('availableFrom', formatDate(selectedDate));
+                    if (Platform.OS === 'android') setShowFromPicker(false);
+                  }}
+                />
+              )}
+
+              {/* Available Until */}
+              <Pressable
+                onPress={() => setShowUntilPicker(true)}
+                style={[styles.input, { justifyContent: 'center', marginTop: 8 }]}
+              >
+                <Text style={{
+                  color: formData.availableUntil ? '#111827' : '#9ca3af',
+                  fontFamily: 'Jost-Regular',
+                  fontSize: 15,
+                }}>
+                  {formData.availableUntil || 'Available until (optional)'}
+                </Text>
+              </Pressable>
+
+              {showUntilPicker && (
+                <DateTimePicker
+                  value={formData.availableUntil ? new Date(formData.availableUntil) : new Date()}
+                  mode="date"
+                  minimumDate={formData.availableFrom ? new Date(formData.availableFrom) : new Date()}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selectedDate) => {
+                    setShowUntilPicker(Platform.OS === 'ios');
+                    if (event.type === 'dismissed') { setShowUntilPicker(false); return; }
+                    if (selectedDate) updateField('availableUntil', formatDate(selectedDate));
+                    if (Platform.OS === 'android') setShowUntilPicker(false);
+                  }}
+                />
+              )}
             </>
           )}
 
@@ -608,6 +637,7 @@ const CreateListing = () => {
           )}
 
           <Text style={styles.label}>Pickup Location</Text>
+          <Text className='mb-2 text-sm text-red-500'>Must be more than 3 characters</Text>
           <TextInput
             style={[styles.input, errors.location && styles.inputError]}
             value={formData.location}

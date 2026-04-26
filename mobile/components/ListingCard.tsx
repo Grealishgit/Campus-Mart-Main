@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, Image } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Listing, TransactionType } from '@/types';
+import { getCurrentUser } from '@/lib/authService'
 
 interface ListingCardProps {
     listing: Listing;
@@ -9,7 +10,10 @@ interface ListingCardProps {
     onFavoritePress?: () => void;
     isFavorited?: boolean;
     cardWidth?: number;
+    userId?: string | null;
 }
+
+
 
 const ListingCard: React.FC<ListingCardProps> = ({
     listing,
@@ -17,8 +21,23 @@ const ListingCard: React.FC<ListingCardProps> = ({
     onFavoritePress,
     isFavorited = false,
     cardWidth,
+    userId,
 }) => {
     const isLease = listing.type === TransactionType.LEASE;
+
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const sellerId = (listing as any).userId;
+    const isOwner = !!(currentUserId && sellerId && currentUserId === sellerId);
+
+
+    useEffect(() => {
+        const init = async () => {
+            const me = await getCurrentUser();
+            const user = (me.data as any)?.user ?? me.data;
+            if (user?.id) setCurrentUserId(String(user.id));
+        };
+        init();
+    }, []);
 
     return (
         <Pressable
@@ -28,6 +47,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
                 width: cardWidth,
                 aspectRatio: 3 / 4,
                 shadowColor: '#6769ef',
+                backgroundColor: isOwner ? '#6769ef' : '#ffffff',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.08,
                 shadowRadius: 8,
@@ -42,6 +62,13 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     resizeMode="cover"
                 />
 
+                {isOwner && (
+                    <View className="absolute mt-20 left-[30%] justify-center bg-primary items-center gap-1 px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.8)' }}>
+                        <Text className='text-sm font-semibold text-primary'>Owned by You</Text>
+                    </View>
+                )}
+
                 {/* Gradient scrim — gives badges contrast on any image */}
                 <View
                     className="absolute inset-0"
@@ -52,20 +79,30 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     }}
                 />
 
-                {/* Type badge */}
-                <View
-                    className="absolute top-2.5 left-2.5 flex-row items-center gap-1 px-2.5 py-1 rounded-full"
-                    style={{ backgroundColor: isLease ? '#6769ef' : '#10b981' }}
-                >
-                    <Ionicons
-                        name={isLease ? 'time-outline' : 'pricetag-outline'}
-                        size={10}
-                        color="white"
-                    />
-                    <Text className="text-[10px] tracking-widest text-white uppercase font-display-bold">
-                        {isLease ? 'Lease' : 'Sale'}
-                    </Text>
+                <View className='flex-row absolute top-2.5 left-2.5 items-center'>
+                    {listing.condition && (
+                        <View className="">
+                            {listing.isVerified && (
+                                <MaterialIcons name="verified" size={16} color="#3b82f6" />
+                            )}
+                        </View>
+                    )}
+                    <View
+                        className=" flex-row items-center gap-1 px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: isLease ? '#6769ef' : '#10b981' }}
+                    >
+
+                        <Ionicons
+                            name={isLease ? 'time-outline' : 'pricetag-outline'}
+                            size={10}
+                            color="white"
+                        />
+                        <Text className="text-xs tracking-widest text-white font-display-bold">
+                            {isLease ? 'Lease' : 'Sale'}
+                        </Text>
+                    </View>
                 </View>
+
 
                 {/* Favourite button */}
                 <Pressable
@@ -85,42 +122,35 @@ const ListingCard: React.FC<ListingCardProps> = ({
                 </Pressable>
 
                 {/* Condition chip — only if present */}
-                {listing.condition && (
-                    <View
-                        className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md"
-                        style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
-                    >
-                        <Text className="text-[10px] text-white font-display-medium capitalize">
-                            {listing.condition}
-                        </Text>
-                    </View>
-                )}
+
             </View>
 
             {/* ── Content ───────────────────────────── */}
             <View className="gap-1 p-3" style={{ flex: 1 }}>
                 <View className='flex-row items-center justify-between w-full'>
                     <Text
-                        className="text-sm leading-tight text-gray-900 font-display-semibold"
-                        numberOfLines={1}>
+                        className="text-sm leading-tight font-display-semibold"
+                        style={{ color: isOwner ? '#ffffff' : '#111827' }} // ✅
+                        numberOfLines={1}
+                    >
                         {listing.title.length > 15 ? listing.title.slice(0, 15) + '...' : listing.title}
                     </Text>
                     {/* Price */}
                     <View className="flex-row items-center justify-between">
                         <View className="flex-row items-end justify-end  gap-0.5">
+                            <View>
+                                <Text style={{ color: isOwner ? '#c7d2fe' : '#9ca3af' }} className="text-md font-display">Ksh</Text>
+                                <Text style={{ color: isOwner ? '#ffffff' : '#6769ef' }} className="text-base leading-none font-display-bold">
+                                    {listing.price.toLocaleString()}
+                                </Text>
+                            </View>
 
-                            <Text className="text-gray-400 text-md font-display">Ksh</Text>
-                            <Text className="text-base leading-none font-display-bold text-primary">
-                                {listing.price.toLocaleString()}
-                            </Text>
                             {isLease && listing.priceUnit && (
-                                <Text className="text-3xl text-gray-400 font-display">{listing.priceUnit}</Text>
+                                <Text className="text-sm text-gray-400 font-display">{listing.priceUnit}</Text>
                             )}
                         </View>
 
-                        {listing.isVerified && (
-                            <MaterialIcons name="verified" size={14} color="#3b82f6" />
-                        )}
+
 
                     </View>
                 </View>
@@ -135,10 +165,15 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     ].filter(item => item.value).map((item) => (
                         <View
                             key={item.icon}
-                            className="flex-row items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full"
+                            className="flex-row items-center gap-1 px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: isOwner ? 'rgba(255,255,255,0.2)' : '#f3f4f6' }}
                         >
-                            <Ionicons name={item.icon as any} size={10} color="#9ca3af" />
-                            <Text className="text-[10px] text-gray-500 font-display-medium" numberOfLines={1}>
+                            <Ionicons name={item.icon as any} size={10} color={isOwner ? '#c7d2fe' : '#9ca3af'} />
+                            <Text
+                                className="text-[10px] font-display-medium"
+                                style={{ color: isOwner ? '#e0e7ff' : '#6b7280' }}
+                                numberOfLines={1}
+                            >
                                 {item.value}
                             </Text>
                         </View>

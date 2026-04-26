@@ -145,10 +145,12 @@ const BrowseScreen = () => {
         imageUrl: item.imageUrl || item.image_url || '',
         isVerified: String(item.isVerified || item.is_verified || false),
         description: item.description,
+        sellerId: item.seller?.id ?? item.userId ?? '',
         sellerName: item.seller?.name || item.seller_name || 'Unknown',
         sellerRating: item.seller?.rating || item.seller_rating || 0,
         sellerAvatar: item.seller?.avatarUrl || item.seller_avatar || '',
         sellerVerified: String(item.seller?.isVerified || item.seller_verified || false),
+
       }
     } as any);
   };
@@ -223,14 +225,14 @@ const BrowseScreen = () => {
             )}
 
             {error && !loading && (
-              <View className="p-4 bg-red-50 rounded-lg">
+              <View className="p-4 rounded-lg bg-red-50">
                 <Text className="text-red-600 font-display-medium">Error</Text>
-                <Text className="text-red-500 mt-1">{error}</Text>
+                <Text className="mt-1 text-red-500">{error}</Text>
                 <Pressable
                   onPress={() => searchListings(searchValue, activeCategory, priceRange[0], priceRange[1])}
-                  className="mt-3 px-4 py-2 bg-red-600 rounded-lg"
+                  className="px-4 py-2 mt-3 bg-red-600 rounded-lg"
                 >
-                  <Text className="text-white text-center font-display-medium">Retry</Text>
+                  <Text className="text-center text-white font-display-medium">Retry</Text>
                 </Pressable>
               </View>
             )}
@@ -292,7 +294,7 @@ const BrowseScreen = () => {
                 <ScrollView className='p-2 px-2 bg-white border-t border-slate-100' showsVerticalScrollIndicator={false}>
                   <Text className="mb-4 ml-4 text-lg tracking-widest uppercase font-display-bold text-primary">Category</Text>
 
-                  <View className="px-4 flex-row gap-2 flex-wrap mb-6">
+                  <View className="flex-row flex-wrap gap-2 px-4 mb-6">
                     {categories.map((cat, index) => (
                       <Pressable onPress={() => handleCategorySelect(cat)}
                         key={`${cat}-${index}`} className={`rounded-xl px-5 py-3 
@@ -304,17 +306,17 @@ const BrowseScreen = () => {
                     ))}
                   </View>
 
-                  <View className="mt-5 mb-8 px-4">
+                  <View className="px-4 mt-5 mb-8">
                     <View className="flex-row items-center justify-between mb-3">
-                      <Text className="text-md tracking-widest uppercase font-display-medium text-slate-400">
+                      <Text className="tracking-widest uppercase text-md font-display-medium text-slate-400">
                         Price Range (KES)
                       </Text>
-                      <Text className="font-display-bold text-lg text-primary">
+                      <Text className="text-lg font-display-bold text-primary">
                         {tempPriceRange[0].toLocaleString()} - {tempPriceRange[1].toLocaleString()}
                       </Text>
                     </View>
 
-                    <View className='flex justify-center items-center'>
+                    <View className='flex items-center justify-center'>
                       <MultiSlider
                         values={tempPriceRange}
                         onValuesChange={setTempPriceRange}

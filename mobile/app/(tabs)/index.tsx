@@ -86,6 +86,7 @@ const HomeScreen = () => {
         imageUrl: item.imageUrl || item.image_url || '',
         isVerified: String(item.isVerified || item.is_verified || false),
         description: item.description,
+        sellerId: item.seller?.id ?? item.userId ?? '',
         sellerName: item.seller?.name || item.seller_name || 'Unknown',
         sellerRating: item.seller?.rating || item.seller_rating || 0,
         sellerAvatar: item.seller?.avatarUrl || item.seller_avatar || '',
@@ -212,7 +213,7 @@ const HomeScreen = () => {
 
           {/* Loading State */}
           {loading && (
-            <View className="flex-1 items-center justify-center py-20">
+            <View className="items-center justify-center flex-1 py-20">
               <ActivityIndicator size="large" color="#6769ef" />
               <Text className="mt-4 text-gray-600">Loading listings...</Text>
             </View>
@@ -220,14 +221,14 @@ const HomeScreen = () => {
 
           {/* Error State */}
           {error && !loading && (
-            <View className="mx-4 p-4 bg-red-50 rounded-lg">
+            <View className="p-4 mx-4 rounded-lg bg-red-50">
               <Text className="text-red-600 font-display-medium">Error</Text>
-              <Text className="text-red-500 mt-1">{error}</Text>
+              <Text className="mt-1 text-red-500">{error}</Text>
               <Pressable
                 onPress={loadData}
-                className="mt-3 px-4 py-2 bg-red-600 rounded-lg"
+                className="px-4 py-2 mt-3 bg-red-600 rounded-lg"
               >
-                <Text className="text-white text-center font-display-medium">Retry</Text>
+                <Text className="text-center text-white font-display-medium">Retry</Text>
               </Pressable>
             </View>
           )}
@@ -261,7 +262,7 @@ const HomeScreen = () => {
                 <Text className="mt-4 text-lg text-gray-500 font-display-medium">
                   No listings found
                 </Text>
-                <Text className="mt-2 text-sm text-gray-400 text-center">
+                <Text className="mt-2 text-sm text-center text-gray-400">
                   Try changing your filters or check back later
                 </Text>
               </View>

@@ -177,9 +177,9 @@ const LeaseScreen = () => {
 
         <View className="flex-row justify-between gap-2 p-4">
           <View className="flex-1 gap-1 p-4 border rounded-lg bg-primary/10 border-primary/20">
-            <Text className="tracking-wider uppercase text-md font-display-bold text-primary">Items Out</Text>
+            <Text className="tracking-wider uppercase text-md font-display-bold text-primary">Items Rented</Text>
             <Text className="text-4xl text-center font-display-semibold text-primary">
-              {String(activeOrders.length).padStart(2, '0')}
+              {String(activeOrders.length)}
             </Text>
           </View>
 
