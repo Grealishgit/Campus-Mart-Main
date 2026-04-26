@@ -87,10 +87,10 @@ export default function RootLayout() {
 
     const rootSegment = segments[0] as string | undefined;
     const secondSegment = String(segments[1] ?? "");
-    const isAdminRoute = rootSegment === "admin";
-    const isAdminLoginRoute = isAdminRoute && secondSegment === "login";
+    // const isAdminRoute = rootSegment === "admin";
+    // const isAdminLoginRoute = isAdminRoute && secondSegment === "login";
     const isInPublicRoute =
-      rootSegment === "(auth)" || rootSegment === "(onboard)" || isAdminLoginRoute;
+      rootSegment === "(auth)" || rootSegment === "(onboard)";
 
     if (isAuth) {
       // Wait until role is known before deciding where authenticated users should land.
@@ -106,19 +106,19 @@ export default function RootLayout() {
       }
 
       // Prevent non-admin accounts from accessing admin screens.
-      if (isAdminRoute && userRole !== "admin") {
-        router.replace("/(tabs)" as never);
-      }
+      // if (isAdminRoute && userRole !== "admin") {
+      //   router.replace("/(tabs)" as never);
+      // }
       return;
     }
 
-    if (isAdminRoute && !isAdminLoginRoute) {
-      router.replace("/admin/login" as never);
-      return;
-    }
+    // if (isAdminRoute && !isAdminLoginRoute) {
+    //   router.replace("/admin/login" as never);
+    //   return;
+    // }
 
     if (!isInPublicRoute) {
-      router.replace("/(auth)/SignIn" as never);
+      router.replace("/(auth)/login" as never);
     }
   }, [isAuth, userRole, segments, router]);
 

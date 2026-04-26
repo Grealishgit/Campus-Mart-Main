@@ -11,19 +11,15 @@ const registerSchema = z.object({
       .max(100, 'Name cannot exceed 100 characters')
       .trim(),
     email: z.string()
-      .email('Invalid email format')
-      .refine(
-        (email) => /^[^\s@]+@[^\s@]+\.(ac\.ke|edu)$/.test(email),
-        'Must be a university email (.ac.ke or .edu)'
-      ),
+      .email('Invalid email format'),
     password: z.string()
       .min(8, 'Password must be at least 8 characters')
       .regex(/[A-Z]/, 'Password must contain uppercase letter')
       .regex(/[0-9]/, 'Password must contain number')
       .regex(/[^A-Za-z0-9]/, 'Password must contain special character'),
+    role: z.enum(['student', 'vendor']).default('student'), // ✅ add this
     faculty: z.string().max(100).optional(),
-    year: z.coerce.number().int().min(2000).max(2100).optional(),
-    graduation_year: z.coerce.number().int().min(2000).max(2100).optional(),
+    location: z.string().max(100).optional(),
     phone: z.string().min(7).max(20).optional(),
   }),
 });
@@ -44,7 +40,7 @@ const updateProfileSchema = z.object({
       .max(100, 'Name cannot exceed 100 characters')
       .optional(),
     faculty: z.string().max(100).optional(),
-    graduation_year: z.coerce.number().int().min(2000).max(2100).optional(),
+    location: z.string().max(100).optional(),
   }),
 });
 

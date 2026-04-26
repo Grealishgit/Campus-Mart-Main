@@ -15,9 +15,9 @@ export interface RegisterRequest {
   email: string;
   password: string;
   faculty?: string;
-  year?: string | number;
   phone?: string;
-  graduation_year?: number;
+  location?: string;
+  role?: string;
 }
 
 export interface LoginRequest {
@@ -25,10 +25,7 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface AdminLoginRequest {
-  email: string;
-  password: string;
-}
+
 
 export interface ChangePasswordRequest {
   currentPassword: string;
@@ -43,7 +40,7 @@ export interface User {
   avatar_url?: string;
   is_verified?: boolean;
   faculty?: string;
-  graduation_year?: number;
+  location?: string;
   rating?: number;
   created_at?: string;
   updated_at?: string;
@@ -98,23 +95,7 @@ export async function loginUser(
   return response;
 }
 
-/**
- * Login admin user from the separate admin portal.
- */
-export async function loginAdmin(
-  data: AdminLoginRequest,
-): Promise<ApiResponse<AuthResponse>> {
-  const response = await apiRequest<AuthResponse>("/admin/login", {
-    method: "POST",
-    body: data,
-  });
 
-  if (response.success && response.data?.token) {
-    await setAuthToken(response.data.token);
-  }
-
-  return response;
-}
 
 /**
  * Get current authenticated user

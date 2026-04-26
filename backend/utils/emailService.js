@@ -13,6 +13,26 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+
+const sendOTPEmail = async (email, firstName, otp) => {
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Your Campus Mart Verification Code',
+    html: `
+      <div class="container">
+        <div class="header"><h2>Verify Your Account</h2></div>
+        <div class="content">
+          <p>Hi ${firstName},</p>
+          <p>Your verification code is:</p>
+          <h1 style="letter-spacing: 8px; color: #6769ef;">${otp}</h1>
+          <p style="color: #999;">Expires in 10 minutes.</p>
+        </div>
+      </div>
+    `,
+  });
+};
+
 /**
  * Send email verification link
  */

@@ -10,7 +10,7 @@ const DEFAULT_CONDITIONS = [
   'Like New',
   'Excellent',
   'Good',
-  'Used - Like New',
+  'Used Like New',
   'Fair',
 ];
 

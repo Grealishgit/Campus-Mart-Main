@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url      TEXT,
   is_verified     BOOLEAN       DEFAULT FALSE,
   faculty         VARCHAR(100),
-  graduation_year INTEGER,
+  location        VARCHAR(100), 
   rating          DECIMAL(2,1)  DEFAULT 0.0,
   total_sales     INTEGER       DEFAULT 0,
   active_listings INTEGER       DEFAULT 0,

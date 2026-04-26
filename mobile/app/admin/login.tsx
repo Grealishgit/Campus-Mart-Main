@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-import { loginAdmin } from "@/lib/authService";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdminLoginScreen() {
@@ -21,42 +21,14 @@ export default function AdminLoginScreen() {
 
   const router = useRouter();
 
-  const handleAdminLogin = async () => {
-    if (!email.trim() || !password) {
-      Alert.alert("Missing details", "Enter both admin email and password.");
-      return;
-    }
 
-    setLoading(true);
-
-    try {
-      const response = await loginAdmin({
-        email: email.trim(),
-        password,
-      });
-
-      if (!response.success || response.data?.user?.role !== "admin") {
-        Alert.alert(
-          "Admin login failed",
-          response.error || "This account does not have admin access.",
-        );
-        return;
-      }
-
-      router.replace("/admin/dashboard" as never);
-    } catch {
-      Alert.alert("Admin login failed", "Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
       <View className="flex-1 px-6 py-5">
         <View className="flex-row items-center justify-between">
           <Pressable
-            onPress={() => router.replace("/(auth)/SignIn" as never)}
+            onPress={() => router.replace("/(auth)/login" as never)}
             className="items-center justify-center rounded-full h-11 w-11 bg-white/10"
           >
             <Ionicons name="chevron-back" size={24} color="#fff" />
@@ -117,7 +89,7 @@ export default function AdminLoginScreen() {
             </Pressable>
           </View>
 
-          <Pressable
+          {/* <Pressable
             onPress={handleAdminLogin}
             disabled={loading}
             className={`h-14 items-center justify-center rounded-2xl ${
@@ -131,10 +103,10 @@ export default function AdminLoginScreen() {
                 Continue to dashboard
               </Text>
             )}
-          </Pressable>
+          </Pressable> */}
 
           <Pressable
-            onPress={() => router.replace("/(auth)/SignIn" as never)}
+            onPress={() => router.replace("/(auth)/login" as never)}
             className="items-center mt-5"
           >
             <Text className="text-sm text-slate-400 font-display-medium">
