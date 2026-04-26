@@ -33,6 +33,19 @@ const YEAR_OPTIONS = Array.from({ length: 25 }, (_, index) =>
   String(2015 + index),
 );
 
+const LOCATION_OPTIONS = [
+  "Kathemboni",
+  "CP",
+  "Katoloni",
+  "Kathayoni",
+  "Machakos CBD",
+  "Kathale",
+  "Eastleigh",
+  "Kaseoni",
+  "Kwa Mzee",
+  "Diaspora"
+]
+
 type OptionPickerModalProps = {
   visible: boolean;
   title: string;
@@ -56,37 +69,39 @@ const OptionPickerModal = ({
     transparent
     onRequestClose={onClose}
   >
-    <View className="justify-end flex-1 bg-black/40">
+    <View className="justify-end flex-1 gap-2 bg-black/40">
       <View className="rounded-t-3xl bg-white px-4 pt-5 pb-6 max-h-[70%]">
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-xl text-gray-800 font-display-bold">{title}</Text>
-          <Pressable onPress={onClose} className="px-3 py-2 rounded-lg bg-gray-100">
+          <Pressable onPress={onClose} className="px-3 py-2 bg-gray-100 rounded-lg">
             <Text className="text-gray-700 font-display-medium">Close</Text>
           </Pressable>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          {options.map((option) => {
-            const isSelected = selectedValue === option;
-            return (
-              <Pressable
-                key={option}
-                onPress={() => {
-                  onSelect(option);
-                  onClose();
-                }}
-                className={`mb-2 flex-row items-center justify-between rounded-xl border px-4 py-3 ${isSelected ? "border-primary bg-primary/10" : "border-gray-200 bg-white"
-                  }`}
-              >
-                <Text
-                  className={`text-base ${isSelected ? "text-primary font-display-semibold" : "text-gray-700 font-display"}`}
+          <View className="flex-row flex-wrap gap-2">
+            {options.map((option) => {
+              const isSelected = selectedValue === option;
+              return (
+                <Pressable
+                  key={option}
+                  onPress={() => {
+                    onSelect(option);
+                    onClose();
+                  }}
+                  className={`rounded-xl flex-row gap-2 border px-4 py-3 ${isSelected ? "border-primary bg-primary/10" : "border-gray-200 bg-white"
+                    }`}
                 >
-                  {option}
-                </Text>
-                {isSelected && <Ionicons name="checkmark" size={18} color="#6769ef" />}
-              </Pressable>
-            );
-          })}
+                  <Text
+                    className={`text-base ${isSelected ? "text-primary font-display-semibold" : "text-gray-700 font-display"}`}
+                  >
+                    {option}
+                  </Text>
+                  {isSelected && <Ionicons name="checkmark" size={18} color="#6769ef" />}
+                </Pressable>
+              );
+            })}
+          </View>
         </ScrollView>
       </View>
     </View>
@@ -101,7 +116,8 @@ const SignUpScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [facultyPickerOpen, setFacultyPickerOpen] = useState(false);
   const [yearPickerOpen, setYearPickerOpen] = useState(false);
-  const [error,setError] = useState("");
+  const [role, setRole] = useState<'student' | 'vendor'>('student');
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState<{
     fullName: string;
@@ -110,6 +126,7 @@ const SignUpScreen = () => {
     year: string;
     phone: string;
     password: string;
+    location: string;
   }>({
     fullName: "",
     email: "",
@@ -117,6 +134,7 @@ const SignUpScreen = () => {
     year: "",
     phone: "",
     password: "",
+    location: "",
   });
 
   const [errors, setErrors] = useState<Partial<typeof formData>>({});
@@ -125,16 +143,22 @@ const SignUpScreen = () => {
     const newErrors: Partial<typeof formData> = {};
     const normalizedPhone = formData.phone.replace(/\s+/g, "");
 
-    if (!formData.fullName.trim())
-      newErrors.fullName = "Full name is required.";
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
 
     if (!formData.email.trim()) newErrors.email = "Email is required.";
-    else if (!/^[^\s@]+@[^\s@]+\.(ac\.ke|edu)$/.test(formData.email))
+    else if (role === 'student' && !/^[^\s@]+@[^\s@]+\.(ac\.ke|edu)$/.test(formData.email))
       newErrors.email = "Must be a valid university email (.ac.ke or .edu).";
+    else if (role === 'vendor' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+      newErrors.email = "Must be a valid email address.";
 
-    if (!formData.faculty.trim()) newErrors.faculty = "Faculty is required.";
+    if (role === 'student') {
+      if (!formData.faculty.trim()) newErrors.faculty = "Faculty is required.";
+      if (!formData.year.trim()) newErrors.year = "Year is required.";
+    }
 
-    if (!formData.year.trim()) newErrors.year = "Year of study is required.";
+    if (role === 'vendor') {
+      if (!formData.location.trim()) newErrors.location = "Location is required.";
+    }
 
     if (!normalizedPhone.trim()) newErrors.phone = "Phone number is required.";
     else if (!/^[0-9]{9,13}$/.test(normalizedPhone))
@@ -165,12 +189,12 @@ const SignUpScreen = () => {
 
       const response = await registerUser({
         name: formData.fullName.trim(),
-        email: formData.email.trim().toLowerCase(),
+        email: formData.email.trim(),
         password: formData.password,
-        faculty: formData.faculty || undefined,
-        year: formData.year || undefined,
+        role,
+        faculty: role === 'student' ? formData.faculty || undefined : undefined,
         phone: normalizedPhone || undefined,
-        graduation_year: Number.isNaN(selectedYear) ? undefined : selectedYear,
+        location: role === 'vendor' ? formData.location || undefined : undefined,
       });
 
       if (response.success) {
@@ -207,7 +231,7 @@ const SignUpScreen = () => {
           <Ionicons name="chevron-back" size={24} color="primary" />
         </Pressable>
         <Text className="flex-1 pr-10 text-3xl text-center text-primary font-display-bold">
-          Campus Mart
+          Create Your Account
         </Text>
       </View>
 
@@ -216,18 +240,29 @@ const SignUpScreen = () => {
 
         <View className="flex-1 px-4">
           {/* Title Section */}
-          <View className="pt-6 pb-8">
-            <Text className="text-3xl text-center font-display-bold">
-              Create Your Account
-            </Text>
-            <Text className="mt-2 text-center text-gray-500 text-md font-display">
+          <View className="pt-2 pb-4">
+            <Text className="mt-2 text-xl text-center text-gray-500 font-display">
               Join thousands of students at your university.
             </Text>
-          
+
           </View>
 
           {/* Form */}
-          <View className="space-y-6">
+          <View className="space-y-5">
+            {/* Role Toggle */}
+            <View className="flex-row p-1 mb-3 bg-gray-200 rounded-xl">
+              {(['student', 'vendor'] as const).map((r) => (
+                <Pressable
+                  key={r}
+                  onPress={() => setRole(r)}
+                  className={`flex-1 py-3 rounded-xl items-center ${role === r ? 'bg-primary py-2.5' : ''}`}
+                >
+                  <Text className={`text-base font-display-semibold capitalize ${role === r ? 'text-white' : 'text-gray-600'}`}>
+                    {r}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
             <View className="space-y-2">
               <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
                 Full Name
@@ -257,7 +292,7 @@ const SignUpScreen = () => {
             {/* University Email */}
             <View className="mt-4 space-y-2">
               <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-                University Email
+                {role === 'student' ? " University Email" : "Email Address"}
               </Text>
               <View
                 className={`flex-row items-center bg-white border rounded-xl ${errors.email ? "border-red-400" : "border-gray-400"}`}
@@ -280,13 +315,13 @@ const SignUpScreen = () => {
                 <Text className="ml-1 text-sm text-red-500">{errors.email}</Text>
               ) : (
                 <Text className="mt-3 ml-1 font-medium text-md text-primary">
-                  Must end in .ac.ke or .edu
+                    {role === 'student' ? 'Must end in .ac.ke or .edu' : 'A valid email address'}
                 </Text>
               )}
             </View>
 
             {/* Faculty and Year Row */}
-            <View className="flex-row gap-4 mt-4">
+            {role === 'student' && (
               <View className="flex-1 space-y-2">
                 <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
                   Faculty
@@ -310,27 +345,30 @@ const SignUpScreen = () => {
                   </Text>
                 )}
               </View>
-              <View className="flex-1 space-y-2">
-                <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
-                  Graduation Year
-                </Text>
-                <Pressable
-                  onPress={() => setYearPickerOpen(true)}
-                  className={`bg-white border rounded-xl ${errors.year ? "border-red-400" : "border-gray-400"}`}
-                >
-                  <View className="flex-row items-center justify-between p-4">
-                    <Text
-                      className={`text-base ${formData.year ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
-                    >
-                      {formData.year || "Select year"}
-                    </Text>
-                    <Ionicons name="chevron-down" size={18} color="#6b7280" />
-                  </View>
-                </Pressable>
-                {errors.year && (
-                  <Text className="ml-1 text-sm text-red-500">{errors.year}</Text>
-                )}
-              </View>
+            )}
+            <View className="flex-row gap-4 mt-4">
+              {role === 'vendor' && (
+                <View className="flex-1 space-y-2">
+                  <Text className="mb-3 ml-1 text-lg text-gray-700 font-display-medium">
+                    Location
+                  </Text>
+                  <Pressable
+                    onPress={() => setYearPickerOpen(true)}
+                    className={`bg-white border rounded-xl ${errors.year ? "border-red-400" : "border-gray-400"}`}
+                  >
+                    <View className="flex-row items-center justify-between p-4">
+                      <Text
+                        className={`text-base ${formData.location ? "text-gray-900 font-display" : "text-gray-400 font-display"}`}
+                      >
+                        {formData.location || "Select location"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={18} color="#6b7280" />
+                    </View>
+                  </Pressable>
+
+                </View>
+              )}
+
             </View>
 
             {/* Phone Number */}
@@ -401,9 +439,9 @@ const SignUpScreen = () => {
               )}
             </View>
 
-              <Text className="mt-1 text-center text-red-500 text-md font-display">
-                {error}
-            </Text>
+            {/* <Text className="mt-1 text-center text-red-500 text-md font-display">
+              {error}
+            </Text> */}
 
             {/* Terms Checkbox */}
             <Pressable
@@ -473,13 +511,13 @@ const SignUpScreen = () => {
 
         <OptionPickerModal
           visible={yearPickerOpen}
-          title="Select Year"
-          options={YEAR_OPTIONS}
-          selectedValue={formData.year}
+          title="Select Location"
+          options={LOCATION_OPTIONS}
+          selectedValue={formData.location}
           onClose={() => setYearPickerOpen(false)}
           onSelect={(value) => {
-            setFormData({ ...formData, year: value });
-            setErrors({ ...errors, year: undefined });
+            setFormData({ ...formData, location: value });
+            setErrors({ ...errors, location: undefined });
           }}
         />
 

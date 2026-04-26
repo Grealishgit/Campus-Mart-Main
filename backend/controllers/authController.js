@@ -1,6 +1,9 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { sendOTPEmail } = require('../utils/emailService');
+
 const { AppError, asyncHandler } = require('../utils/errorHandler');
 
 // Generate JWT token
@@ -92,6 +95,63 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
+// @desc    Send OTP to user's email
+// @route   POST /api/auth/send-otp
+// @access  Public
+const sendOTP = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const { rows } = await pool.query(
+    'SELECT id, name FROM users WHERE email = $1 OR LOWER(email) = LOWER($1)',
+    [email]
+  );
+  if (!rows[0]) throw new AppError('User not found.', 404, 'USER_NOT_FOUND');
+
+  const otp = crypto.randomInt(100000, 999999).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+  await pool.query(
+    'UPDATE users SET otp_code = $1, otp_expires_at = $2 WHERE id = $3',
+    [otp, expiresAt, rows[0].id]
+  );
+
+  await sendOTPEmail(email, rows[0].name.split(' ')[0], otp);
+
+  res.json({ success: true, message: 'OTP sent to your email.' });
+});
+
+// @desc    Verify OTP and mark user as verified
+// @route   POST /api/auth/verify-otp
+// @access  Public
+const verifyOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  const { rows } = await pool.query(
+    'SELECT id, otp_code, otp_expires_at FROM users WHERE email = $1 OR LOWER(email) = LOWER($1)',
+    [email]
+  );
+  if (!rows[0]) throw new AppError('User not found.', 404, 'USER_NOT_FOUND');
+
+  const user = rows[0];
+
+  if (!user.otp_code || user.otp_code !== otp) {
+    throw new AppError('Invalid OTP.', 400, 'INVALID_OTP');
+  }
+
+  if (new Date() > new Date(user.otp_expires_at)) {
+    throw new AppError('OTP has expired.', 400, 'OTP_EXPIRED');
+  }
+
+  await pool.query(
+    'UPDATE users SET is_verified = true, otp_code = NULL, otp_expires_at = NULL WHERE id = $1',
+    [user.id]
+  );
+
+  res.json({ success: true, message: 'Email verified successfully.' });
+});
+
 // @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
@@ -321,6 +381,8 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 module.exports = {
   registerUser,
+  sendOTP,
+  verifyOTP,
   loginUser,
   getCurrentUser,
   updateProfile,

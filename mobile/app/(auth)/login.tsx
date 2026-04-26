@@ -209,15 +209,6 @@ const SignInScreen = () => {
               </Text>
             </Pressable>
           </View>
-
-          <Pressable
-            onPress={() => router.push("/admin/login" as any)}
-            className="items-center justify-center rounded-xl border border-slate-300 py-3"
-          >
-            <Text className="text-base text-slate-700 font-display-semibold">
-              Admin login
-            </Text>
-          </Pressable>
         </View>
       </View>
     </SafeAreaView>
