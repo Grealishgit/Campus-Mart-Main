@@ -32,9 +32,9 @@ const SignInScreen = () => {
   const validate = (): boolean => {
     const newErrors: Partial<typeof formData> = {};
 
-    if (!formData.email.trim()) newErrors.email = "Email is required.";
-    else if (!/^[^\s@]+@[^\s@]+\.(ac\.ke|edu)$/.test(formData.email))
-      newErrors.email = "Must be a valid university email (.ac.ke or .edu).";
+    // if (!formData.email.trim()) newErrors.email = "Email is required.";
+    // else if (!/^[^\s@]+@[^\s@]+\.(ac\.ke|edu)$/.test(formData.email))
+    //   newErrors.email = "Must be a valid university email (.ac.ke or .edu).";
 
     if (!formData.password) newErrors.password = "Password is required.";
 
@@ -54,15 +54,11 @@ const SignInScreen = () => {
 
     if (response.success) {
       const user = response.data?.user;
-      Alert.alert("Success", `Welcome back, ${user?.name}!`);
+      // Alert.alert("Success", `Welcome back, ${user?.name}!`);
       console.log("Logged in user:", user?.role);
 
-      // Route based on role
-      if (user?.role === "admin") {
-        router.replace("/admin/dashboard" as never);
-      } else {
-        router.replace("/(tabs)");
-      }
+      router.replace("/(tabs)" as never);
+
     } else {
       Alert.alert(
         "Login Failed",
@@ -132,7 +128,7 @@ const SignInScreen = () => {
               </Text>
             ) : (
               <Text className="mt-3 ml-1 font-medium text-md text-primary">
-                Your Yegistered School email must end in .ac.ke or .edu
+                  Your registered email address
               </Text>
             )}
           </View>

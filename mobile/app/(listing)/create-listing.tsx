@@ -78,7 +78,7 @@ const CreateListing = () => {
           setSellerId(String(userData.id));
         } else {
           Alert.alert('Authentication Required', 'Please sign in again.', [
-            { text: 'OK', onPress: () => router.replace('/(auth)/SignIn') },
+            { text: 'OK', onPress: () => router.replace('/(auth)/login') },
           ]);
           return;
         }

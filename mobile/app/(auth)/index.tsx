@@ -488,7 +488,7 @@ const SignUpScreen = () => {
               <Text className="text-lg text-gray-500 font-display">
                 Already have an account?{" "}
               </Text>
-              <Pressable onPress={() => router.push("/(auth)/SignIn")}>
+              <Pressable onPress={() => router.navigate("/(auth)/login")}>
                 <Text className="text-xl font-display-bold text-primary">
                   Sign In
                 </Text>

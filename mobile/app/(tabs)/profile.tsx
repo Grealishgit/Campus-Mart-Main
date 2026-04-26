@@ -8,41 +8,75 @@ import { getUserProfile, logout, updateProfile, deleteAccount } from '@/lib/auth
 import { getFavorites } from '@/lib/favoriteService'
 import profile from '../../assets/imgs/profile.jpeg'
 
+// ─── Role helpers ─────────────────────────────────────────────
+const ROLE_THEME = {
+  student: { accent: '#6769ef', badge: 'Student' },
+  vendor: { accent: '#f59e0b', badge: 'Vendor' },
+} as const;
 
+type Role = keyof typeof ROLE_THEME;
+const getTheme = (role?: string) =>
+  ROLE_THEME[(role as Role) ?? 'student'] ?? ROLE_THEME.student;
+
+// Student tabs include Favorites; vendor tabs include Orders received
+const getTabsForRole = (role?: string) => {
+  if (role === 'vendor') {
+    return [
+      { label: 'My Listings', value: 'my listings' },
+      { label: 'Orders', value: 'orders' },
+      { label: 'Reviews', value: 'reviews' },
+    ];
+  }
+  return [
+    { label: 'My Listings', value: 'my listings' },
+    { label: 'Favorites', value: 'favorites' },
+    { label: 'Reviews', value: 'reviews' },
+  ];
+};
 
 const ProfileScreen = () => {
-  const [activeTab, setActiveTab] = useState<'my listings' | 'favorites' | 'reviews'>('my listings');
-  const [editProfile, setEditProfile] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('my listings');
+  const [editProfile, setEditProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [myItems, setMyItems] = useState<any[]>([]);
   const [favorites, setFavorites] = useState<any[]>([]);
-  const [listStats, setListStats] = useState([
-    { label: 'Active', val: '0' },
-    { label: 'Sold', val: '0' },
-    { label: 'Rating', val: '0', icon: true }
-  ]);
+
+  const theme = getTheme(userData?.role);
+  const tabs = getTabsForRole(userData?.role);
+
+  // ─── Stats — different per role ───────────────────────────
+  const listStats = userData
+    ? userData.role === 'vendor'
+      ? [
+        { label: 'Active', val: String(userData.active_listings ?? 0) },
+        { label: 'Sold', val: String(userData.total_sales ?? 0) },
+        // { label: 'Rating', val: String(userData.rating?.toFixed(1) ?? '0'), icon: true },
+      ]
+      : [
+        { label: 'Listings', val: String(userData.active_listings ?? 0) },
+        { label: 'Orders', val: String(userData.orders_count ?? 0) },
+        // { label: 'Rating', val: String(userData.rating?.toFixed(1) ?? '0'), icon: true },
+      ]
+    : [
+      { label: 'Listings', val: '0' },
+      { label: 'Orders', val: '0' },
+      { label: 'Rating', val: '0', icon: true },
+    ];
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fetch user profile
+
         const profileResult = await getUserProfile();
         if (profileResult.success && profileResult.data) {
-          const profileData = profileResult.data as any;
-          setUserData(profileData);
-          setListStats([
-            { label: 'Active', val: String(profileData.active_listings || 0) },
-            { label: 'Sold', val: String(profileData.sold_count || 0) },
-            { label: 'Rating', val: String(profileData.rating?.toFixed(1) || '0'), icon: true }
-          ]);
+          const data = (profileResult.data as any).user ?? profileResult.data;
+          setUserData(data);
         }
-        
-        // Fetch my listings
+
         const listingsResult = await getMyListings() as any;
         if (listingsResult.success && listingsResult.data?.listings) {
           setMyItems(listingsResult.data.listings);
@@ -76,20 +110,32 @@ const ProfileScreen = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      router.replace('/(auth)/SignIn' as never);
+      router.replace('/(auth)/login' as never);
     } catch {
       Alert.alert('Error', 'Failed to logout');
     }
   };
 
-  // Edit Profile Form State
+  // ─── Edit form — fields differ by role ────────────────────
   const [editFormData, setEditFormData] = useState({
     name: userData?.name || '',
-    email: userData?.email || '',
     faculty: userData?.faculty || '',
     graduation_year: userData?.graduation_year?.toString() || '',
+    location: userData?.location || '',
   });
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Keep form in sync when userData loads
+  useEffect(() => {
+    if (userData) {
+      setEditFormData({
+        name: userData.name || '',
+        faculty: userData.faculty || '',
+        graduation_year: userData.graduation_year?.toString() || '',
+        location: userData.location || '',
+      });
+    }
+  }, [userData]);
 
   const handleSaveProfile = async () => {
     if (!editFormData.name.trim()) {
@@ -98,17 +144,24 @@ const ProfileScreen = () => {
     }
     try {
       setSavingProfile(true);
-      const updateData = {
-        ...editFormData,
-        graduation_year: editFormData.graduation_year ? parseInt(editFormData.graduation_year) : undefined,
-      };
+      const updateData =
+        userData?.role === 'vendor'
+          ? { name: editFormData.name, location: editFormData.location }
+          : {
+            name: editFormData.name,
+            faculty: editFormData.faculty,
+            graduation_year: editFormData.graduation_year
+              ? parseInt(editFormData.graduation_year)
+              : undefined,
+          };
+
       const result = await updateProfile(updateData);
       if (result.success && result.data) {
-        setUserData(result.data);
+        setUserData((result.data as any).user ?? result.data);
         setEditProfile(false);
         Alert.alert('Success', 'Profile updated successfully');
       } else {
-        Alert.alert('Error', result.message || 'Failed to update profile');
+        Alert.alert('Error', (result as any).message || 'Failed to update profile');
       }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to update profile');
@@ -120,7 +173,7 @@ const ProfileScreen = () => {
   const handleDeleteAccount = async () => {
     Alert.alert(
       'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone.',
+      'Are you sure? This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -134,7 +187,7 @@ const ProfileScreen = () => {
                 await logout();
                 router.replace('/(auth)/SignIn' as never);
               } else {
-                Alert.alert('Error', result.message || 'Failed to delete account');
+                Alert.alert('Error', (result as any).message || 'Failed to delete account');
               }
             } catch (err: any) {
               Alert.alert('Error', err.message || 'Failed to delete account');
@@ -147,239 +200,265 @@ const ProfileScreen = () => {
     );
   };
 
-  const tabs = [
-    { label: 'My Listings', value: 'my listings' },
-    { label: 'Favorites', value: 'favorites' },
-    { label: 'Reviews', value: 'reviews' }
-  ]
+  // ─── Shared listing card ──────────────────────────────────
+  const ListingCard = ({ item }: { item: any }) => (
+    <Pressable
+      className="flex-col w-[48%] gap-2"
+      onPress={() => router.push(`/product-item/${item.id}`)}
+    >
+      <View className="relative overflow-hidden rounded-2xl aspect-square bg-slate-100">
+        <Image source={{ uri: item.imageUrl }} className="object-cover w-full h-full" />
+        <View className="absolute px-2 py-1 rounded-lg top-2 left-2 bg-white/90">
+          <Text className="text-xs tracking-wide uppercase font-display-semibold">{item.category}</Text>
+        </View>
+      </View>
+      <View className="px-1">
+        <Text className="text-base leading-tight truncate font-display-bold">{item.title}</Text>
+        <Text className="text-sm font-display-bold mt-0.5" style={{ color: theme.accent }}>
+          Ksh {item.price?.toFixed(2)}
+        </Text>
+      </View>
+    </Pressable>
+  );
 
   return (
-    <SafeAreaView className='flex-1'>
-      <View className="flex flex-col h-full overflow-hidden bg-white">
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex flex-col h-full bg-white">
 
-        <View className="sticky top-0 z-30 flex-row items-center justify-between p-4 pb-2 bg-background-light/80 backdrop-blur-md">
+        {/* Header */}
+        <View className="flex-row items-center justify-between p-4 pb-2 border-b border-gray-100">
           <Text className="flex-1 text-xl tracking-tight font-display-bold">Profile</Text>
-          <View className="flex items-center justify-end w-12">
-            <Pressable
-              onPress={() => router.push('/settings/settings')}
-              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5"
-            >
-              <Ionicons name="settings-outline" size={25} color="#6769ef" />
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={() => router.push('/settings/settings')}
+            className="items-center justify-center w-10 h-10 rounded-full"
+          >
+            <Ionicons name="settings-outline" size={25} color={theme.accent} />
+          </Pressable>
         </View>
 
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
-          <View className="flex flex-col items-center gap-6 p-4">
-            <View className="flex flex-col items-center w-full gap-4">
-              <View className="relative">
-                <View className="overflow-hidden rounded-full shadow-lg size-32 ring-4 ring-white">
-                  <Image source={profile} alt="Me" className="object-cover w-full h-full" />
-                </View>
-                <View className="absolute flex items-center justify-center p-1 text-white border-2 border-white rounded-full bottom-1 right-1 bg-primary">
-                  <MaterialIcons name="verified" size={16} color="white" />
-                </View>
-              </View>
-              <View className="flex flex-col items-center text-center">
-                <Text className="text-3xl tracking-tight font-display-bold">{userData?.name || 'Loading...'}</Text>
-                <Text className="mt-1 text-sm text-gray-500 font-display-medium">{userData?.email || 'user@university.ac.ke'}</Text>
-              </View>
-              <Pressable onPress={() => setEditProfile(true)}
-                className="flex items-center justify-center w-full p-2 px-8 py-3 rounded-lg bg-primary">
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
 
-                <Text className='text-2xl text-white font-display-medium'>
-                  Edit Profile
-                </Text>
-
-              </Pressable>
-            </View>
-          </View>
-
-          <View className="px-4 py-2">
-            <View className="flex-row justify-between w-full gap-3">
-              {listStats.map(stat => (
-                <View key={stat.label} className="flex flex-col items-center flex-1 gap-1 p-4 text-center bg-white border border-gray-200 rounded-lg shadow-lg">
-                  <View className="flex items-center gap-1">
-                    <View className='flex-row items-center gap-1'>
-                      <Text className="text-3xl font-display-bold">{stat.val}</Text>
-                      {stat.icon && <Ionicons name="star" size={16} color="#fbbf24" />}
-                    </View>
-
+          {/* Avatar + name */}
+          <View className="items-center gap-4 p-4 pt-6">
+            <View className="relative">
+              <View className="overflow-hidden border-2 rounded-full shadow-lg border-primary size-28 ring-4 ring-white">
+                {userData?.avatar_url
+                  ? <Image source={{ uri: userData.avatar_url }} className="object-cover w-full h-full" />
+                  : <View className='items-center justify-center w-full h-full bg-gray-200 ' >
+                    <Ionicons name="camera" size={40} color="#9ca3af" />
                   </View>
-                  <Text className="text-gray-500 text-[11px] uppercase tracking-wider font-display-semibold">{stat.label}</Text>
+                }
+              </View>
+              {userData?.is_verified && (
+                <View className="absolute flex items-center justify-center border-2 border-white rounded-full w-7 h-7 bottom-1 right-1" style={{ backgroundColor: theme.accent }}>
+                  <MaterialIcons name="verified" size={14} color="white" />
                 </View>
-              ))}
+              )}
             </View>
+
+            <View className="items-center">
+              <Text className="text-2xl tracking-tight font-display-bold">{userData?.name || 'Loading...'}</Text>
+              <Text className="mt-0.5 text-sm text-gray-500 font-display-medium">{userData?.email}</Text>
+
+              {/* Role badge */}
+              <View className="px-3 py-1 mt-2 rounded-full" style={{ backgroundColor: theme.accent + '18' }}>
+                <Text className="text-xs font-display-semibold" style={{ color: theme.accent }}>
+                  {theme.badge}
+                  {userData?.role === 'student' && userData?.faculty ? ` · ${userData.faculty}` : ''}
+                  {userData?.role === 'vendor' && userData?.location ? ` · ${userData.location}` : ''}
+                </Text>
+              </View>
+            </View>
+
+            <Pressable
+              onPress={() => setEditProfile(true)}
+              className="w-full py-3 rounded-xl" style={{ backgroundColor: theme.accent }}>
+              <Text className="text-lg text-center text-white font-display-semibold">
+                Edit Profile
+              </Text>
+            </Pressable>
           </View>
 
-          <View className="flex-row justify-between w-full px-4 mt-6 border-b border-gray-100 ">
+          {/* Stats row */}
+          <View className="flex-row justify-between gap-3 px-4 py-2">
+            {listStats.map(stat => (
+              <View key={stat.label} className="items-center flex-1 p-3 bg-white border border-gray-200 shadow-sm rounded-xl">
+                <View className="flex-row items-center gap-1">
+                  <Text className="text-2xl font-display-bold">{stat.val}</Text>
+                  {stat.icon && <Ionicons name="star" size={14} color="#fbbf24" />}
+                </View>
+                <Text className="text-gray-500 text-[10px] uppercase tracking-wider font-display-semibold mt-1">
+                  {stat.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Tabs */}
+          <View className="flex-row w-full px-4 mt-4 border-b border-gray-100">
             {tabs.map(tab => (
               <Pressable
-                onPress={() => setActiveTab(tab.value as any)}
                 key={tab.value}
-                className={`flex-1 border-b-[3px] ${tab.value === activeTab ? 'border-primary ' : 'border-transparent '} pb-3`}
+                onPress={() => setActiveTab(tab.value)}
+                className={`flex-1 pb-3 border-b-2 ${tab.value === activeTab ? 'border-primary' : 'border-transparent'}`}
               >
-                <Text className={`text-xl ${tab.value === activeTab ? ' text-primary' : 'border-transparent text-gray-400'} text-center font-display-bold`}>{tab.label}</Text>
+                <Text
+                  className={`text-center font-display-bold text-sm ${tab.value === activeTab ? 'text-primary' : 'text-gray-400'}`}
+                >
+                  {tab.label}
+                </Text>
               </Pressable>
             ))}
           </View>
 
+          {/* Tab content */}
           {loading ? (
-            <View className="flex justify-center items-center h-64">
-              <ActivityIndicator size="large" color="#6769ef" />
+            <View className="items-center justify-center h-48">
+              <ActivityIndicator size="large" color={theme.accent} />
             </View>
           ) : error ? (
             <View className="p-4">
               <Text className="text-center text-red-500 font-display-bold">{error}</Text>
             </View>
           ) : activeTab === 'my listings' ? (
-            <View className="flex-row flex-wrap justify-between w-full p-4 gap-y-4">
-              {myItems.length > 0 ? (
-                myItems.map(item => (
-                  <Pressable key={item.id} className="flex-col w-48 gap-2 group" onPress={() => router.push(`/product-item/${item.id}`)}>
-                    <View className="relative overflow-hidden rounded-2xl aspect-square bg-slate-100">
-                      <Image source={{ uri: item.imageUrl }} className="object-cover w-full h-full" />
-                      <View className="absolute px-2 py-1 rounded-lg top-2 left-2 bg-white/90 backdrop-blur">
-                        <Text className='text-sm tracking-wide uppercase font-display-semibold'>{item.category}</Text>
-                      </View>
-                    </View>
-                    <View className="px-1">
-                      <Text className="text-xl leading-tight truncate font-display-bold">{item.title}</Text>
-                      <Text className="text-primary text-md font-display-bold mt-0.5">Ksh {item.price.toFixed(2)}</Text>
-                    </View>
-                  </Pressable>
-                ))
-              ) : (
-                <Text className="text-center text-gray-500 w-full pt-10 font-display">No listings yet</Text>
-              )}
+                <View className="flex-row flex-wrap justify-between p-4 gap-y-4">
+                  {myItems.length > 0
+                    ? myItems.map((item, index) => <ListingCard key={`listing-${item.id ?? index}`} item={item} />)
+                    : <Text className="w-full pt-10 text-center text-gray-400 font-display">No listings yet</Text>
+                  }
             </View>
           ) : activeTab === 'favorites' ? (
-            <View className="flex-row flex-wrap justify-between w-full p-4 gap-y-4">
-              {favorites.length > 0 ? (
-                favorites.map(item => (
-                  <Pressable key={item.id} className="flex-col w-48 gap-2 group" onPress={() => router.push(`/product-item/${item.id}`)}>
-                    <View className="relative overflow-hidden rounded-2xl aspect-square bg-slate-100">
-                      <Image source={{ uri: item.imageUrl }} className="object-cover w-full h-full" />
-                      <View className="absolute px-2 py-1 rounded-lg top-2 left-2 bg-white/90 backdrop-blur">
-                        <Text className='text-sm tracking-wide uppercase font-display-semibold'>{item.category}</Text>
-                      </View>
-                    </View>
-                    <View className="px-1">
-                      <Text className="text-xl leading-tight truncate font-display-bold">{item.title}</Text>
-                      <Text className="text-primary text-md font-display-bold mt-0.5">Ksh {item.price.toFixed(2)}</Text>
-                    </View>
-                  </Pressable>
-                ))
-              ) : (
-                <Text className="text-center text-gray-500 w-full pt-10 font-display">No favorites yet</Text>
-              )}
+                  <View className="flex-row flex-wrap justify-between p-4 gap-y-4">
+                    {favorites.length > 0
+                      ? favorites.map((item, index) => <ListingCard key={`favorite-${item.id ?? index}`} item={item} />)
+                      : <Text className="w-full pt-10 text-center text-gray-400 font-display">No favorites yet</Text>
+                    }
+                  </View>
+                ) : activeTab === 'orders' ? (
+                  <View className="p-4">
+                    <Text className="text-lg text-center text-gray-500 font-display-bold">📦 Orders Coming Soon</Text>
+                    <Text className="mt-2 text-center text-gray-400 font-display">Track orders placed by buyers</Text>
             </View>
           ) : (
             <View className="p-4">
-              <Text className="text-center text-gray-500 font-display-bold text-lg">🌟 Reviews Coming Soon</Text>
-              <Text className="text-center text-gray-400 font-display mt-2">View feedback from buyers and sellers</Text>
+                        <Text className="text-lg text-center text-gray-500 font-display-bold">🌟 Reviews Coming Soon</Text>
+                        <Text className="mt-2 text-center text-gray-400 font-display">View feedback from buyers and sellers</Text>
             </View>
           )}
 
+          {/* Logout */}
           <View className="p-6 pb-32">
-            <Pressable onPress={handleLogout} className="flex items-center justify-center w-full gap-2 py-3 font-bold border border-red-500 rounded-lg bg-red-50">
-              <Text className="text-xl text-red-500 font-display-bold">logout</Text>
+            <Pressable
+              onPress={handleLogout}
+              className="items-center justify-center w-full py-3 border border-red-400 rounded-xl bg-red-50"
+            >
+              <Text className="text-base text-red-500 font-display-bold">Logout</Text>
             </Pressable>
-            <Text className="text-center text-gray-400 text-md font-display-bold mt-4 uppercase tracking-[0.2em] ">CampusMart v1.0.0</Text>
+            <Text className="mt-4 text-xs tracking-widest text-center text-gray-400 uppercase font-display-bold">
+              CampusMart v1.0.0
+            </Text>
           </View>
         </ScrollView>
-
-
       </View>
 
+      {/* ─── Edit Profile Modal ─────────────────────────────── */}
       {editProfile && (
-        <Modal onRequestClose={() => setEditProfile(false)}
-          animationType="slide" transparent={true}>
+        <Modal onRequestClose={() => setEditProfile(false)} animationType="slide" transparent>
           <View className="justify-end flex-1 bg-black/40">
             <View className="w-full p-5 bg-white rounded-t-3xl max-h-[80%]">
-              <View className="flex-row items-center justify-between w-full mb-4">
+
+              <View className="flex-row items-center justify-between mb-5">
                 <Text className="text-2xl font-display-bold">Edit Profile</Text>
                 <Pressable onPress={() => setEditProfile(false)} disabled={savingProfile}>
-                  <Ionicons name="close" size={24} color="#6769ef" />
+                  <Ionicons name="close" size={24} color={theme.accent} />
                 </Pressable>
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false} className="gap-4 mb-4">
-                {/* Name Field */}
-                <View className="gap-2">
-                  <Text className="font-display-bold text-gray-700">Full Name</Text>
+
+                {/* Name — both roles */}
+                <View className="gap-1 mb-4">
+                  <Text className="text-sm text-gray-600 font-display-semibold">Full Name</Text>
                   <TextInput
                     value={editFormData.name}
-                    onChangeText={(text) => setEditFormData({ ...editFormData, name: text })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-display bg-white"
+                    onChangeText={(t) => setEditFormData({ ...editFormData, name: t })}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl font-display"
                     placeholder="Enter your name"
                     editable={!savingProfile}
                   />
                 </View>
 
-                {/* Email Field */}
-                <View className="gap-2">
-                  <Text className="font-display-bold text-gray-700">Email</Text>
+                {/* Email — read-only for both */}
+                <View className="gap-1 mb-4">
+                  <Text className="text-sm text-gray-600 font-display-semibold">Email</Text>
                   <TextInput
-                    value={editFormData.email}
-                    onChangeText={(text) => setEditFormData({ ...editFormData, email: text })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-display bg-white"
-                    placeholder="your@university.ac.ke"
+                    value={userData?.email}
+                    className="w-full px-4 py-3 text-gray-400 border border-gray-200 rounded-xl font-display bg-gray-50"
                     editable={false}
                   />
                 </View>
 
-                {/* Faculty Field */}
-                <View className="gap-2">
-                  <Text className="font-display-bold text-gray-700">Faculty</Text>
-                  <TextInput
-                    value={editFormData.faculty}
-                    onChangeText={(text) => setEditFormData({ ...editFormData, faculty: text })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-display bg-white"
-                    placeholder="Engineering, Sciences, etc."
-                    editable={!savingProfile}
-                  />
-                </View>
+                {/* Student-only fields */}
+                {userData?.role === 'student' && (
+                  <>
+                    <View className="gap-1 mb-4">
+                      <Text className="text-sm text-gray-600 font-display-semibold">Faculty</Text>
+                      <TextInput
+                        value={editFormData.faculty}
+                        onChangeText={(t) => setEditFormData({ ...editFormData, faculty: t })}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl font-display"
+                        placeholder="e.g. Engineering, Sciences"
+                        editable={!savingProfile}
+                      />
+                    </View>
+                    <View className="gap-1 mb-4">
+                      <Text className="text-sm text-gray-600 font-display-semibold">Graduation Year</Text>
+                      <TextInput
+                        value={editFormData.graduation_year}
+                        onChangeText={(t) => setEditFormData({ ...editFormData, graduation_year: t })}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl font-display"
+                        placeholder="2026"
+                        keyboardType="numeric"
+                        maxLength={4}
+                        editable={!savingProfile}
+                      />
+                    </View>
+                  </>
+                )}
 
-                {/* Graduation Year Field */}
-                <View className="gap-2">
-                  <Text className="font-display-bold text-gray-700">Graduation Year</Text>
-                  <TextInput
-                    value={editFormData.graduation_year}
-                    onChangeText={(text) => setEditFormData({ ...editFormData, graduation_year: text })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-display bg-white"
-                    placeholder="2025"
-                    keyboardType="numeric"
-                    maxLength={4}
-                    editable={!savingProfile}
-                  />
-                </View>
+                {/* Vendor-only fields */}
+                {userData?.role === 'vendor' && (
+                  <View className="gap-1 mb-4">
+                    <Text className="text-sm text-gray-600 font-display-semibold">Location</Text>
+                    <TextInput
+                      value={editFormData.location}
+                      onChangeText={(t) => setEditFormData({ ...editFormData, location: t })}
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl font-display"
+                      placeholder="e.g. Nairobi, Kenya"
+                      editable={!savingProfile}
+                    />
+                  </View>
+                )}
 
-                <View className="mt-4 gap-3">
-                  {/* Save Button */}
+                <View className="gap-3 mt-2">
                   <Pressable
                     onPress={handleSaveProfile}
                     disabled={savingProfile}
-                    className="justify-center w-full p-3 bg-primary rounded-lg"
+                    className="items-center justify-center w-full py-3 rounded-xl"
+                    style={{ backgroundColor: theme.accent }}
                   >
-                    {savingProfile ? (
-                      <ActivityIndicator color="white" />
-                    ) : (
-                      <Text className="text-lg text-center text-white font-display-bold">Save Changes</Text>
-                    )}
+                    {savingProfile
+                      ? <ActivityIndicator color="white" />
+                      : <Text className="text-base text-center text-white font-display-bold">Save Changes</Text>
+                    }
                   </Pressable>
 
-                  {/* Delete Account Button */}
                   <Pressable
                     onPress={handleDeleteAccount}
                     disabled={savingProfile}
-                    className="justify-center w-full p-3 bg-red-500 rounded-lg"
+                    className="items-center justify-center w-full py-3 bg-red-500 rounded-xl"
                   >
-                    <Text className="text-lg text-center text-white font-display-bold">Delete Account</Text>
+                    <Text className="text-base text-center text-white font-display-bold">Delete Account</Text>
                   </Pressable>
                 </View>
               </ScrollView>
@@ -387,9 +466,8 @@ const ProfileScreen = () => {
           </View>
         </Modal>
       )}
-
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default ProfileScreen
+export default ProfileScreen;
