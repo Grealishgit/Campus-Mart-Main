@@ -34,6 +34,8 @@ const getTabsForRole = (role?: string) => {
   ];
 };
 
+
+
 const ProfileScreen = () => {
   const [activeTab, setActiveTab] = useState<string>('my listings');
   const [editProfile, setEditProfile] = useState(false);
@@ -45,6 +47,26 @@ const ProfileScreen = () => {
 
   const theme = getTheme(userData?.role);
   const tabs = getTabsForRole(userData?.role);
+
+
+  // buttons for other pages
+  const nav_links = [
+    {
+      "name": 'My Listings',
+      "icon": <Ionicons name="list" size={20} color={theme.accent} />,
+      onPress: () => router.push('/my-listings' as any)
+    },
+    {
+      "name": "My Orders",
+      "icon": <Ionicons name="cart" size={20} color={theme.accent} />,
+      onPress: () => router.push('/my-orders' as any)
+    },
+    {
+      "name": "Favorites",
+      "icon": <Ionicons name="heart" size={20} color={theme.accent} />,
+      onPress: () => router.push('/favorites' as any)
+    }
+  ]
 
   // ─── Stats — different per role ───────────────────────────
   const listStats = userData
@@ -79,7 +101,11 @@ const ProfileScreen = () => {
 
         const listingsResult = await getMyListings() as any;
         if (listingsResult.success && listingsResult.data?.listings) {
-          setMyItems(listingsResult.data.listings);
+          const listings = listingsResult.data.listings.map((item: any) => ({
+            ...item,
+            uniqueKey: `${item.type}-${item.id}`,
+          }));
+          setMyItems(listings);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
@@ -323,9 +349,16 @@ const ProfileScreen = () => {
           ) : activeTab === 'my listings' ? (
                 <View className="flex-row flex-wrap justify-between p-4 gap-y-4">
                   {myItems.length > 0
-                    ? myItems.map((item, index) => <ListingCard key={`listing-${item.id ?? index}`} item={item} />)
-                    : <Text className="w-full pt-10 text-center text-gray-400 font-display">No listings yet</Text>
+                    ? myItems.slice(0, 4).map((item, index) => (
+                      <ListingCard key={item.uniqueKey ?? `listing-${index}`} item={item} />
+                    ))
+                    : <Text className="w-full pt-10 text-center text-gray-400 font-display">
+                      No listings yet
+                    </Text>
                   }
+                  <Pressable className='items-end justify-end w-full mr-8 flex-end' onPress={() => router.push('/my-listings' as any)}>
+                    <Text className='text-xl font-semibold underline text-primary'>View All</Text>
+                  </Pressable>
             </View>
           ) : activeTab === 'favorites' ? (
                   <View className="flex-row flex-wrap justify-between p-4 gap-y-4">

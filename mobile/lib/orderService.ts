@@ -34,6 +34,7 @@ export interface Order {
 
 export interface CreateOrderRequest {
   listingId: string;
+  type: 'SALE' | 'LEASE'; 
   leaseStart?: string;
   leaseEnd?: string;
 }
@@ -43,7 +44,7 @@ export interface OrdersResponse {
 }
 
 export async function getMyOrders(): Promise<ApiResponse<OrdersResponse>> {
-  return apiRequest<OrdersResponse>('/orders/my', {
+  return apiRequest<OrdersResponse>('/orders/buying', {
     method: 'GET',
     requiresAuth: true,
   });
@@ -61,6 +62,7 @@ export async function createOrder(data: CreateOrderRequest): Promise<ApiResponse
     method: 'POST',
     body: {
       listing_id: Number(data.listingId),
+      type: data.leaseStart ? 'LEASE' : 'SALE', 
       lease_start: data.leaseStart,
       lease_end: data.leaseEnd,
     },
@@ -73,7 +75,7 @@ export async function updateOrderStatus(
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
 ): Promise<ApiResponse<{ order: Order }>> {
   return apiRequest<{ order: Order }>(`/orders/${orderId}/status`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: { status },
     requiresAuth: true,
   });

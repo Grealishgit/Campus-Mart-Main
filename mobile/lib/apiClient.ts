@@ -19,7 +19,7 @@ export interface ApiResponse<T> {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: any;
   headers?: Record<string, string>;
   requiresAuth?: boolean;

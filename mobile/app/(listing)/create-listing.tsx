@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 import {
   ActivityIndicator,
   Alert,
@@ -22,6 +24,7 @@ import {
   getCategories,
   getConditions,
 } from '@/lib/listingService';
+import { getAuthToken } from '@/lib/apiClient';
 
 type ListingType = 'SALE' | 'LEASE';
 
@@ -47,9 +50,33 @@ const CreateListing = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [conditions, setConditions] = useState<string[]>(defaultConditions);
 
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+
+  const handlePickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Please allow access to your photo library.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    imageUrl: '',
     price: '',
     priceUnit: '/day',
     minDuration: '',
@@ -162,48 +189,104 @@ const CreateListing = () => {
   const handleCreateListing = async () => {
     if (!validate()) return;
 
-    // Backend sets seller_id from req.user.id (JWT), so it is not sent in the body.
-    const payload: CreateListingRequest = {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      price: Number(formData.price),
-      type: formData.type,
-      category: formData.category.trim(),
-      condition: formData.condition.trim(),
-      location: formData.location.trim(),
-    };
-
-    if (formData.type === 'LEASE') {
-      payload.price_unit = formData.priceUnit.trim();
-      if (formData.minDuration.trim()) {
-        payload.min_duration = Number(formData.minDuration);
-      }
-      if (formData.maxDuration.trim()) {
-        payload.max_duration = Number(formData.maxDuration);
-      }
-      payload.duration_unit = formData.durationUnit;
-      if (formData.availableFrom.trim()) {
-        payload.available_from = formData.availableFrom.trim();
-      }
-      if (formData.availableUntil.trim()) {
-        payload.available_until = formData.availableUntil.trim();
-      }
-    }
-
     try {
       setSubmitting(true);
-      const response = await createListing(payload);
 
-      if (response.success) {
+      // Build multipart/form-data
+      const body = new FormData();
+
+      // Text fields
+      body.append('title', formData.title.trim());
+      body.append('description', formData.description.trim());
+      body.append('price', formData.price);
+      body.append('type', formData.type);
+      body.append('category', formData.category.trim());
+      body.append('condition', formData.condition.trim());
+      body.append('location', formData.location.trim());
+
+    if (formData.type === 'LEASE') {
+      body.append('price_unit', formData.priceUnit);
+      body.append('duration_unit', formData.durationUnit);
+      if (formData.minDuration) body.append('min_duration', formData.minDuration);
+      if (formData.maxDuration) body.append('max_duration', formData.maxDuration);
+      if (formData.availableFrom) body.append('available_from', formData.availableFrom.trim());
+      if (formData.availableUntil) body.append('available_until', formData.availableUntil.trim());
+    }
+
+      // Image — appended last, only if picked
+      if (imageUri) {
+        const filename = imageUri.split('/').pop() ?? 'listing.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const mimeType = match ? `image/${match[1].replace('jpg', 'jpeg')}` : 'image/jpeg';
+
+        body.append('image', {
+          uri: imageUri,
+          name: filename,
+          type: mimeType,
+        } as any);
+      }
+
+      const token = await getAuthToken(); // import from apiClient
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/listings`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+          body,
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
         Alert.alert('Success', 'Your item has been listed successfully.', [
-          { text: 'Go Home', onPress: () => router.replace('/(tabs)') },
+          { text: 'View Listing', onPress: () => router.replace('/(tabs)') },
         ]);
         return;
       }
 
-      Alert.alert('Failed', response.error || 'Could not create listing.');
-    } catch {
-      Alert.alert('Error', 'An unexpected error occurred while creating listing.');
+      // Field-level validation errors from backend
+      if (response.status === 400 && data.errors) {
+        const backendErrors: Record<string, string> = {};
+        for (const err of data.errors) {
+          if (err.path) backendErrors[err.path] = err.message;
+        }
+        setErrors(backendErrors);
+        Alert.alert('Validation Error', 'Please fix the highlighted fields.');
+        return;
+      }
+
+      // Rate limit
+      if (response.status === 429) {
+        Alert.alert('Slow down', 'You are creating listings too quickly. Please wait a moment.');
+        return;
+      }
+
+      // Auth expired
+      if (response.status === 401) {
+        Alert.alert('Session expired', 'Please sign in again.', [
+          { text: 'Sign In', onPress: () => router.replace('/(auth)/login') },
+        ]);
+        return;
+      }
+
+      Alert.alert('Failed', data.message || 'Could not create listing. Please try again.');
+
+    } catch (error: any) {
+      // Network / timeout
+      if (error?.message?.includes('Network request failed')) {
+        Alert.alert('No connection', 'Check your internet and try again.');
+        return;
+      }
+      // JSON parse failure (e.g. server returned HTML error page)
+      if (error instanceof SyntaxError) {
+        Alert.alert('Server error', 'Unexpected response from server. Please try again later.');
+        return;
+      }
+      Alert.alert('Error', error?.message || 'An unexpected error occurred.');
     } finally {
       setSubmitting(false);
     }
@@ -268,6 +351,62 @@ const CreateListing = () => {
               </Pressable>
             ))}
           </View>
+
+          {/* Image Upload */}
+          <Text style={styles.label}>Item Photo</Text>
+          <Pressable
+            onPress={handlePickImage}
+            disabled={uploadingImage}
+            style={{
+              borderWidth: 1.5,
+              borderColor: imageUri ? '#6769ef' : '#d1d5db',
+              borderStyle: imageUri ? 'solid' : 'dashed',
+              borderRadius: 16,
+              height: 180,
+              marginBottom: 16,
+              overflow: 'hidden',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: imageUri ? '#f5f5ff' : '#fafafa',
+            }}
+          >
+            {uploadingImage ? (
+              <View style={{ alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#6769ef" />
+                <Text style={{ color: '#6769ef', fontFamily: 'Jost-Medium', fontSize: 13 }}>
+                  Uploading...
+                </Text>
+              </View>
+            ) : imageUri ? (
+              <>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+                {/* Re-pick overlay */}
+                <View style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
+                  backgroundColor: 'rgba(0,0,0,0.45)', paddingVertical: 8,
+                  alignItems: 'center',
+                }}>
+                  <Text style={{ color: 'white', fontFamily: 'Jost-Medium', fontSize: 12 }}>
+                    Tap to change photo
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <View style={{ alignItems: 'center', gap: 8 }}>
+                <Ionicons name="camera-outline" size={36} color="#9ca3af" />
+                <Text style={{ color: '#9ca3af', fontFamily: 'Jost-Medium', fontSize: 14 }}>
+                  Tap to add a photo
+                </Text>
+                <Text style={{ color: '#d1d5db', fontFamily: 'Jost-Regular', fontSize: 12 }}>
+                  JPG or PNG · max 5 MB
+                </Text>
+              </View>
+            )}
+          </Pressable>
 
           <Text style={styles.label}>Title</Text>
           <TextInput
@@ -399,49 +538,71 @@ const CreateListing = () => {
           )}
 
           <Text style={styles.label}>Category</Text>
-          <TextInput
-            style={[styles.input, errors.category && styles.inputError]}
-            value={formData.category}
-            onChangeText={(value) => updateField('category', value)}
-            placeholder="e.g. Textbooks, Electronics"
-            placeholderTextColor="#9ca3af"
-          />
-          {categories.length > 0 && (
-            <View style={styles.suggestionRow}>
-              {categories.slice(0, 6).map((item) => (
+
+          {/* Category Selection Chips */}
+          <View style={[styles.categoriesContainer, { marginBottom: 6 }]}>
+            {categories.map((item) => {
+              const isSelected = formData.category === item;
+              return (
                 <Pressable
                   key={item}
                   onPress={() => updateField('category', item)}
-                  style={styles.chip}
+                  style={[
+                    styles.categoryChip,
+                    isSelected && styles.categoryChipActive
+                  ]}
                 >
-                  <Text style={styles.chipText}>{item}</Text>
+                  <Text
+                    style={[
+                      styles.categoryChipText,
+                      isSelected && styles.categoryChipTextActive
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                  {isSelected && (
+                    <Ionicons name="checkmark" size={16} color="#fff" style={styles.checkIcon} />
+                  )}
                 </Pressable>
-              ))}
-            </View>
-          )}
+              );
+            })}
+          </View>
+
           {!!errors.category && (
             <Text style={styles.errorText}>{errors.category}</Text>
           )}
 
           <Text style={styles.label}>Condition</Text>
-          <TextInput
-            style={[styles.input, errors.condition && styles.inputError]}
-            value={formData.condition}
-            onChangeText={(value) => updateField('condition', value)}
-            placeholder="e.g. Like New"
-            placeholderTextColor="#9ca3af"
-          />
-          <View style={styles.suggestionRow}>
-            {conditions.slice(0, 6).map((item) => (
-              <Pressable
-                key={item}
-                onPress={() => updateField('condition', item)}
-                style={styles.chip}
-              >
-                <Text style={styles.chipText}>{item}</Text>
-              </Pressable>
-            ))}
+
+          {/* Condition Selection Chips */}
+          <View style={[styles.categoriesContainer, { marginBottom: 6 }]}>
+            {conditions.map((item) => {
+              const isSelected = formData.condition === item;
+              return (
+                <Pressable
+                  key={item}
+                  onPress={() => updateField('condition', item)}
+                  style={[
+                    styles.categoryChip,
+                    isSelected && styles.categoryChipActive
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.categoryChipText,
+                      isSelected && styles.categoryChipTextActive
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                  {isSelected && (
+                    <Ionicons name="checkmark" size={16} color="#fff" style={styles.checkIcon} />
+                  )}
+                </Pressable>
+              );
+            })}
           </View>
+
           {!!errors.condition && (
             <Text style={styles.errorText}>{errors.condition}</Text>
           )}
@@ -655,5 +816,38 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontFamily: 'Jost-Bold',
+  },
+  categoriesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 8,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 25,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 6,
+  },
+  categoryChipActive: {
+    backgroundColor: '#6769ef',
+    borderColor: '#6769ef',
+  },
+  categoryChipText: {
+    fontSize: 12,
+    color: '#4b5563',
+    fontFamily: 'Inter_400Regular',
+  },
+  categoryChipTextActive: {
+    color: '#ffffff',
+    fontFamily: 'Inter_600SemiBold',
+  },
+  checkIcon: {
+    marginLeft: 4,
   },
 });
