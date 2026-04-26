@@ -1,28 +1,33 @@
 import { apiRequest, ApiResponse } from './apiClient';
 
-// ══════════════════════════════════════════════════════════════
-// FAVORITES TYPES
-// ══════════════════════════════════════════════════════════════
-
 export interface Favorite {
-  id: string;
+  favoriteId: string;
   listingId: string;
-  userId: string;
-  createdAt?: string;
+  type: 'SALE' | 'LEASE';
+  title: string;
+  price: number;
+  priceUnit?: string;
+  category: string;
+  condition: string;
+  location: string;
+  imageUrl?: string;
+  description: string;
+  isVerified: boolean;
+  favoritedAt: string;
+  availableFrom?: string;
+  availableUntil?: string;
+  seller: {
+    name: string;
+    rating: number;
+    avatarUrl?: string;
+    isVerified: boolean;
+  };
 }
 
 export interface FavoritesResponse {
   favorites?: Favorite[];
-  data?: Favorite[];
 }
 
-// ══════════════════════════════════════════════════════════════
-// FAVORITES SERVICES
-// ══════════════════════════════════════════════════════════════
-
-/**
- * Get all favorite listings of current user
- */
 export async function getFavorites(): Promise<ApiResponse<FavoritesResponse>> {
   return apiRequest<FavoritesResponse>('/favorites', {
     method: 'GET',
@@ -30,31 +35,30 @@ export async function getFavorites(): Promise<ApiResponse<FavoritesResponse>> {
   });
 }
 
-/**
- * Add listing to favorites
- */
-export async function addFavorite(listingId: string): Promise<ApiResponse<Favorite>> {
-  return apiRequest<Favorite>('/favorites', {
+// type must be 'sale' or 'lease' (lowercase — matches backend route param)
+export async function addFavorite(
+  listingId: string,
+  type: 'SALE' | 'LEASE',
+): Promise<ApiResponse<any>> {
+  return apiRequest(`/favorites/${type.toLowerCase()}/${listingId}`, {
     method: 'POST',
-    body: { listingId },
     requiresAuth: true,
   });
 }
 
-/**
- * Remove listing from favorites
- */
-export async function removeFavorite(listingId: string): Promise<ApiResponse<any>> {
-  return apiRequest(`/favorites/${listingId}`, {
+export async function removeFavorite(
+  listingId: string,
+  type: 'SALE' | 'LEASE',
+): Promise<ApiResponse<any>> {
+  return apiRequest(`/favorites/${type.toLowerCase()}/${listingId}`, {
     method: 'DELETE',
     requiresAuth: true,
   });
 }
 
-/**
- * Check if listing is favorited
- */
-export async function isFavorited(listingId: string): Promise<boolean> {
+export async function isFavorited(
+  listingId: string,
+): Promise<boolean> {
   const response = await getFavorites();
   if (response.success && response.data?.favorites) {
     return response.data.favorites.some(fav => fav.listingId === listingId);

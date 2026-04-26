@@ -64,13 +64,16 @@ const ProductItemScreen = () => {
         try {
             setLoading(true);
             if (isFav) {
-                const r = await removeFavorite(id);
-                if (r.success) setIsFav(false);
+                const result = await removeFavorite(id, type as 'SALE' | 'LEASE');
+                // console.log('remove result:', result);
+                if (result.success) setIsFav(false);   
             } else {
-                const r = await addFavorite(id);
-                if (r.success) setIsFav(true);
+                const result = await addFavorite(id, type as 'SALE' | 'LEASE');
+                // console.log('add result:', result);
+                if (result.success) setIsFav(true);   
             }
-        } catch {
+        } catch (err: any) {
+            console.error('favorite error:', err);
             Alert.alert('Error', 'Failed to update favorites');
         } finally {
             setLoading(false);
@@ -111,7 +114,7 @@ const ProductItemScreen = () => {
                     'Success',
                     type === 'LEASE' ? 'Lease created successfully.' : 'Order placed successfully.',
                     [
-                        { text: type === 'LEASE' ? 'View Leases' : 'View Orders', onPress: () => router.push('/(tabs)/leases') },
+                        { text: type === 'LEASE' ? 'View Leases' : 'View Orders', onPress: () => router.push('/(tabs)/orders') },
                         { text: 'Continue Shopping', onPress: () => router.back() },
                     ]
                 );

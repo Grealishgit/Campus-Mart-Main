@@ -3,6 +3,12 @@ import { View, Text, Pressable, Image } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Listing, TransactionType } from '@/types';
 import { getCurrentUser } from '@/lib/authService'
+import {
+    addFavorite,
+    removeFavorite,
+    isFavorited as checkIsFavorited
+} from '@/lib/favoriteService';
+// const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
 
 interface ListingCardProps {
     listing: Listing;
@@ -12,8 +18,6 @@ interface ListingCardProps {
     cardWidth?: number;
     userId?: string | null;
 }
-
-
 
 const ListingCard: React.FC<ListingCardProps> = ({
     listing,
@@ -29,6 +33,29 @@ const ListingCard: React.FC<ListingCardProps> = ({
     const sellerId = (listing as any).userId;
     const isOwner = !!(currentUserId && sellerId && currentUserId === sellerId);
 
+
+    const handleFavoritePress = onFavoritePress ?? (async () => {
+        try {
+            if (localFavorited) {
+                await removeFavorite(listing.id, listing.type as 'SALE' | 'LEASE');
+                setLocalFavorited(false);
+            } else {
+                await addFavorite(listing.id, listing.type as 'SALE' | 'LEASE');
+                setLocalFavorited(true);
+            }
+        } catch {
+            // revert on failure
+            setLocalFavorited(prev => !prev);
+        }
+    });
+
+    const [localFavorited, setLocalFavorited] = useState(isFavorited);
+
+    // useEffect(() => {
+    //     setLocalFavorited(isFavorited);
+    // }, [isFavorited]);
+
+    
 
     useEffect(() => {
         const init = async () => {
@@ -108,29 +135,29 @@ const ListingCard: React.FC<ListingCardProps> = ({
                 <Pressable
                     onPress={(e) => {
                         e.stopPropagation();
-                        onFavoritePress?.();
+                        handleFavoritePress();
                     }}
+
                     hitSlop={8}
                     className="absolute top-2.5 right-2.5 items-center justify-center w-8 h-8 rounded-full"
-                    style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
-                >
+                    style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}>
+
                     <Ionicons
-                        name={isFavorited ? 'heart' : 'heart-outline'}
+                        name={localFavorited ? 'heart' : 'heart-outline'}
                         size={16}
-                        color={isFavorited ? '#f43f5e' : 'white'}
+                        color={localFavorited ? '#f43f5e' : 'white'}
                     />
                 </Pressable>
 
-                {/* Condition chip — only if present */}
 
-            </View>
+            </View >
 
             {/* ── Content ───────────────────────────── */}
             <View className="gap-1 p-3" style={{ flex: 1 }}>
                 <View className='flex-row items-center justify-between w-full'>
                     <Text
                         className="text-sm leading-tight font-display-semibold"
-                        style={{ color: isOwner ? '#ffffff' : '#111827' }} // ✅
+                        style={{ color: isOwner ? '#ffffff' : '#111827' }}
                         numberOfLines={1}
                     >
                         {listing.title.length > 15 ? listing.title.slice(0, 15) + '...' : listing.title}
@@ -180,7 +207,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     ))}
                 </View>
             </View>
-        </Pressable>
+        </Pressable >
     );
 };
 

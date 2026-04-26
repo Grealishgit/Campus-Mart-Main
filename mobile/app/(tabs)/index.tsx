@@ -1,12 +1,14 @@
 import { View, Text, TextInput, ScrollView, FlatList, useWindowDimensions, ActivityIndicator, Pressable } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { getAllListings, getCategories } from '@/lib/listingService';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 
+
 import '../../global.css'
 import ListingCard from '@/components/ListingCard';
+import { getFavorites } from '@/lib/favoriteService';
 
 const HomeScreen = () => {
 
@@ -18,7 +20,8 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { width } = useWindowDimensions();
-  const cardWidth = (width - 32 - 12) / 2; // 32 = px-4 on both sides, 12 = gap between cards
+  const cardWidth = (width - 32 - 12) / 2;
+  const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
 
   const loadData = React.useCallback(async () => {
     try {
@@ -65,8 +68,27 @@ const HomeScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadData();
+      const loadFavs = async () => {
+        const result = await getFavorites();
+        if (result.success && result.data?.favorites) {
+          const ids = new Set(result.data.favorites.map((f: any) => f.listingId));
+          setFavoritedIds(ids);
+        }
+      };
+      loadFavs();
     }, [loadData])
   );
+
+  // useEffect(() => {
+  //   const loadFavs = async () => {
+  //     const result = await getFavorites();
+  //     if (result.success && result.data?.favorites) {
+  //       const ids = new Set(result.data.favorites.map(f => f.listingId));
+  //       setFavoritedIds(ids);
+  //     }
+  //   };
+  //   loadFavs();
+  // }, []);
 
   const filteredListings = listings;
 
@@ -248,6 +270,7 @@ const HomeScreen = () => {
                 renderItem={({ item }) => (
                   <ListingCard
                     listing={item}
+                    isFavorited={favoritedIds.has(item?.id)}
                     onClick={() => handleOnClick(item)}
                     cardWidth={cardWidth}
                   />
