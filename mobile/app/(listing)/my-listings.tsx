@@ -1,9 +1,11 @@
 import { View, Text, Image, ScrollView, Modal, ActivityIndicator, Alert, TextInput, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useState, useEffect } from 'react';
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getMyListings } from '@/lib/listingService';
 import { getFavorites } from '@/lib/favoriteService';
-import { Ionicons } from '@expo/vector-icons';
+
 
 const MyListings = () => {
     const [activeTab, setActiveTab] = useState<string>('my listings');
@@ -84,7 +86,24 @@ const MyListings = () => {
     );
 
     return (
-        <View className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white">
+
+            <View className="flex-row items-center justify-between w-full p-4 pb-8">
+                <Pressable
+                    onPress={() => router.back()}
+                    className="flex-row items-center justify-center gap-2"
+                >
+                    <Ionicons name="chevron-back" size={25} color={theme.accent} />
+                    <Text className="text-xl tracking-tight font-display-bold">Back</Text>
+                </Pressable>
+
+                <View>
+                    <Text className="text-xl tracking-tight font-display-bold">My Listings</Text>
+                </View>
+
+
+            </View>
+
             {/* Tabs */}
             <View className="flex-row w-full px-4 mt-4 border-b border-gray-100">
                 {tabs.map(tab => (
@@ -114,20 +133,14 @@ const MyListings = () => {
             ) : activeTab === 'my listings' ? (
                 <View className="flex-row flex-wrap justify-between p-4 gap-y-4">
                     {myItems.length > 0 ? (
-                        myItems.slice(0, 4).map((item, index) => (
+                                myItems.map((item, index) => (
                             <ListingCard key={item.uniqueKey ?? `listing-${index}`} item={item} />
                         ))
                     ) : (
                         <Text className="w-full pt-10 text-center text-gray-400 font-display">
                             No listings yet
                         </Text>
-                    )}
-                    <Pressable
-                        className='items-end justify-end w-full mr-8 flex-end'
-                        onPress={() => router.push('/my-listings' as any)}
-                    >
-                        <Text className='text-xl font-semibold underline text-primary'>View All</Text>
-                    </Pressable>
+                            )}
                 </View>
             ) : activeTab === 'favorites' ? (
                 <View className="flex-row flex-wrap justify-between p-4 gap-y-4">
@@ -152,7 +165,7 @@ const MyListings = () => {
                     <Text className="mt-2 text-center text-gray-400 font-display">View feedback from buyers and sellers</Text>
                 </View>
             )}
-        </View>
+        </SafeAreaView>
     );
 };
 

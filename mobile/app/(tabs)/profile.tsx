@@ -84,12 +84,12 @@ const ProfileScreen = () => {
         { 
           name: 'My Orders',
           icon: 'bag-handle-outline',
-          onPress: () => router.push('/my-orders' as any)
+          onPress: () => router.push('/orders' as any)
         },
         { 
           name: 'Favorites',
           icon: 'heart-outline',
-          onPress: () => router.push('/favorites' as any)
+          onPress: () => router.push('/(listing)/favorites' as any)
         },
         {
           name: 'My Leases',
