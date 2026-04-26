@@ -1,12 +1,10 @@
 import { View, Text, Image, ScrollView, Modal, ActivityIndicator, Alert, TextInput, Pressable } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { getMyListings } from '@/lib/listingService'
 import { getUserProfile, logout, updateProfile, deleteAccount } from '@/lib/authService'
-import { getFavorites } from '@/lib/favoriteService'
-import profile from '../../assets/imgs/profile.jpeg'
+import * as ImagePicker from 'expo-image-picker';
 
 import {
   getMyOrders, getSellingOrders
@@ -38,16 +36,36 @@ const getTabsForRole = (role?: string) => {
   ];
 };
 
-
-
 const ProfileScreen = () => {
-  const [activeTab, setActiveTab] = useState<string>('my listings');
   const [editProfile, setEditProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
-  const [myItems, setMyItems] = useState<any[]>([]);
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [orderCount, setOrderCount] = useState(0);
+  const [sellingOrders, setSellingOrders] = useState(0);
+
+  const [editImageUri, setEditImageUri] = useState<string | null>(userData?.avatar_url || null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  useEffect(() => {
+    getMyOrders().then(res => setOrderCount(res.data?.orders?.length ?? 0));
+    getSellingOrders().then(res => setSellingOrders(res.data?.orders?.length ?? 0));
+  }, []);
+
+  const handlePickAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Please allow access to your photo library.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled) setEditImageUri(result.assets[0].uri);
+  };
 
   const theme = getTheme(userData?.role);
   const tabs = getTabsForRole(userData?.role);
@@ -56,21 +74,60 @@ const ProfileScreen = () => {
   // buttons for other pages
   const nav_links = [
     {
-      "name": 'My Listings',
-      "icon": <Ionicons name="list" size={20} color={theme.accent} />,
-      onPress: () => router.push('/my-listings' as any)
+      section: 'My Activity',
+      items: [
+        {
+          name: 'My Listings',
+          icon: 'albums-outline',
+          onPress: () => router.push('/(listing)/my-listings' as any)
+        },
+        { 
+          name: 'My Orders',
+          icon: 'bag-handle-outline',
+          onPress: () => router.push('/my-orders' as any)
+        },
+        { 
+          name: 'Favorites',
+          icon: 'heart-outline',
+          onPress: () => router.push('/favorites' as any)
+        },
+        {
+          name: 'My Leases',
+          icon: 'time-outline',
+          onPress: () => router.push('/(tabs)/leases' as any)
+        },
+      ],
     },
     {
-      "name": "My Orders",
-      "icon": <Ionicons name="cart" size={20} color={theme.accent} />,
-      onPress: () => router.push('/my-orders' as any)
+      section: 'Account',
+      items: [
+        {
+          name: 'Edit Profile',
+          icon: 'create-outline',
+          onPress: () => setEditProfile(true)
+        },
+        {
+          name: 'Change Password',
+          icon: 'key-outline',
+          onPress: () => router.push('/settings/change-password' as any)
+        },
+        {
+          name: 'Notifications',
+          icon: 'notifications-outline',
+          onPress: () => router.push('/settings/notifications' as any)
+        },
+      ],
     },
     {
-      "name": "Favorites",
-      "icon": <Ionicons name="heart" size={20} color={theme.accent} />,
-      onPress: () => router.push('/favorites' as any)
-    }
-  ]
+      section: 'Support & Legal',
+      items: [
+        { name: 'Help Center', icon: 'help-circle-outline', onPress: () => router.push('/settings/help' as any) },
+        { name: 'Privacy Policy', icon: 'shield-outline', onPress: () => router.push('/settings/privacy' as any) },
+        { name: 'Terms of Service', icon: 'document-text-outline', onPress: () => router.push('/settings/terms' as any) },
+        { name: 'Report a Bug', icon: 'bug-outline', onPress: () => router.push('/settings/report' as any) },
+      ],
+    },
+  ] as const;
 
   // ─── Stats — different per role ───────────────────────────
   const listStats = userData
@@ -80,12 +137,13 @@ const ProfileScreen = () => {
         { label: 'Sold', val: String(userData.total_sales ?? 0) },
       ]
       : [
-        { label: 'Listings', val: String(userData.active_listings ?? 0) },
-        { label: 'Orders', val: getMyOrders().then(res => res.data?.orders?.length ?? 0) },]
+        { label: 'Listings', val: String(userData?.active_listings ?? 0) },
+        { label: 'Orders', val: String(orderCount) },
+        { label: 'Selling Orders', val: String(sellingOrders) },
+      ]
     : [
       { label: 'Listings', val: '0' },
       { label: 'Orders', val: '0' },
-      { label: 'Rating', val: '0', icon: true },
     ];
 
   useEffect(() => {
@@ -100,14 +158,6 @@ const ProfileScreen = () => {
           setUserData(data);
         }
 
-        const listingsResult = await getMyListings() as any;
-        if (listingsResult.success && listingsResult.data?.listings) {
-          const listings = listingsResult.data.listings.map((item: any) => ({
-            ...item,
-            uniqueKey: `${item.type}-${item.id}`,
-          }));
-          setMyItems(listings);
-        }
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
       } finally {
@@ -118,21 +168,6 @@ const ProfileScreen = () => {
     fetchUserData();
   }, []);
 
-  useEffect(() => {
-    if (activeTab === 'favorites') {
-      const fetchFavorites = async () => {
-        try {
-          const result = await getFavorites() as any;
-          if (result.success && result.data?.favorites) {
-            setFavorites(result.data.favorites);
-          }
-        } catch {
-          Alert.alert('Error', 'Failed to load favorites');
-        }
-      };
-      fetchFavorites();
-    }
-  }, [activeTab]);
 
   const handleLogout = async () => {
     try {
@@ -163,19 +198,44 @@ const ProfileScreen = () => {
   }, [userData]);
 
   const handleSaveProfile = async () => {
-    if (!editFormData.name.trim()) {
-      Alert.alert('Error', 'Name is required');
-      return;
-    }
+    if (!editFormData.name.trim()) { Alert.alert('Error', 'Name is required'); return; }
     try {
       setSavingProfile(true);
-      const updateData =
-        userData?.role === 'vendor'
-          ? { name: editFormData.name, location: editFormData.location }
-          : {
-            name: editFormData.name,
-            faculty: editFormData.faculty,
-          };
+
+      // If new image picked, upload via multipart
+      if (editImageUri && editImageUri !== userData?.avatar_url) {
+        const body = new FormData();
+        body.append('name', editFormData.name);
+        if (userData?.role === 'vendor') body.append('location', editFormData.location);
+        if (userData?.role === 'student') body.append('faculty', editFormData.faculty);
+
+        const filename = editImageUri.split('/').pop() ?? 'avatar.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const mimeType = match ? `image/${match[1].replace('jpg', 'jpeg')}` : 'image/jpeg';
+        body.append('avatar', { uri: editImageUri, name: filename, type: mimeType } as any);
+
+        const { getAuthToken } = await import('@/lib/apiClient');
+        const token = await getAuthToken();
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/profile`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+          body,
+        });
+        const data = await response.json();
+        if (data.success) {
+          setUserData((data as any).user ?? data);
+          setEditProfile(false);
+          Alert.alert('Success', 'Profile updated successfully');
+        } else {
+          Alert.alert('Error', data.message || 'Failed to update profile');
+        }
+        return;
+      }
+
+      // No new image — use existing service
+      const updateData = userData?.role === 'vendor'
+        ? { name: editFormData.name, location: editFormData.location }
+        : { name: editFormData.name, faculty: editFormData.faculty };
 
       const result = await updateProfile(updateData);
       if (result.success && result.data) {
@@ -222,27 +282,6 @@ const ProfileScreen = () => {
     );
   };
 
-  // ─── Shared listing card ──────────────────────────────────
-  const ListingCard = ({ item }: { item: any }) => (
-    <Pressable
-      className="flex-col w-[48%] gap-2"
-      onPress={() => router.push('/(tabs)/browse')}
-    >
-      <View className="relative overflow-hidden rounded-2xl aspect-square bg-slate-100">
-        <Image source={{ uri: item.imageUrl }} className="object-cover w-full h-full" />
-        <View className="absolute px-2 py-1 rounded-lg top-2 left-2 bg-white/90">
-          <Text className="text-xs tracking-wide uppercase font-display-semibold">{item.category}</Text>
-        </View>
-      </View>
-      <View className="px-1">
-        <Text className="text-base leading-tight truncate font-display-bold">{item.title}</Text>
-        <Text className="text-sm font-display-bold mt-0.5" style={{ color: theme.accent }}>
-          Ksh {item.price?.toFixed(2)}
-        </Text>
-      </View>
-    </Pressable>
-  );
-
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex flex-col h-full bg-white">
@@ -251,10 +290,10 @@ const ProfileScreen = () => {
         <View className="flex-row items-center justify-between p-4 pb-2 border-b border-gray-100">
           <Text className="flex-1 text-xl tracking-tight font-display-bold">Profile</Text>
           <Pressable
-            onPress={() => router.push('/settings/settings')}
+            onPress={handleLogout}
             className="items-center justify-center w-10 h-10 rounded-full"
           >
-            <Ionicons name="settings-outline" size={25} color={theme.accent} />
+            <MaterialIcons name="logout" size={25} color={theme.accent} />
           </Pressable>
         </View>
 
@@ -315,64 +354,34 @@ const ProfileScreen = () => {
             ))}
           </View>
 
-          {/* Tabs */}
-          <View className="flex-row w-full px-4 mt-4 border-b border-gray-100">
-            {tabs.map(tab => (
-              <Pressable
-                key={tab.value}
-                onPress={() => setActiveTab(tab.value)}
-                className={`flex-1 pb-3 border-b-2 ${tab.value === activeTab ? 'border-primary' : 'border-transparent'}`}
-              >
-                <Text
-                  className={`text-center font-display-bold text-sm ${tab.value === activeTab ? 'text-primary' : 'text-gray-400'}`}
-                >
-                  {tab.label}
+
+          {/* Nav links */}
+          <View className="gap-4 px-4 mt-4">
+            {nav_links.map(section => (
+              <View key={section.section}>
+                <Text className="mb-2 ml-1 text-xs tracking-widest text-gray-400 uppercase font-display-semibold">
+                  {section.section}
                 </Text>
-              </Pressable>
+                <View className="overflow-hidden bg-white border border-gray-100 rounded-2xl"
+                  style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+                >
+                  {section.items.map((item, i) => (
+                    <Pressable
+                      key={item.name}
+                      onPress={item.onPress}
+                      className={`flex-row items-center px-4 py-3.5 active:bg-gray-50 ${i < section.items.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    >
+                      <View className="items-center justify-center mr-3 w-9 h-9 rounded-xl" style={{ backgroundColor: theme.accent + '15' }}>
+                        <Ionicons name={item.icon as any} size={18} color={theme.accent} />
+                      </View>
+                      <Text className="flex-1 text-base text-gray-800 font-display-medium">{item.name}</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#d1d5db" />
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
             ))}
           </View>
-
-          {/* Tab content */}
-          {loading ? (
-            <View className="items-center justify-center h-48">
-              <ActivityIndicator size="large" color={theme.accent} />
-            </View>
-          ) : error ? (
-            <View className="p-4">
-              <Text className="text-center text-red-500 font-display-bold">{error}</Text>
-            </View>
-          ) : activeTab === 'my listings' ? (
-                <View className="flex-row flex-wrap justify-between p-4 gap-y-4">
-                  {myItems.length > 0
-                    ? myItems.slice(0, 4).map((item, index) => (
-                      <ListingCard key={item.uniqueKey ?? `listing-${index}`} item={item} />
-                    ))
-                    : <Text className="w-full pt-10 text-center text-gray-400 font-display">
-                      No listings yet
-                    </Text>
-                  }
-                  <Pressable className='items-end justify-end w-full mr-8 flex-end' onPress={() => router.push('/my-listings' as any)}>
-                    <Text className='text-xl font-semibold underline text-primary'>View All</Text>
-                  </Pressable>
-            </View>
-          ) : activeTab === 'favorites' ? (
-                  <View className="flex-row flex-wrap justify-between p-4 gap-y-4">
-                    {favorites.length > 0
-                      ? favorites.map((item, index) => <ListingCard key={`favorite-${item.id ?? index}`} item={item} />)
-                      : <Text className="w-full pt-10 text-center text-gray-400 font-display">No favorites yet</Text>
-                    }
-                  </View>
-                ) : activeTab === 'orders' ? (
-                  <View className="p-4">
-                    <Text className="text-lg text-center text-gray-500 font-display-bold">📦 Orders Coming Soon</Text>
-                    <Text className="mt-2 text-center text-gray-400 font-display">Track orders placed by buyers</Text>
-            </View>
-          ) : (
-            <View className="p-4">
-                        <Text className="text-lg text-center text-gray-500 font-display-bold">🌟 Reviews Coming Soon</Text>
-                        <Text className="mt-2 text-center text-gray-400 font-display">View feedback from buyers and sellers</Text>
-            </View>
-          )}
 
           {/* Logout */}
           <View className="p-6 pb-32">
@@ -382,10 +391,28 @@ const ProfileScreen = () => {
             >
               <Text className="text-base text-red-500 font-display-bold">Logout</Text>
             </Pressable>
+
+            <View className='flex flex-col w-full p-2 mt-8 bg-white shadow-lg rounded-xl'>
+              <View className='flex-row items-center gap-2 mb-4 ml-5'>
+                <MaterialCommunityIcons name="delete" size={24} color="red" />
+                <Text className='text-xl font-semibold text-gray-500 '>
+                  Danger Zone
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={handleDeleteAccount}
+                className="items-center justify-center w-full py-3 mt-3 bg-red-500 rounded-xl"
+              >
+                <Text className="text-base text-center text-white font-display-bold">Delete Account</Text>
+              </Pressable>
+            </View>
+
             <Text className="mt-4 text-xs tracking-widest text-center text-gray-400 uppercase font-display-bold">
               CampusMart v1.0.0
             </Text>
           </View>
+
         </ScrollView>
       </View>
 
@@ -403,6 +430,26 @@ const ProfileScreen = () => {
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false} className="gap-4 mb-4">
+
+                {/* Avatar picker */}
+                <Pressable onPress={handlePickAvatar} className="items-center mb-5">
+                  <View className="relative">
+                    <View className="overflow-hidden border-2 rounded-full size-20" style={{ borderColor: theme.accent }}>
+                      {editImageUri
+                        ? <Image source={{ uri: editImageUri }} className="w-full h-full" resizeMode="cover" />
+                        : <View className="items-center justify-center w-full h-full bg-gray-100">
+                          <Ionicons name="person" size={32} color="#9ca3af" />
+                        </View>
+                      }
+                    </View>
+                    <View className="absolute bottom-0 right-0 items-center justify-center w-6 h-6 border-2 border-white rounded-full" style={{ backgroundColor: theme.accent }}>
+                      <Ionicons name="camera" size={12} color="white" />
+                    </View>
+                  </View>
+                  <Text className="mt-2 text-sm font-display-medium" style={{ color: theme.accent }}>
+                    Change Photo
+                  </Text>
+                </Pressable>
 
                 {/* Name — both roles */}
                 <View className="gap-1 mb-4">
@@ -470,13 +517,7 @@ const ProfileScreen = () => {
                     }
                   </Pressable>
 
-                  <Pressable
-                    onPress={handleDeleteAccount}
-                    disabled={savingProfile}
-                    className="items-center justify-center w-full py-3 bg-red-500 rounded-xl"
-                  >
-                    <Text className="text-base text-center text-white font-display-bold">Delete Account</Text>
-                  </Pressable>
+
                 </View>
               </ScrollView>
             </View>
