@@ -8,6 +8,10 @@ import { getUserProfile, logout, updateProfile, deleteAccount } from '@/lib/auth
 import { getFavorites } from '@/lib/favoriteService'
 import profile from '../../assets/imgs/profile.jpeg'
 
+import {
+  getMyOrders, getSellingOrders
+} from '@/lib/orderService';
+
 // ─── Role helpers ─────────────────────────────────────────────
 const ROLE_THEME = {
   student: { accent: '#6769ef', badge: 'Student' },
@@ -74,13 +78,10 @@ const ProfileScreen = () => {
       ? [
         { label: 'Active', val: String(userData.active_listings ?? 0) },
         { label: 'Sold', val: String(userData.total_sales ?? 0) },
-        // { label: 'Rating', val: String(userData.rating?.toFixed(1) ?? '0'), icon: true },
       ]
       : [
         { label: 'Listings', val: String(userData.active_listings ?? 0) },
-        { label: 'Orders', val: String(userData.orders_count ?? 0) },
-        // { label: 'Rating', val: String(userData.rating?.toFixed(1) ?? '0'), icon: true },
-      ]
+        { label: 'Orders', val: getMyOrders().then(res => res.data?.orders?.length ?? 0) },]
     : [
       { label: 'Listings', val: '0' },
       { label: 'Orders', val: '0' },
@@ -146,7 +147,6 @@ const ProfileScreen = () => {
   const [editFormData, setEditFormData] = useState({
     name: userData?.name || '',
     faculty: userData?.faculty || '',
-    graduation_year: userData?.graduation_year?.toString() || '',
     location: userData?.location || '',
   });
   const [savingProfile, setSavingProfile] = useState(false);
@@ -157,7 +157,6 @@ const ProfileScreen = () => {
       setEditFormData({
         name: userData.name || '',
         faculty: userData.faculty || '',
-        graduation_year: userData.graduation_year?.toString() || '',
         location: userData.location || '',
       });
     }
@@ -176,9 +175,6 @@ const ProfileScreen = () => {
           : {
             name: editFormData.name,
             faculty: editFormData.faculty,
-            graduation_year: editFormData.graduation_year
-              ? parseInt(editFormData.graduation_year)
-              : undefined,
           };
 
       const result = await updateProfile(updateData);
@@ -311,7 +307,6 @@ const ProfileScreen = () => {
               <View key={stat.label} className="items-center flex-1 p-3 bg-white border border-gray-200 shadow-sm rounded-xl">
                 <View className="flex-row items-center gap-1">
                   <Text className="text-2xl font-display-bold">{stat.val}</Text>
-                  {stat.icon && <Ionicons name="star" size={14} color="#fbbf24" />}
                 </View>
                 <Text className="text-gray-500 text-[10px] uppercase tracking-wider font-display-semibold mt-1">
                   {stat.label}
@@ -444,18 +439,7 @@ const ProfileScreen = () => {
                         editable={!savingProfile}
                       />
                     </View>
-                    <View className="gap-1 mb-4">
-                      <Text className="text-sm text-gray-600 font-display-semibold">Graduation Year</Text>
-                      <TextInput
-                        value={editFormData.graduation_year}
-                        onChangeText={(t) => setEditFormData({ ...editFormData, graduation_year: t })}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl font-display"
-                        placeholder="2026"
-                        keyboardType="numeric"
-                        maxLength={4}
-                        editable={!savingProfile}
-                      />
-                    </View>
+
                   </>
                 )}
 

@@ -34,12 +34,16 @@ const ProductItemScreen = () => {
         category, condition, location, imageUrl,
         description, sellerName, sellerRating,
         sellerAvatar, sellerVerified, sellerId,
+        minDuration, maxDuration, durationUnit,
+        availableFrom, availableUntil,
     } = useLocalSearchParams<{
         id: string; title: string; price: string;
         priceUnit: string; type: string; category: string;
         condition: string; location: string; imageUrl: string;
         description: string; sellerName: string; sellerRating: string;
         sellerAvatar: string; sellerVerified: string; sellerId: string;
+        minDuration: string; maxDuration: string; durationUnit: string;
+        availableFrom: string; availableUntil: string;
     }>();
 
     const isOwner = currentUserId && sellerId && currentUserId === sellerId;
@@ -142,7 +146,26 @@ const ProductItemScreen = () => {
                 <View className="flex-row items-center gap-2">
                     {isOwner ? (
                         <Pressable
-                            onPress={() => router.push(`/listing/edit?id=${id}&type=${type}` as never)}
+                            onPress={() => router.push({
+                                pathname: '/edit-listing',
+                                params: {
+                                    id,
+                                    type,
+                                    title,
+                                    description,
+                                    price: String(price),
+                                    priceUnit: priceUnit ?? '',
+                                    category,
+                                    condition,
+                                    location,
+                                    imageUrl: imageUrl ?? '',
+                                    minDuration: String(minDuration ?? ''),
+                                    maxDuration: String(maxDuration ?? ''),
+                                    durationUnit: durationUnit ?? 'days',
+                                    availableFrom: availableFrom ?? '',
+                                    availableUntil: availableUntil ?? '',
+                                },
+                            })}
                             className="flex-row items-center gap-1.5 px-4 py-2 bg-primary rounded-full shadow-sm"
                         >
                             <Ionicons name="create-outline" size={16} color="white" />
@@ -347,7 +370,26 @@ const ProductItemScreen = () => {
                     {isOwner && (
                         <View className="flex-row gap-3 mt-6">
                             <Pressable
-                                onPress={() => router.push(`/listing/edit?id=${id}&type=${type}` as never)}
+                                onPress={() => router.push({
+                                    pathname: '/edit-listing',
+                                    params: {
+                                        id,
+                                        type,
+                                        title,
+                                        description,
+                                        price: String(price),
+                                        priceUnit: priceUnit ?? '',
+                                        category,
+                                        condition,
+                                        location,
+                                        imageUrl: imageUrl ?? '',
+                                        minDuration: String(minDuration ?? ''),
+                                        maxDuration: String(maxDuration ?? ''),
+                                        durationUnit: durationUnit ?? 'days',
+                                        availableFrom: availableFrom ?? '',
+                                        availableUntil: availableUntil ?? '',
+                                    },
+                                })}
                                 className="flex-row items-center justify-center flex-1 gap-2 py-3 border border-primary rounded-xl"
                             >
                                 <Ionicons name="create-outline" size={18} color="#6769ef" />
