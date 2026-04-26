@@ -82,17 +82,31 @@ const ProductItemScreen = () => {
 
     const handleMessageSeller = async () => {
         try {
-            const result = await createConversation(id, `I'm interested in ${title}`);
-            const conversation = result.data?.conversation;
-            if (result.success && conversation?.id) {
-                router.push(`/chats/chat?id=${conversation.id}`);
-            } else {
-                Alert.alert('Error', 'Failed to start conversation');
-            }
-        } catch {
-            Alert.alert('Error', 'Failed to start conversation');
-        }
-    };
+      const result = await createConversation(id, type as 'SALE' | 'LEASE');
+      const conversation = result.data?.conversation;
+      if (result.success && conversation?.id) {
+        router.push({
+            pathname: '/chats/chat',
+            params: {
+                id: String(conversation.id),
+                name: sellerName ?? 'Seller',       // ✅ from product params
+                avatarUrl: sellerAvatar ?? '',              // ✅
+                isOnline: 'false',
+                listingThumb: imageUrl ?? '',              // ✅ product image
+                listingTitle: title ?? '',              // ✅ product title
+                type: conversation.type ?? 'BUYING',
+                lastMessage: '',
+                timestamp: conversation.created_at ?? '',
+                unreadCount: '0',
+            },
+        } as never);
+    } else {
+        Alert.alert('Error', result.error || 'Failed to start conversation');
+    }
+       } catch (err: any) {
+           Alert.alert('Error', err.message || 'Failed to start conversation');
+       }
+   };
 
     const handleBuyNow = async () => {
         try {

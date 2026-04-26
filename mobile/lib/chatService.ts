@@ -22,6 +22,8 @@ export interface Conversation {
   unreadCount: number;
   listingThumb: string;
   type: 'BUYING' | 'SELLING' | 'LEASING';
+  listingTitle: string;
+  created_at: string;
 }
 
 export interface ConversationsResponse {
@@ -57,11 +59,14 @@ export async function sendMessage(
 
 export async function createConversation(
   listingId: string,
-  _message: string
+  listingType: 'SALE' | 'LEASE',
 ): Promise<ApiResponse<{ conversation: Conversation }>> {
   return apiRequest<{ conversation: Conversation }>('/chats/start', {
     method: 'POST',
-    body: { listing_id: Number(listingId) },
+    body: {
+      listing_id: Number(listingId),
+      type: listingType.toLowerCase(),
+    },
     requiresAuth: true,
   });
 }

@@ -86,12 +86,28 @@ const ChatScreen = () => {
                 unreadCount: String(conv.unreadCount),
                 listingThumb: conv.listingThumb,
                 type: conv.type,
+                listingTitle: conv.listingTitle,
             }
         } as any);
     };
 
 
     const [createMessage, setCreateMessage] = useState<boolean>(false);
+
+    const formatRelativeTime = (iso?: string): string => {
+        if (!iso) return '';
+        const diff = Date.now() - new Date(iso).getTime();
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (diff < 60000) return 'just now';
+        if (mins < 60) return `${mins}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days === 1) return 'yesterday';
+        if (days < 7) return `${days}d ago`;
+        return new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' });
+    };
 
 
     return (
@@ -186,7 +202,7 @@ const ChatScreen = () => {
                                         <Text className="font-display-semibold text-lg truncate">{conv.participant.name}</Text>
                                         {conv.participant.isStore && <MaterialIcons name="verified" size={16} color="#6769ef" />}
                                     </View>
-                                    <Text className={`text-md font-display-medium ${conv.unreadCount > 0 ? 'text-primary' : 'text-gray-400'}`}>{conv.timestamp}</Text>
+                                      <Text className={`text-md font-display-medium ${conv.unreadCount > 0 ? 'text-primary' : 'text-gray-400'}`}>{formatRelativeTime(conv.timestamp)}</Text>
                                 </View>
 
                                 <Text className={`text-md line-clamp-1 mb-1 
