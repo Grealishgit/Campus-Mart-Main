@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { getAllListings, getCategories } from '@/lib/listingService'
 import ListingCard from '@/components/ListingCard'
+import { getFavorites } from '@/lib/favoriteService';
+import { useFocusEffect } from 'expo-router';
 
 const BrowseScreen = () => {
 
@@ -23,6 +25,7 @@ const BrowseScreen = () => {
   const [searchValue, setSearchValue] = useState<string>('');
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [tempPriceRange, setTempPriceRange] = useState([0, 50000]);
+  const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
 
   const loadCategories = async () => {
     try {
@@ -155,6 +158,20 @@ const BrowseScreen = () => {
     } as any);
   };
 
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadFavs = async () => {
+        const result = await getFavorites();
+        if (result.success && result.data?.favorites) {
+          const ids = new Set(result.data.favorites.map((f: any) => f.listingId));
+          setFavoritedIds(ids);
+        }
+      };
+      loadFavs();
+    }, [])
+  );
+
   return (
     <SafeAreaView className='flex-1'>
       <View className="flex flex-col h-full bg-background-light animate-slide-up">
@@ -259,6 +276,7 @@ const BrowseScreen = () => {
                   renderItem={({ item }) => (
                     <ListingCard
                       listing={item}
+                      isFavorited={favoritedIds.has(item?.id)}
                       onClick={() => handleListingClick(item)}
                       cardWidth={cardWidth}
                     />
