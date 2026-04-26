@@ -20,12 +20,46 @@ const isUniversityEmail = (email) => {
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
   try {
-    const { name, email, password, role = 'student', faculty, graduation_year, year } = req.body;
-    const normalizedGraduationYear = graduation_year ?? year ?? null;
-    // Check if email already exists
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const {
+      name,
+      email,
+      password,
+      role = 'student',
+      faculty,
+    } = req.body;
+
+    // console.log('req.body:', req.body);
+
+    let normalizedEmail;
+
+    // Validate email format based on role
+    if (role === 'student') {
+      const studentEmailRegex = /^[^\s@]+@[^\s@]+\.(ac\.ke|edu)$/;
+      if (!studentEmailRegex.test(email)) {
+        throw new AppError('Students must use a valid university email (.ac.ke or .edu)', 400, 'INVALID_EMAIL_FORMAT');
+      }
+      normalizedEmail = email.toLowerCase();
+
+    } else if (role === 'vendor') {
+      const vendorEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!vendorEmailRegex.test(email)) {
+        throw new AppError('Please provide a valid email address', 400, 'INVALID_EMAIL_FORMAT');
+      }
+      normalizedEmail = email;
+
+    } else {
+      throw new AppError('Invalid role. Must be student or vendor', 400, 'INVALID_ROLE');
+    }
+
+    // Check for existing user
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+
     if (existing.rows.length > 0) {
-      throw new AppError('An account with this email already exists.', 409, 'EMAIL_EXISTS');
+      throw new AppError(
+        'An account with this email already exists.',
+        409,
+        'EMAIL_ALREADY_EXISTS'
+      );
     }
 
     // Hash password
@@ -34,10 +68,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Create user
     const result = await pool.query(
-      `INSERT INTO users (name, email, password, role, faculty, graduation_year)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, name, email, role, avatar_url, is_verified, faculty, graduation_year, rating, created_at`,
-      [name, email.toLowerCase(), hashedPassword, role, faculty || null, normalizedGraduationYear]
+      `INSERT INTO users (name, email, password, role, faculty, location)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, name, email, role, avatar_url, is_verified, faculty, rating, created_at`,
+      [name, normalizedEmail, hashedPassword, role, faculty || null, null]
     );
 
     const user = result.rows[0];
@@ -56,13 +90,8 @@ const registerUser = asyncHandler(async (req, res) => {
       error_code: error.errorCode || 'INTERNAL_SERVER_ERROR',
       message: error.message || 'An error occurred during registration.',
     });
-
   }
-
-
-
 });
-
 // @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
@@ -70,9 +99,13 @@ const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   // Find user
-  const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+  const normalizedEmail = email.toLowerCase();
+  const result = await pool.query(
+    'SELECT * FROM users WHERE email = $1 OR LOWER(email) = LOWER($1)',
+    [email]
+  );
   if (result.rows.length === 0) {
-   return res.status(401).json({
+    return res.status(401).json({
       success: false,
       error_code: 'INVALID_CREDENTIALS',
       message: 'Invalid email or password.',
@@ -105,7 +138,7 @@ const loginUser = asyncHandler(async (req, res) => {
 // @access  Private
 const getCurrentUser = asyncHandler(async (req, res) => {
   const result = await pool.query(
-    `SELECT id, name, email, role, avatar_url, is_verified, faculty, graduation_year,
+    `SELECT id, name, email, role, avatar_url, is_verified, faculty, location,
             rating, total_sales, active_listings, created_at, updated_at
      FROM users WHERE id = $1`,
     [req.user.id]
@@ -122,7 +155,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/profile
 // @access  Private
 const updateProfile = asyncHandler(async (req, res) => {
-  const { name, faculty, graduation_year } = req.body;
+  const { name, faculty, location } = req.body;
   const avatar_url = req.file ? req.file.path : undefined;
 
   const fields = [];
@@ -131,7 +164,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   if (name) { fields.push(`name = $${idx++}`); values.push(name); }
   if (faculty) { fields.push(`faculty = $${idx++}`); values.push(faculty); }
-  if (graduation_year) { fields.push(`graduation_year = $${idx++}`); values.push(graduation_year); }
+  if (location) { fields.push(`location = $${idx++}`); values.push(location); }
   if (avatar_url) { fields.push(`avatar_url = $${idx++}`); values.push(avatar_url); }
 
   if (fields.length === 0) {
@@ -141,7 +174,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   values.push(req.user.id);
   const result = await pool.query(
     `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx}
-     RETURNING id, name, email, role, avatar_url, is_verified, faculty, graduation_year, rating, total_sales, active_listings, created_at, updated_at`,
+     RETURNING id, name, email, role, avatar_url, is_verified, faculty, location, rating, total_sales, active_listings, created_at, updated_at`,
     values
   );
 
