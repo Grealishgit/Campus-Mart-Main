@@ -77,6 +77,11 @@ const ProfileScreen = () => {
       section: 'My Activity',
       items: [
         {
+          name: 'Create Listings',
+          icon: 'arrow-up-right-box-outline',
+          onPress: () => router.push('/(listing)/create-listing' as any)
+        },
+        {
           name: 'My Listings',
           icon: 'albums-outline',
           onPress: () => router.push('/(listing)/my-listings' as any)
@@ -297,8 +302,6 @@ const ProfileScreen = () => {
           </Pressable>
         </View>
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-
           {/* Avatar + name */}
           <View className="items-center gap-4 p-4 pt-6">
             <View className="relative">
@@ -340,6 +343,7 @@ const ProfileScreen = () => {
             </Pressable>
           </View>
 
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Stats row */}
           <View className="flex-row justify-between gap-3 px-4 py-2">
             {listStats.map(stat => (
@@ -434,7 +438,8 @@ const ProfileScreen = () => {
                 {/* Avatar picker */}
                 <Pressable onPress={handlePickAvatar} className="items-center mb-5">
                   <View className="relative">
-                    <View className="overflow-hidden border-2 rounded-full size-20" style={{ borderColor: theme.accent }}>
+                    <View className="overflow-hidden border-2 rounded-full size-20"
+                      style={{ borderColor: theme.accent }}>
                       {editImageUri
                         ? <Image source={{ uri: editImageUri }} className="w-full h-full" resizeMode="cover" />
                         : <View className="items-center justify-center w-full h-full bg-gray-100">
@@ -504,19 +509,31 @@ const ProfileScreen = () => {
                   </View>
                 )}
 
-                <View className="gap-3 mt-2">
+                <View className="flex-row items-center flex-1 gap-4 mt-2">
+
                   <Pressable
                     onPress={handleSaveProfile}
                     disabled={savingProfile}
-                    className="items-center justify-center w-full py-3 rounded-xl"
+                    className="items-center justify-center flex-1 py-3 rounded-xl"
                     style={{ backgroundColor: theme.accent }}
                   >
                     {savingProfile
                       ? <ActivityIndicator color="white" />
-                      : <Text className="text-base text-center text-white font-display-bold">Save Changes</Text>
+                      : <Text className="text-lg text-center text-white font-display-bold">
+                        Save Changes
+                      </Text>
                     }
                   </Pressable>
+                  <Pressable
+                    onPress={() => setEditProfile(false)}
+                    disabled={savingProfile}
+                    className="items-center justify-center flex-1 py-3 bg-gray-400 rounded-xl"
+                  >
+                    <Text className="text-lg text-center text-white font-display-bold">
+                      Cancel
+                    </Text>
 
+                  </Pressable>
 
                 </View>
               </ScrollView>
