@@ -21,6 +21,7 @@ app.use(cors({
     'http://localhost:5000',      // Local backend
     'http://localhost:8081',      // Expo dev server (mobile) 
     'http://localhost:5173',    //  Admin page
+    'https://campus-mart.hantardev.tech', // Production frontend
     'http://192.168.0.105:8081',  // Local network access
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
   ],
