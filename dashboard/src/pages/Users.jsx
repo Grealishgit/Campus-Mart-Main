@@ -1,16 +1,36 @@
 import { useState } from 'react';
 import { useUsers } from '../hooks/useUsers';
-import { Search, ShieldCheck, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ShieldCheck, Trash2, ChevronLeft, ChevronRight, Users as UsersIcon, BadgeCheck, ShieldOff, GraduationCap } from 'lucide-react';
+
+const StatCard = ({ title, value, icon: Icon, dark }) => (
+  <div className={`rounded-xl p-5 border ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
+    <div className="flex items-center justify-between mb-3">
+      <p className={`text-sm font-medium ${dark ? 'text-white/60' : 'text-gray-500'}`}>{title}</p>
+      <div className="w-9 h-9 rounded-lg bg-[#6769ef]/10 flex items-center justify-center">
+        <Icon size={18} className="text-[#6769ef]" />
+      </div>
+    </div>
+    <p className={`text-2xl font-bold ${dark ? 'text-white' : 'text-gray-800'}`}>{value}</p>
+  </div>
+);
 
 const Users = () => {
-  const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-  const dark = theme === 'dark';
-
+  const dark = document.documentElement.classList.contains('dark');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-
   const { users, loading, error, verifyUser, deleteUser } = useUsers(page, search);
+
+  const verified = users.filter(u => u.is_verified).length;
+  const unverified = users.filter(u => !u.is_verified).length;
+  const withFaculty = users.filter(u => u.faculty).length;
+
+  const stats = [
+    { title: 'Total Users', value: users.length, icon: UsersIcon },
+    { title: 'Verified', value: verified, icon: BadgeCheck },
+    { title: 'Unverified', value: unverified, icon: ShieldOff },
+    { title: 'With Faculty', value: withFaculty, icon: GraduationCap },
+  ];
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -26,14 +46,11 @@ const Users = () => {
   return (
     <div className="p-6 space-y-5">
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className={`text-xl font-bold ${dark ? 'text-white' : 'text-gray-800'}`}>Users</h1>
           <p className={`text-sm mt-0.5 ${dark ? 'text-white/50' : 'text-gray-500'}`}>Manage all registered users</p>
         </div>
-
-        {/* Search */}
         <form onSubmit={handleSearch} className="flex items-center gap-2">
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${dark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}>
             <Search size={15} className="text-gray-400" />
@@ -48,6 +65,11 @@ const Users = () => {
             Search
           </button>
         </form>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map(s => <StatCard key={s.title} {...s} dark={dark} />)}
       </div>
 
       {/* Table */}
@@ -113,7 +135,6 @@ const Users = () => {
         )}
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between">
         <p className={`text-sm ${dark ? 'text-white/40' : 'text-gray-400'}`}>Page {page}</p>
         <div className="flex items-center gap-2">
