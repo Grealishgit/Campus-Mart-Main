@@ -116,6 +116,42 @@ const getStats = async (req, res) => {
   }
 };
 
+
+// get all orders
+// Add this function in adminController.js before the module.exports
+
+const getOrders = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const result = await pool.query(
+      `SELECT
+        o.id, o.type, o.amount, o.status, o.created_at,
+        o.lease_start, o.lease_end,
+        buyer.name        AS buyer_name,
+        buyer.email       AS buyer_email,
+        seller.name       AS seller_name,
+        seller.email      AS seller_email,
+        COALESCE(sl.title, ll.title) AS item_title
+       FROM orders o
+       LEFT JOIN users buyer   ON o.buyer_id         = buyer.id
+       LEFT JOIN users seller  ON o.seller_id        = seller.id
+       LEFT JOIN sale_listings  sl ON o.sale_listing_id  = sl.id
+       LEFT JOIN lease_listings ll ON o.lease_listing_id = ll.id
+       ORDER BY o.created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [parseInt(limit), parseInt(offset)]
+    );
+
+    res.json({ success: true, orders: result.rows });
+  } catch (err) {
+    console.error('GetOrders error:', err.message);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
+
 // @desc    Get all users
 // @route   GET /api/admin/users
 // @access  Admin
@@ -307,4 +343,9 @@ const verifyListing = async (req, res) => {
   }
 };
 
-module.exports = { loginAdmin, getStats, getAllUsers, verifyUser, deleteUser, getAllListings, verifyListing };
+module.exports = {
+  loginAdmin, getStats,
+  getOrders, getAllUsers,
+  verifyUser, deleteUser,
+  getAllListings, verifyListing
+};

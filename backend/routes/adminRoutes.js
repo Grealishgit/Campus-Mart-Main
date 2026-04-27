@@ -5,14 +5,15 @@ const router = express.Router();
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // Controllers
-const { 
+const {
     loginAdmin,
-     getStats,
-      getAllUsers, 
-      verifyUser,
-       deleteUser, 
-       getAllListings, 
-       verifyListing
+    getStats,
+    getOrders,
+    getAllUsers,
+    verifyUser,
+    deleteUser,
+    getAllListings,
+    verifyListing
 } = require('../controllers/adminController');
 
 // Validation
@@ -31,5 +32,7 @@ router.put('/users/:id/verify', asyncHandler(verifyUser));
 router.delete('/users/:id', asyncHandler(deleteUser));
 router.get('/listings', asyncHandler(getAllListings));
 router.put('/listings/:id/verify', asyncHandler(verifyListing));
+router.get('/orders', asyncHandler(getOrders));
 
-module.exports = router;
+
+module.exports = router;      
