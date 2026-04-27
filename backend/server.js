@@ -22,6 +22,7 @@ app.use(cors({
     'http://localhost:8081',      // Expo dev server (mobile) 
     'http://localhost:5173',    //  Admin page
     'https://campus-mart.hantardev.tech', // Production frontend
+    'https://campus-mart-main.vercel.app', // Vercel preview deployment
     'http://192.168.0.105:8081',  // Local network access
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
   ],
@@ -126,9 +127,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
-const startServer = async () => {
+const env = process.env.NODE_ENV;
+console.log(env)
+
+
+if (env === 'development') {
+  const startServer = async () => {
   try {
     // Forces an initial DB connection so status is shown at startup.
     await pool.query('SELECT 1');
@@ -142,6 +148,9 @@ const startServer = async () => {
     console.error('Failed to connect to PostgreSQL on startup:', err.message);
     process.exit(1);
   }
-};
+  };
+  startServer();
+}
 
-startServer();
+
+
