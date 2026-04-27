@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL;
+  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://campus-mart.hantardev.tech/api';
 const AUTH_TOKEN_KEY = "authToken";
 
 type AuthTokenListener = (token: string | null) => void;

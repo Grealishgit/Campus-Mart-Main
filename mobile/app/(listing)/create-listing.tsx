@@ -233,7 +233,7 @@ const CreateListing = () => {
 
       const token = await getAuthToken(); // import from apiClient
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/listings`,
+        `${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://campus-mart.hantardev.tech/api'}/listings`,
         {
           method: 'POST',
           headers: {

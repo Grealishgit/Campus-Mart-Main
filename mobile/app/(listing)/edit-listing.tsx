@@ -188,7 +188,7 @@ const EditListing = () => {
 
       const token = await getAuthToken();
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/listings/${params.id}?type=${formData.type}`,
+        `${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://campus-mart.hantardev.tech/api'}/listings/${params.id}?type=${formData.type}`,
         {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },

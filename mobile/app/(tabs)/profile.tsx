@@ -221,7 +221,7 @@ const ProfileScreen = () => {
 
         const { getAuthToken } = await import('@/lib/apiClient');
         const token = await getAuthToken();
-        const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/profile`, {
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://campus-mart.hantardev.tech/api'}/auth/profile`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
           body,
