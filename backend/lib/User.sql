@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
 	avatar_url TEXT,
 	is_verified BOOLEAN DEFAULT FALSE,
 	faculty VARCHAR(100),
-	graduation_year INTEGER,
 	rating DECIMAL(2,1) DEFAULT 0.0,
 	total_sales INTEGER DEFAULT 0,
 	active_listings INTEGER DEFAULT 0,
@@ -51,15 +50,15 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 -- SELECT id FROM users WHERE email = $1;
 
 -- Register: create user
--- INSERT INTO users (name, email, password, role, faculty, graduation_year)
+-- INSERT INTO users (name, email, password, role, faculty)
 -- VALUES ($1, $2, $3, $4, $5, $6)
--- RETURNING id, name, email, role, avatar_url, is_verified, faculty, graduation_year, rating, created_at;
+-- RETURNING id, name, email, role, avatar_url, is_verified, faculty, rating, created_at;
 
 -- Login: find user
 -- SELECT * FROM users WHERE email = $1;
 
 -- Get current user
--- SELECT id, name, email, role, avatar_url, is_verified, faculty, graduation_year,
+-- SELECT id, name, email, role, avatar_url, is_verified, faculty, 
 --        rating, total_sales, active_listings, created_at
 -- FROM users
 -- WHERE id = $1;
@@ -68,10 +67,9 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 -- UPDATE users
 -- SET name = COALESCE($1, name),
 --     faculty = COALESCE($2, faculty),
---     graduation_year = COALESCE($3, graduation_year),
 --     avatar_url = COALESCE($4, avatar_url)
 -- WHERE id = $5
--- RETURNING id, name, email, role, avatar_url, is_verified, faculty, graduation_year, rating;
+-- RETURNING id, name, email, role, avatar_url, is_verified, faculty,  rating;
 
 -- Delete account
 -- DELETE FROM users WHERE id = $1;

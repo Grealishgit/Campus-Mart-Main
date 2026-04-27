@@ -195,6 +195,20 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at       TIMESTAMP DEFAULT NOW()
 );
 
+
+CREATE TABLE IF NOT EXISTS logs (
+  id         SERIAL       PRIMARY KEY,
+  level      VARCHAR(20)  DEFAULT 'info' CHECK (level IN ('info', 'warning', 'error', 'success')),
+  message    TEXT         NOT NULL,
+  source     VARCHAR(100),
+  user_id    UUID         REFERENCES users(id) ON DELETE SET NULL,
+  metadata   JSONB,
+  created_at TIMESTAMP    DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_logs_level      ON logs(level);
+CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
+
 -- ============================================================
 -- INDEXES
 -- ============================================================

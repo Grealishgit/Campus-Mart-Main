@@ -142,7 +142,6 @@ const registerSchema = z.object({
       .regex(/[0-9]/, 'Password must contain number')
       .regex(/[^A-Za-z0-9]/, 'Password must contain special character'),
     faculty: z.string().optional(),
-    graduation_year: z.number().int().min(2024).max(2030).optional(),
   }),
 });
 
@@ -586,7 +585,7 @@ const crypto = require('crypto');
 const { sendVerificationEmail } = require('../utils/emailService');
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, faculty, graduation_year } = req.body;
+  const { name, email, password, faculty} = req.body;
 
   // Check if user exists
   const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
@@ -603,10 +602,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // Create user
   const result = await pool.query(
-    `INSERT INTO users (name, email, password, faculty, graduation_year, verification_token, verification_token_expires)
+    `INSERT INTO users (name, email, password, faculty,  verification_token, verification_token_expires)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING id, email, name`,
-    [name, email, hashedPassword, faculty, graduation_year, verificationToken, tokenExpiry]
+    [name, email, hashedPassword, faculty,  verificationToken, tokenExpiry]
   );
 
   const user = result.rows[0];
@@ -909,7 +908,6 @@ describe('Authentication API', () => {
           email: 'john@university.ac.ke',
           password: 'SecurePass123!',
           faculty: 'Engineering',
-          graduation_year: 2026,
         });
 
       expect(response.status).toBe(201);
@@ -1403,7 +1401,6 @@ interface RegisterPayload {
   email: string;
   password: string;
   faculty?: string;
-  graduation_year?: number;
 }
 
 interface LoginPayload {

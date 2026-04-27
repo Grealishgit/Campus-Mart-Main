@@ -88,8 +88,8 @@ const registerUser = asyncHandler(async (req, res) => {
   
   // Create user
   const result = await pool.query(
-    'INSERT INTO users (name, email, password, faculty, graduation_year) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role',
-    [name, email, hashedPassword, req.body.faculty, req.body.graduation_year]
+    'INSERT INTO users (name, email, password, faculty) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role',
+    [name, email, hashedPassword, req.body.faculty]
   );
   
   const user = result.rows[0];

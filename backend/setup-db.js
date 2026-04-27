@@ -54,7 +54,7 @@ async function seedDemoUsers(dbPool) {
     const hashedPassword = await bcrypt.hash(user.password, 10);
 
     await dbPool.query(
-      `INSERT INTO users (name, email, password, role, faculty, graduation_year, is_verified)
+      `INSERT INTO users (name, email, password, role, faculty, is_verified)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (email) DO UPDATE SET
          name = EXCLUDED.name,
@@ -69,7 +69,6 @@ async function seedDemoUsers(dbPool) {
         hashedPassword,
         user.role,
         user.faculty,
-        user.graduation_year,
         user.is_verified,
       ]
     );

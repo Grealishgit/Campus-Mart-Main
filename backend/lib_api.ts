@@ -63,7 +63,6 @@ export const authAPI = {
     password: string;
     role?: string;
     faculty?: string;
-    graduation_year?: number;
   }) => request('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
 
   login: (email: string, password: string) =>
