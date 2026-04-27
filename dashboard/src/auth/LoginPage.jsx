@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { Eye, EyeOff } from 'lucide-react'
 
 const LoginPage = () => {
     const { login, loading, error } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isDark, setIsDark] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Detect theme from html class or localStorage
     useEffect(() => {
@@ -78,14 +80,25 @@ const LoginPage = () => {
 
                         <div>
                             <label className={`${labelText} text-sm mb-1.5 block`}>Password</label>
-                            <input
-                                type="password"
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 placeholder="••••••••"
                                 className={`w-full ${inputBg} border ${inputBorder} ${inputFocus} outline-none ${inputText} text-sm rounded-lg px-4 py-2.5 transition-colors`}
-                            />
+                                />  
+                                <button onClick={() => setShowPassword(!showPassword)} type='button' className="absolute text-gray-500 -translate-y-1/2 cursor-pointer right-3 top-1/2 hover:text-gray-700 focus:outline-none">
+                                    {showPassword ? (
+                                        <Eye size={18} />
+                                    ) : (
+                                        <EyeOff size={18} />
+                                    )}
+                                </button>
+
+                            </div>
+
                         </div>
 
                         <button
@@ -95,6 +108,9 @@ const LoginPage = () => {
                         >
                             {loading ? 'Signing in...' : 'Sign In'}
                         </button>
+
+                        <p className='text-sm text-center'>Forgot Password? <span className='text-[#6769ef] underline cursor-pointer'>Contact Developer | Arnold</span></p>
+
                     </form>
                 </div>
             </div>
