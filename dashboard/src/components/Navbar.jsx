@@ -1,4 +1,4 @@
-import { Bell, LogOut, Headset, Menu, Settings } from 'lucide-react'
+import { Bell, LogOut, Headset, Menu, Settings, Box } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -50,7 +50,7 @@ const Navbar = ({ theme, themeMode, setTheme, sidebarOpen, setSidebarOpen, sideb
                         to='/orders'
                         className='font-medium flex items-center gap-2 bg-[#6769ef] hover:bg-[#5557d4] px-3 py-1.5 rounded-lg text-white text-sm transition-colors'
                     >
-                        <Headset size={14} />
+                        <Box size={14} />
                         View Orders
                     </NavLink>
                 </div>
