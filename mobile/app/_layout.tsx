@@ -7,8 +7,9 @@ import {
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import "react-native-reanimated";
 import "../global.css";
 
@@ -28,6 +29,7 @@ export default function RootLayout() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
+
   const [fontsLoaded] = useFonts({
     "Jost-Black": require("../assets/fonts/Jost-Black.ttf"),
     "Jost-Bold": require("../assets/fonts/Jost-Bold.ttf"),
@@ -40,8 +42,13 @@ export default function RootLayout() {
   useEffect(() => {
     let isMounted = true;
 
+
     const bootstrapAuth = async () => {
-      const { authenticated, role } = await initializeAuthSession();
+      const [{ authenticated, role }, onboarded] = await Promise.all([
+        initializeAuthSession(),
+        AsyncStorage.getItem('onboarded'),
+      ]);
+      console.log('bootstrap — onboarded:', onboarded, 'auth:', authenticated); // ✅
       if (isMounted) {
         setIsAuth(authenticated);
         setUserRole(role ?? null);
@@ -50,6 +57,8 @@ export default function RootLayout() {
 
     bootstrapAuth();
 
+    // In the subscribeToAuthTokenChanges callback
+    // In _layout.tsx subscribeToAuthTokenChanges callback
     const unsubscribe = subscribeToAuthTokenChanges(async (token) => {
       if (!isMounted) return;
 
@@ -82,46 +91,28 @@ export default function RootLayout() {
     };
   }, []);
 
+
   useEffect(() => {
     if (isAuth === null) return;
 
     const rootSegment = segments[0] as string | undefined;
-    const secondSegment = String(segments[1] ?? "");
-    // const isAdminRoute = rootSegment === "admin";
-    // const isAdminLoginRoute = isAdminRoute && secondSegment === "login";
-    const isInPublicRoute =
-      rootSegment === "(auth)" || rootSegment === "(onboard)";
+    const isInPublicRoute = rootSegment === '(auth)' || rootSegment === '(onboard)';
 
     if (isAuth) {
-      // Wait until role is known before deciding where authenticated users should land.
       if (!userRole) return;
-
       if (isInPublicRoute) {
-        if (userRole === "admin") {
-          router.replace("/admin/dashboard" as never);
-        } else {
-          router.replace("/(tabs)" as never);
-        }
-        return;
-      }
-
-      // Prevent non-admin accounts from accessing admin screens.
-      // if (isAdminRoute && userRole !== "admin") {
-      //   router.replace("/(tabs)" as never);
-      // }
+      router.replace(userRole === 'admin' ? '/admin/dashboard' as never : '/(tabs)' as never);
+    }
       return;
     }
 
-    // if (isAdminRoute && !isAdminLoginRoute) {
-    //   router.replace("/admin/login" as never);
-    //   return;
-    // }
-
-    if (!isInPublicRoute) {
-      router.replace("/(auth)/login" as never);
+    if (!isInPublicRoute && rootSegment) {
+      router.replace('/(auth)/login' as never);
     }
   }, [isAuth, userRole, segments, router]);
 
+
+  // Update loading guard
   if (isAuth === null || !fontsLoaded)
     return (
       <View className="items-center justify-center flex-1 bg-primary">
@@ -132,6 +123,7 @@ export default function RootLayout() {
         <ActivityIndicator size="large" color="white" />
       </View>
     );
+
 
   return (
     <ThemeProvider value={colorScheme === "light" ? DarkTheme : DefaultTheme}>

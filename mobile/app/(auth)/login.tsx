@@ -42,7 +42,7 @@ const SignInScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
- const handleLogin = async () => {
+  const handleLogin = async () => {
   if (!validate()) return;
 
   setIsLoading(true);
@@ -53,21 +53,16 @@ const SignInScreen = () => {
     });
 
     if (response.success) {
-      const user = response.data?.user;
-      // Alert.alert("Success", `Welcome back, ${user?.name}!`);
-      console.log("Logged in user:", user?.role);
-
-      router.replace("/(tabs)" as never);
-
+      // ✅ do nothing — root layout subscriber handles redirect
     } else {
       Alert.alert(
-        "Login Failed",
-        response.error || "An error occurred during login",
+        'Login Failed',
+        response.error || 'An error occurred during login',
       );
     }
   } catch (error) {
-    Alert.alert("Error", "An unexpected error occurred");
-    console.error("Login error:", error);
+    Alert.alert('Error', 'An unexpected error occurred');
+    console.error('Login error:', error);
   } finally {
     setIsLoading(false);
   }

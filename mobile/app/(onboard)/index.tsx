@@ -6,6 +6,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
@@ -34,19 +35,24 @@ const OnboardingScreen = () => {
         }
     ];
 
-    const nextStep = () => {
+    const nextStep = async () => {
         if (step < steps.length - 1) {
             setStep(step + 1);
         } else {
+            await AsyncStorage.setItem('onboarded', 'true');
+            console.log('onboarding status', await AsyncStorage.getItem('onboarded'));
             router.replace('/(auth)' as any);
         }
-    }
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-white">
             {/* Skip Button */}
             <View className="items-end px-6 pt-6 pb-2">
-                <Pressable onPress={() => router.replace('/(auth)' as any)}>
+                <Pressable onPress={async () => {
+                    await AsyncStorage.setItem('onboarded', 'true');
+                    router.replace('/(auth)' as any);
+                }}>
                     <Text className="text-2xl tracking-wide text-primary font-display-medium">
                         Skip
                     </Text>
@@ -110,7 +116,7 @@ const OnboardingScreen = () => {
                         <Ionicons name="arrow-forward" size={20} color="white" />
                     </Text>
                 </Pressable>
-        </View>
+            </View>
         </SafeAreaView>
     )
 }
