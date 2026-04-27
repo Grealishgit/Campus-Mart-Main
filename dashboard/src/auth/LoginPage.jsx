@@ -30,10 +30,10 @@ const LoginPage = () => {
     const textPrimary = isDark ? 'text-white' : 'text-gray-900';
     const textMuted = isDark ? 'text-white/50' : 'text-gray-500';
     const cardBg = isDark ? 'bg-gray-800' : 'bg-white';
-    const cardBorder = isDark ? 'border-[#933942]/30' : 'border-gray-200';
+    const cardBorder = isDark ? 'border-[#6769ef]/30' : 'border-gray-200';
     const inputBg = isDark ? 'bg-gray-900' : 'bg-gray-50';
     const inputBorder = isDark ? 'border-gray-700' : 'border-gray-300';
-    const inputFocus = isDark ? 'focus:border-[#933942]' : 'focus:border-[#933942]';
+    const inputFocus = isDark ? 'focus:border-[#6769ef]' : 'focus:border-[#6769ef]';
     const inputText = isDark ? 'text-white' : 'text-gray-900';
     const labelText = isDark ? 'text-white/70' : 'text-gray-600';
     const errorBg = isDark ? 'bg-red-500/10' : 'bg-red-50';
@@ -66,6 +66,9 @@ const LoginPage = () => {
                             <input
                                 type="email"
                                 value={email}
+                                autoComplete='email'
+                                autoFocus
+                                autoSave='on'
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 placeholder="admin@example.com"

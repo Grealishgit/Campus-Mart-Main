@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import LoginPage from "../auth/LoginPage";
 
 const STORAGE_KEY = "theme";
 
@@ -101,6 +102,7 @@ const Layout = () => {
                     sidebarWidth={sidebarWidth}
                 />
                 <Outlet context={{ theme, setTheme: toggleTheme, sidebarOpen, setSidebarOpen }} />
+
             </main>
         </div>
     );

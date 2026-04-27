@@ -27,7 +27,6 @@ const DEMO_USERS = [
     password: 'Admin@123',
     role: 'admin',
     faculty: 'Administration',
-    graduation_year: null,
     is_verified: true,
   },
   {
@@ -36,7 +35,6 @@ const DEMO_USERS = [
     password: 'SuperAdmin@123',
     role: 'admin',
     faculty: 'Operations',
-    graduation_year: null,
     is_verified: true,
   },
   {
@@ -45,7 +43,6 @@ const DEMO_USERS = [
     password: 'Student@123',
     role: 'student',
     faculty: 'Engineering',
-    graduation_year: 2027,
     is_verified: true,
   },
 ];
@@ -64,7 +61,6 @@ async function seedDemoUsers(dbPool) {
          password = EXCLUDED.password,
          role = EXCLUDED.role,
          faculty = EXCLUDED.faculty,
-         graduation_year = EXCLUDED.graduation_year,
          is_verified = EXCLUDED.is_verified,
          updated_at = NOW()`,
       [
