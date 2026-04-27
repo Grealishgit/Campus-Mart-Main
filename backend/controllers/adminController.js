@@ -37,21 +37,26 @@ const loginAdmin = async (req, res) => {
 
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
     if (result.rows.length === 0) {
+      await createLog('warning', `Failed login attempt for email: ${email}`, 'loginAdmin');
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
     const user = result.rows[0];
     if (user.role !== 'admin') {
+      await createLog('warning', `Non-admin login attempt: ${email}`, 'loginAdmin');
       return res.status(403).json({ success: false, message: 'Admin access required.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      await createLog('warning', `Wrong password for admin: ${email}`, 'loginAdmin');
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
     const token = generateToken(user.id);
     const { password: _, ...adminWithoutPassword } = user;
+
+    await createLog('success', `Admin logged in: ${email}`, 'loginAdmin', user.id);
 
     return res.json({
       success: true,
@@ -59,14 +64,12 @@ const loginAdmin = async (req, res) => {
       token,
       user: adminWithoutPassword,
     });
-
-
   } catch (error) {
+    await createLog('error', `Admin login error: ${error.message}`, 'loginAdmin');
     console.error('Admin login error:', error.message);
     res.status(500).json({ success: false, message: 'Server error during admin login.' });
-
   }
-}
+};
 
 // @desc    Get dashboard stats
 // @route   GET /api/admin/stats
@@ -193,8 +196,12 @@ const verifyUser = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    res.json({ success: true, message: 'User verified.', user: result.rows[0] });
+    const user = result.rows[0];
+    await createLog('success', `User verified: ${user.email}`, 'verifyUser', req.params.id);
+
+    res.json({ success: true, message: 'User verified.', user });
   } catch (err) {
+    await createLog('error', `verifyUser error: ${err.message}`, 'verifyUser');
     console.error('VerifyUser error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
@@ -205,9 +212,16 @@ const verifyUser = async (req, res) => {
 // @access  Admin
 const deleteUser = async (req, res) => {
   try {
+    const check = await pool.query('SELECT name, email FROM users WHERE id = $1', [req.params.id]);
+    const user = check.rows[0];
+
     await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+
+    await createLog('warning', `User deleted: ${user?.email ?? req.params.id}`, 'deleteUser');
+
     res.json({ success: true, message: 'User deleted.' });
   } catch (err) {
+    await createLog('error', `deleteUser error: ${err.message}`, 'deleteUser');
     console.error('DeleteUser error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
@@ -298,6 +312,7 @@ const verifyListing = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Listing not found.' });
       }
 
+      await createLog('success', `Listing verified: ${result.rows[0].title} (ID: ${listingId})`, 'verifyListing');
       return res.json({ success: true, message: 'Listing verified.', listing: result.rows[0] });
     }
 
@@ -317,28 +332,70 @@ const verifyListing = async (req, res) => {
     } else if (listingType === 'LEASE' && storage.hasLeaseListings) {
       result = await updateLeaseListing();
     } else {
-      if (storage.hasSaleListings) {
-        result = await updateSaleListing();
-      }
-      if (!result.rows.length && storage.hasLeaseListings) {
-        result = await updateLeaseListing();
-      }
+      if (storage.hasSaleListings) result = await updateSaleListing();
+      if (!result.rows.length && storage.hasLeaseListings) result = await updateLeaseListing();
     }
 
     if (!result.rows.length) {
       return res.status(404).json({ success: false, message: 'Listing not found.' });
     }
 
+    await createLog(
+      'success',
+      `Listing verified: ${result.rows[0].title} (ID: ${listingId}, type: ${listingType ?? 'unknown'})`,
+      'verifyListing'
+    );
+
     return res.json({
       success: true,
       message: 'Listing verified.',
-      listing: {
-        ...result.rows[0],
-        type: listingType || result.rows[0].type,
-      },
+      listing: { ...result.rows[0], type: listingType || result.rows[0].type },
     });
   } catch (err) {
+    await createLog('error', `verifyListing error: ${err.message}`, 'verifyListing');
     console.error('VerifyListing error:', err.message);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
+
+const createLog = async (level, message, source, userId = null) => {
+  try {
+    // silently skip if logs table doesn't exist yet
+    const { rows } = await pool.query(`SELECT to_regclass('public.logs') AS t`);
+    if (!rows[0].t) return;
+
+    await pool.query(
+      `INSERT INTO logs (level, message, source, user_id) VALUES ($1, $2, $3, $4)`,
+      [level, message, source, userId]
+    );
+  } catch (err) {
+    console.error('createLog error:', err.message);
+  }
+};
+
+const getLogs = async (req, res) => {
+  try {
+    const { page = 1, limit = 50 } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Check if logs table exists first
+    const tableCheck = await pool.query(`
+      SELECT to_regclass('public.logs') AS logs_table
+    `);
+
+    if (!tableCheck.rows[0].logs_table) {
+      return res.json({ success: true, logs: [] });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM logs ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      [parseInt(limit), parseInt(offset)]
+    );
+
+    res.json({ success: true, logs: result.rows });
+  } catch (err) {
+    console.error('GetLogs error:', err.message);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 };
@@ -346,6 +403,6 @@ const verifyListing = async (req, res) => {
 module.exports = {
   loginAdmin, getStats,
   getOrders, getAllUsers,
-  verifyUser, deleteUser,
+  verifyUser, deleteUser, getLogs,
   getAllListings, verifyListing
 };

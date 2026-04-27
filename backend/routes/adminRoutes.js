@@ -13,7 +13,8 @@ const {
     verifyUser,
     deleteUser,
     getAllListings,
-    verifyListing
+    verifyListing,
+    getLogs
 } = require('../controllers/adminController');
 
 // Validation
@@ -33,6 +34,7 @@ router.delete('/users/:id', asyncHandler(deleteUser));
 router.get('/listings', asyncHandler(getAllListings));
 router.put('/listings/:id/verify', asyncHandler(verifyListing));
 router.get('/orders', asyncHandler(getOrders));
+router.get('/logs', asyncHandler(getLogs));
 
 
 module.exports = router;      
