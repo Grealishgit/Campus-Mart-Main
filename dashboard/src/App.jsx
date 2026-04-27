@@ -11,6 +11,7 @@ import Logs from './pages/Logs'
 import Settings from './pages/Settings'
 import LoginPage from './auth/LoginPage'
 import { useAuth } from './hooks/useAuth'
+import Notifications from './pages/Notifications'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="/logs" element={<Logs />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Route>
     </Routes>
   )

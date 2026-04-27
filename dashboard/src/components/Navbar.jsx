@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
-const Navbar = ({ theme, sidebarOpen, setSidebarOpen, sidebarWidth = 256 }) => {
+const Navbar = ({ theme, themeMode, setTheme, sidebarOpen, setSidebarOpen, sidebarWidth = 256 }) => {
     const { logout, getUser } = useAuth();
     const user = getUser();
     const dark = theme === 'dark';
@@ -37,7 +37,6 @@ const Navbar = ({ theme, sidebarOpen, setSidebarOpen, sidebarWidth = 256 }) => {
             }}
         >
             <div className={`flex flex-row px-4 py-3 ${bg} ${textMain} justify-between items-center w-full transition-colors duration-200`}>
-
                 {/* Left */}
                 <div className='flex items-center gap-3'>
                     <button
@@ -126,7 +125,6 @@ const Navbar = ({ theme, sidebarOpen, setSidebarOpen, sidebarWidth = 256 }) => {
                         </div>
                     )}
                 </div>
-
             </div>
         </div>
     );

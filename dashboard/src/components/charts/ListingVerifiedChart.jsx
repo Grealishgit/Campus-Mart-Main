@@ -1,8 +1,11 @@
+import { useOutletContext } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const COLORS = ['#10b981', '#ef4444'];
 
-const ListingVerifiedChart = ({ listings, dark }) => {
+const ListingVerifiedChart = ({ listings }) => {
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const data = [
     { name: 'Verified', value: listings.filter(l => l.is_verified).length },
     { name: 'Unverified', value: listings.filter(l => !l.is_verified).length },

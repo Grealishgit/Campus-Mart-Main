@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useUsers } from '../hooks/useUsers';
 import { Search, ShieldCheck, Trash2, ChevronLeft, ChevronRight, Users as UsersIcon, BadgeCheck, ShieldOff, GraduationCap } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 
 const StatCard = ({ title, value, icon: Icon, dark }) => (
   <div className={`rounded-xl p-5 border ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
@@ -15,7 +16,8 @@ const StatCard = ({ title, value, icon: Icon, dark }) => (
 );
 
 const Users = () => {
-  const dark = document.documentElement.classList.contains('dark');
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -58,7 +60,7 @@ const Users = () => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search users..."
-              className="outline-none bg-transparent w-48"
+              className="w-48 bg-transparent outline-none"
             />
           </div>
           <button type="submit" className="px-4 py-2 bg-[#6769ef] hover:bg-[#5557d4] text-white text-sm rounded-lg transition-colors">
@@ -68,7 +70,7 @@ const Users = () => {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(s => <StatCard key={s.title} {...s} dark={dark} />)}
       </div>
 
@@ -79,18 +81,18 @@ const Users = () => {
             <div className="w-8 h-8 border-2 border-[#6769ef] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <p className="text-red-400 text-sm p-6">{error}</p>
+            <p className="p-6 text-sm text-red-400">{error}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
-                <th className="text-left px-5 py-3 font-medium">Name</th>
-                <th className="text-left px-5 py-3 font-medium">Email</th>
-                <th className="text-left px-5 py-3 font-medium">Role</th>
-                <th className="text-left px-5 py-3 font-medium">Faculty</th>
-                <th className="text-left px-5 py-3 font-medium">Verified</th>
-                <th className="text-left px-5 py-3 font-medium">Joined</th>
-                <th className="text-left px-5 py-3 font-medium">Actions</th>
+                    <th className="px-5 py-3 font-medium text-left">Name</th>
+                    <th className="px-5 py-3 font-medium text-left">Email</th>
+                    <th className="px-5 py-3 font-medium text-left">Role</th>
+                    <th className="px-5 py-3 font-medium text-left">Faculty</th>
+                    <th className="px-5 py-3 font-medium text-left">Verified</th>
+                    <th className="px-5 py-3 font-medium text-left">Joined</th>
+                    <th className="px-5 py-3 font-medium text-left">Actions</th>
               </tr>
             </thead>
             <tbody>

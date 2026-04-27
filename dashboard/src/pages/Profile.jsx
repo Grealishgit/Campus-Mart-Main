@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { User, Mail, Lock, Save, ShieldCheck } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 
 const Profile = () => {
-  const dark = document.documentElement.classList.contains('dark');
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const { getUser } = useAuth();
   const user = getUser();
   const { updateProfile, changePassword, loading, error, success } = useProfile();
@@ -51,7 +53,7 @@ const Profile = () => {
       {/* Avatar + Info */}
       <div className={`rounded-xl border p-6 flex items-center gap-5 ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
         <div className="w-16 h-16 rounded-full bg-[#6769ef] flex items-center justify-center shrink-0">
-          <span className="text-white text-2xl font-bold">{user?.name?.[0]?.toUpperCase() ?? 'A'}</span>
+          <span className="text-2xl font-bold text-white">{user?.name?.[0]?.toUpperCase() ?? 'A'}</span>
         </div>
         <div>
           <p className={`font-semibold text-lg ${dark ? 'text-white' : 'text-gray-800'}`}>{user?.name ?? 'Admin'}</p>
@@ -70,17 +72,17 @@ const Profile = () => {
         </div>
 
         {success && (
-          <div className="px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm">
+          <div className="px-4 py-3 text-sm border rounded-lg bg-emerald-500/10 border-emerald-500/30 text-emerald-400">
             Profile updated successfully.
           </div>
         )}
         {error && (
-          <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          <div className="px-4 py-3 text-sm text-red-400 border rounded-lg bg-red-500/10 border-red-500/30">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
             <label className={label}>Full Name</label>
             <input value={name} onChange={e => setName(e.target.value)} className={input} placeholder="Your name" />
@@ -106,12 +108,12 @@ const Profile = () => {
         </div>
 
         {passwordError && (
-          <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          <div className="px-4 py-3 text-sm text-red-400 border rounded-lg bg-red-500/10 border-red-500/30">
             {passwordError}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
             <label className={label}>Current Password</label>
             <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className={input} placeholder="••••••••" />

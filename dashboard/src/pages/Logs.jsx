@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLogs } from '../hooks/useLogs';
 import { Activity, AlertCircle, Info, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 
 const StatCard = ({ title, value, icon: Icon, dark, color }) => (
   <div className={`rounded-xl p-5 border ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
@@ -23,7 +24,8 @@ const levelStyles = {
 };
 
 const Logs = () => {
-  const dark = document.documentElement.classList.contains('dark');
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState('ALL');
   const { logs, loading, error } = useLogs(page);
@@ -50,7 +52,7 @@ const Logs = () => {
         <p className={`text-sm mt-0.5 ${dark ? 'text-white/50' : 'text-gray-500'}`}>Monitor system activity and events</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(s => <StatCard key={s.title} {...s} dark={dark} />)}
       </div>
 
@@ -58,7 +60,7 @@ const Logs = () => {
       <div className="flex items-center gap-2">
         {['ALL', 'INFO', 'WARNING', 'ERROR', 'SUCCESS'].map(tab => (
           <button key={tab} onClick={() => setFilter(tab)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === tab ? 'bg-[#6769ef] text-white' : dark ? 'bg-gray-800 text-white/50 hover:text-white border border-gray-700' : 'bg-gray-100 text-gray-500 hover:text-gray-800'}`}>
+            className={`px-4 py-1.5 cursor-pointer rounded-lg text-sm font-medium transition-colors ${filter === tab ? 'bg-[#6769ef] text-white' : dark ? 'bg-gray-800 text-white/50 hover:text-white border border-gray-700' : 'bg-gray-100 text-gray-500 hover:text-gray-800'}`}>
             {tab}
           </button>
         ))}
@@ -70,16 +72,16 @@ const Logs = () => {
             <div className="w-8 h-8 border-2 border-[#6769ef] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <p className="text-red-400 text-sm p-6">{error}</p>
+            <p className="p-6 text-sm text-red-400">{error}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
-                <th className="text-left px-5 py-3 font-medium">Level</th>
-                <th className="text-left px-5 py-3 font-medium">Message</th>
-                <th className="text-left px-5 py-3 font-medium">Source</th>
-                <th className="text-left px-5 py-3 font-medium">User</th>
-                <th className="text-left px-5 py-3 font-medium">Timestamp</th>
+                    <th className="px-5 py-3 font-medium text-left">Level</th>
+                    <th className="px-5 py-3 font-medium text-left">Message</th>
+                    <th className="px-5 py-3 font-medium text-left">Source</th>
+                    <th className="px-5 py-3 font-medium text-left">User</th>
+                    <th className="px-5 py-3 font-medium text-left">Timestamp</th>
               </tr>
             </thead>
             <tbody>

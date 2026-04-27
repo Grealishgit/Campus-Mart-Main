@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { ShoppingCart, CheckCircle, XCircle, Clock, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
 
 const StatCard = ({ title, value, icon: Icon, dark }) => (
   <div className={`rounded-xl p-5 border ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
@@ -21,7 +22,8 @@ const statusStyles = {
 };
 
 const Orders = () => {
-  const dark = document.documentElement.classList.contains('dark');
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const [page, setPage] = useState(1);
   const { orders, loading, error } = useOrders(page);
 
@@ -45,7 +47,7 @@ const Orders = () => {
         <p className={`text-sm mt-0.5 ${dark ? 'text-white/50' : 'text-gray-500'}`}>Track and manage all orders</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(s => <StatCard key={s.title} {...s} dark={dark} />)}
       </div>
 
@@ -55,18 +57,18 @@ const Orders = () => {
             <div className="w-8 h-8 border-2 border-[#6769ef] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <p className="text-red-400 text-sm p-6">{error}</p>
+            <p className="p-6 text-sm text-red-400">{error}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
-                <th className="text-left px-5 py-3 font-medium">Order ID</th>
-                <th className="text-left px-5 py-3 font-medium">Buyer</th>
-                <th className="text-left px-5 py-3 font-medium">Seller</th>
-                <th className="text-left px-5 py-3 font-medium">Item</th>
-                <th className="text-left px-5 py-3 font-medium">Amount</th>
-                <th className="text-left px-5 py-3 font-medium">Status</th>
-                <th className="text-left px-5 py-3 font-medium">Date</th>
+                    <th className="px-5 py-3 font-medium text-left">Order ID</th>
+                    <th className="px-5 py-3 font-medium text-left">Buyer</th>
+                    <th className="px-5 py-3 font-medium text-left">Seller</th>
+                    <th className="px-5 py-3 font-medium text-left">Item</th>
+                    <th className="px-5 py-3 font-medium text-left">Amount</th>
+                    <th className="px-5 py-3 font-medium text-left">Status</th>
+                    <th className="px-5 py-3 font-medium text-left">Date</th>
               </tr>
             </thead>
             <tbody>

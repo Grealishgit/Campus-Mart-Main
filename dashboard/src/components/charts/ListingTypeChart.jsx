@@ -1,8 +1,11 @@
+import { useOutletContext } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const COLORS = ['#6769ef', '#f59e0b'];
 
-const ListingTypeChart = ({ listings, dark }) => {
+const ListingTypeChart = ({ listings }) => {
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const data = [
     { name: 'Sale', value: listings.filter(l => l.type === 'SALE').length },
     { name: 'Lease', value: listings.filter(l => l.type === 'LEASE').length },

@@ -1,6 +1,9 @@
+import { useOutletContext } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const RevenueChart = ({ orders, dark }) => {
+const RevenueChart = ({ orders }) => {
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   // Group completed orders by month
   const monthMap = {};
   orders

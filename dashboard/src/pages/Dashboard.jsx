@@ -8,6 +8,7 @@ import UserGrowthChart from '../components/charts/UserGrowthChart';
 import ListingTypeChart from '../components/charts/ListingTypeChart';
 import ListingVerifiedChart from '../components/charts/ListingVerifiedChart';
 import OrderStatusChart from '../components/charts/OrderStatusChart';
+import { useOutletContext } from 'react-router-dom';
 
 const StatCard = ({ title, value, icon: Icon, trend, dark }) => (
   <div className={`rounded-xl p-5 border ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
@@ -19,7 +20,7 @@ const StatCard = ({ title, value, icon: Icon, trend, dark }) => (
     </div>
     <p className={`text-2xl font-bold ${dark ? 'text-white' : 'text-gray-800'}`}>{value}</p>
     {trend && (
-      <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
+      <p className="flex items-center gap-1 mt-1 text-xs text-emerald-400">
         <TrendingUp size={12} /> {trend}
       </p>
     )}
@@ -33,11 +34,12 @@ const Spinner = () => (
 );
 
 const Dashboard = () => {
-  const dark = document.documentElement.classList.contains('dark');
   const { stats, loading: statsLoading } = useStats();
   const { listings, loading: listingsLoading } = useListings();
   const { orders, loading: ordersLoading } = useOrders();
   const { users, loading: usersLoading } = useUsers();
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
 
   const cards = [
     { title: 'Total Users', value: stats?.totalUsers?.toLocaleString() ?? '0', icon: Users },
@@ -57,19 +59,19 @@ const Dashboard = () => {
 
       {/* Stat Cards */}
       {statsLoading ? <Spinner /> : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map(c => <StatCard key={c.title} {...c} dark={dark} />)}
         </div>
       )}
 
       {/* Row 1 — Revenue + User Growth */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {ordersLoading ? <Spinner /> : <RevenueChart orders={orders} dark={dark} />}
         {usersLoading ? <Spinner /> : <UserGrowthChart users={users} dark={dark} />}
       </div>
 
       {/* Row 2 — Listing Type + Verified + Order Status */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {listingsLoading ? <Spinner /> : <ListingTypeChart listings={listings} dark={dark} />}
         {listingsLoading ? <Spinner /> : <ListingVerifiedChart listings={listings} dark={dark} />}
         {ordersLoading ? <Spinner /> : <OrderStatusChart orders={orders} dark={dark} />}

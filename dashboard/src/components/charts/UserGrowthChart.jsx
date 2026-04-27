@@ -1,6 +1,10 @@
+import { useOutletContext } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const UserGrowthChart = ({ users, dark }) => {
+const UserGrowthChart = ({ users }) => {
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
+
   if (!users?.length) return (
     <div className={`rounded-xl border p-5 flex items-center justify-center h-70 ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
       <p className={`text-sm ${dark ? 'text-white/30' : 'text-gray-400'}`}>No user data yet</p>

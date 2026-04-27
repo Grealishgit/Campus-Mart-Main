@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom';
 import { useListings } from '../hooks/useListings';
 import { ArchiveRestore, ShieldCheck, CheckCircle, TrendingUp, XCircle } from 'lucide-react';
 
@@ -14,7 +15,8 @@ const StatCard = ({ title, value, icon: Icon, dark }) => (
 );
 
 const Leases = () => {
-  const dark = document.documentElement.classList.contains('dark');
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const { listings, loading, error, verifyListing } = useListings();
 
   const leases = listings.filter(l => l.type === 'LEASE');
@@ -38,7 +40,7 @@ const Leases = () => {
         <p className={`text-sm mt-0.5 ${dark ? 'text-white/50' : 'text-gray-500'}`}>All listings available for lease</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(s => <StatCard key={s.title} {...s} dark={dark} />)}
       </div>
 
@@ -48,18 +50,18 @@ const Leases = () => {
             <div className="w-8 h-8 border-2 border-[#6769ef] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <p className="text-red-400 text-sm p-6">{error}</p>
+            <p className="p-6 text-sm text-red-400">{error}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
-                <th className="text-left px-5 py-3 font-medium">Title</th>
-                <th className="text-left px-5 py-3 font-medium">Category</th>
-                <th className="text-left px-5 py-3 font-medium">Price / mo</th>
-                <th className="text-left px-5 py-3 font-medium">Seller</th>
-                <th className="text-left px-5 py-3 font-medium">Available</th>
-                <th className="text-left px-5 py-3 font-medium">Verified</th>
-                <th className="text-left px-5 py-3 font-medium">Actions</th>
+                    <th className="px-5 py-3 font-medium text-left">Title</th>
+                    <th className="px-5 py-3 font-medium text-left">Category</th>
+                    <th className="px-5 py-3 font-medium text-left">Price / mo</th>
+                    <th className="px-5 py-3 font-medium text-left">Seller</th>
+                    <th className="px-5 py-3 font-medium text-left">Available</th>
+                    <th className="px-5 py-3 font-medium text-left">Verified</th>
+                    <th className="px-5 py-3 font-medium text-left">Actions</th>
               </tr>
             </thead>
             <tbody>

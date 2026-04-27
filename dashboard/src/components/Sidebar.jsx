@@ -4,7 +4,9 @@ import { useAuth } from '../hooks/useAuth'
 import {
   LayoutDashboard, LogOut, Settings, Users,
   Activity, ArrowLeftRight, User,
-  ArchiveRestore, Box, BadgeDollarSign
+  ArchiveRestore, Box, BadgeDollarSign,
+  Sun,
+  Moon
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -22,7 +24,7 @@ const BOTTOM_NAV = [
   { to: '/profile', icon: User,     label: 'Profile'     },
 ];
 
-const Sidebar = ({ theme, sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth }) => {
+const Sidebar = ({ theme, sidebarOpen, setTheme, setSidebarOpen, sidebarWidth, setSidebarWidth }) => {
   const { logout, getUser } = useAuth();
   const user = getUser();
   const dark = theme === 'dark';
@@ -94,6 +96,9 @@ const Sidebar = ({ theme, sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarW
           <div className='overflow-hidden'>
             <h2 className='font-bold text-[#6769ef] text-base truncate'>CampusMart</h2>
             <p className={`text-xs -mt-0.5 truncate ${textMuted}`}>Admin Portal</p>
+          </div>
+          <div className='ml-auto cursor-pointer text-[#6769ef] p-1 rounded hover:bg-[#6769ef]/10' onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? <Sun /> : <Moon />}
           </div>
         </div>
 

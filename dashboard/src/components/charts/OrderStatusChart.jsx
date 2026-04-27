@@ -1,8 +1,11 @@
+import { useOutletContext } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const COLORS = { completed: '#10b981', pending: '#f59e0b', cancelled: '#ef4444' };
 
-const OrderStatusChart = ({ orders, dark }) => {
+const OrderStatusChart = ({ orders }) => {
+  const { theme } = useOutletContext();
+  const dark = theme === 'dark';
   const statuses = ['completed', 'pending', 'cancelled'];
   const data = statuses.map(s => ({
     name: s.charAt(0).toUpperCase() + s.slice(1),
