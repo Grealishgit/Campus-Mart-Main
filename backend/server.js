@@ -19,8 +19,8 @@ app.use(helmet());
 app.use(cors({
   origin: [
     'http://localhost:5000',      // Local backend
-    'http://localhost:8081',      // Expo dev server (mobile)
-    'http://localhost:3000',      // Potential web frontend
+    'http://localhost:8081',      // Expo dev server (mobile) 
+    'http://localhost:5173',    //  Admin page
     'http://192.168.0.105:8081',  // Local network access
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
   ],

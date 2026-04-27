@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
 import { useRef, useEffect } from 'react'
+import { useAuth } from '../hooks/useAuth'
 
 import {
- LayoutDashboard, LogOut,
-  Settings,  Users,
+  LayoutDashboard, LogOut,
+  Settings, Users,
   Activity, ArrowLeftRight, User,
-  ArchiveRestore,Box,
+  ArchiveRestore, Box,
   BadgeDollarSign
 } from 'lucide-react'
 
@@ -43,6 +44,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth })
     document.body.style.cursor = 'col-resize';
   };
 
+  const { logout } = useAuth();
+
   useEffect(() => {
     const onMouseMove = (e) => {
       if (!isResizingRef.current) return;
@@ -66,7 +69,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth })
 
   return (
     <div
-      className='flex flex-col min-h-screen flex-shrink-0 transition-all duration-200'
+      className='flex flex-col min-h-screen shrink-0 transition-all duration-200'
       style={{ width: sidebarOpen ? sidebarWidth : 0, overflow: 'hidden' }}
     >
       <div className='relative bg-gray-800 border-r border-[#933942]/40 w-full min-h-screen flex flex-col'>
@@ -79,7 +82,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth })
 
         {/* Logo */}
         <div className='flex items-center gap-2 p-2 border-b border-[#933942]/30'>
-   
+
           <div className='overflow-hidden'>
             <h2 className='font-bold text-[#933942] text-lg truncate'>
               CampusMart
@@ -101,7 +104,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth })
                 }`
               }
             >
-              <Icon size={18} className='flex-shrink-0' />
+              <Icon size={18} className='shrink-0' />
               <span className='text-sm font-medium truncate'>{label}</span>
             </NavLink>
           ))}
@@ -120,7 +123,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth })
                 }`
               }
             >
-              <Icon size={18} className='flex-shrink-0' />
+              <Icon size={18} className='shrink-0' />
               <span className='text-sm font-medium truncate'>{label}</span>
             </NavLink>
           ))}
@@ -130,7 +133,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth })
         {/* Admin info + Logout */}
         <div className='p-2 border-t border-gray-700 mt-auto'>
           <div className='flex items-center gap-3 px-3 py-2'>
-            <div className='w-8 h-8 hover:border border-gray-300 rounded-full bg-[#933942] flex items-center justify-center flex-shrink-0'>
+            <div className='w-8 h-8 hover:border border-gray-300 rounded-full bg-[#933942] flex items-center justify-center shrink-0'>
               <NavLink to={'/settings'} title='settings'>
                 <Settings size={20} className='text-white' />
               </NavLink>
@@ -140,10 +143,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, sidebarWidth, setSidebarWidth })
               <p className='text-white text-sm font-medium truncate'>Super Admin</p>
               <p className='text-white/40 text-xs truncate'>Admin</p>
             </div>
-            <button
-              className='text-white/50 hover:text-red-400 transition-colors cursor-pointer'
-              title='Logout'
-            >
+            <button onClick={logout} className='text-white/50 hover:text-red-400 transition-colors cursor-pointer' title='Logout'>
               <LogOut size={18} />
             </button>
           </div>

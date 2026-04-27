@@ -1,9 +1,135 @@
-import React from 'react'
+import { useState } from 'react';
+import { useUsers } from '../hooks/useUsers';
+import { Search, ShieldCheck, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Users = () => {
-  return (
-    <div>Users</div>
-  )
-}
+  const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  const dark = theme === 'dark';
 
-export default Users
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+
+  const { users, loading, error, verifyUser, deleteUser } = useUsers(page, search);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setSearch(searchInput);
+    setPage(1);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    await deleteUser(id);
+  };
+
+  return (
+    <div className="p-6 space-y-5">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className={`text-xl font-bold ${dark ? 'text-white' : 'text-gray-800'}`}>Users</h1>
+          <p className={`text-sm mt-0.5 ${dark ? 'text-white/50' : 'text-gray-500'}`}>Manage all registered users</p>
+        </div>
+
+        {/* Search */}
+        <form onSubmit={handleSearch} className="flex items-center gap-2">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${dark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}>
+            <Search size={15} className="text-gray-400" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search users..."
+              className="outline-none bg-transparent w-48"
+            />
+          </div>
+          <button type="submit" className="px-4 py-2 bg-[#6769ef] hover:bg-[#5557d4] text-white text-sm rounded-lg transition-colors">
+            Search
+          </button>
+        </form>
+      </div>
+
+      {/* Table */}
+      <div className={`rounded-xl border overflow-hidden ${dark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <div className="w-8 h-8 border-2 border-[#6769ef] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : error ? (
+          <p className="text-red-400 text-sm p-6">{error}</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
+                <th className="text-left px-5 py-3 font-medium">Name</th>
+                <th className="text-left px-5 py-3 font-medium">Email</th>
+                <th className="text-left px-5 py-3 font-medium">Role</th>
+                <th className="text-left px-5 py-3 font-medium">Faculty</th>
+                <th className="text-left px-5 py-3 font-medium">Verified</th>
+                <th className="text-left px-5 py-3 font-medium">Joined</th>
+                <th className="text-left px-5 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.length === 0 ? (
+                <tr><td colSpan={7} className={`text-center py-10 ${dark ? 'text-white/30' : 'text-gray-400'}`}>No users found</td></tr>
+              ) : users.map((user) => (
+                <tr key={user.id} className={`border-b last:border-0 ${dark ? 'border-gray-700/50 hover:bg-gray-700/40' : 'border-gray-100 hover:bg-gray-50'}`}>
+                  <td className={`px-5 py-3 font-medium ${dark ? 'text-white' : 'text-gray-800'}`}>{user.name}</td>
+                  <td className={`px-5 py-3 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{user.email}</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-[#6769ef]/15 text-[#6769ef]' : dark ? 'bg-gray-700 text-white/60' : 'bg-gray-100 text-gray-600'}`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className={`px-5 py-3 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{user.faculty ?? '—'}</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.is_verified ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                      {user.is_verified ? 'Verified' : 'Unverified'}
+                    </span>
+                  </td>
+                  <td className={`px-5 py-3 ${dark ? 'text-white/50' : 'text-gray-400'}`}>
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      {!user.is_verified && (
+                        <button onClick={() => verifyUser(user.id)} title="Verify user"
+                          className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors">
+                          <ShieldCheck size={15} />
+                        </button>
+                      )}
+                      <button onClick={() => handleDelete(user.id)} title="Delete user"
+                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <p className={`text-sm ${dark ? 'text-white/40' : 'text-gray-400'}`}>Page {page}</p>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+            className={`p-2 rounded-lg border transition-colors disabled:opacity-40 ${dark ? 'border-gray-700 hover:bg-gray-700 text-white' : 'border-gray-200 hover:bg-gray-50'}`}>
+            <ChevronLeft size={16} />
+          </button>
+          <button onClick={() => setPage((p) => p + 1)} disabled={users.length < 20}
+            className={`p-2 rounded-lg border transition-colors disabled:opacity-40 ${dark ? 'border-gray-700 hover:bg-gray-700 text-white' : 'border-gray-200 hover:bg-gray-50'}`}>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default Users;

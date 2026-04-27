@@ -1,10 +1,11 @@
 import { Bell, HelpCircle, LogOut, Headset, Menu, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth'
+
 
 const Navbar = ({ sidebarOpen, setSidebarOpen, sidebarWidth = 256 }) => {
-
-
+    const { logout } = useAuth();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
     const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString());
@@ -88,10 +89,10 @@ const Navbar = ({ sidebarOpen, setSidebarOpen, sidebarWidth = 256 }) => {
                                 Support Queries
                             </NavLink>
 
-                            <NavLink className='block w-full bg-gray-900 rounded-md text-left px-4 py-2 text-sm text-white hover:bg-red-400'>
+                            <button onClick={logout} className='block w-full bg-gray-900 rounded-md text-left px-4 py-2 text-sm text-white hover:bg-red-400'>
                                 <LogOut size={16} className='inline-block mr-5' />
                                 Logout
-                            </NavLink>
+                            </button>
                         </div>
                     )}
 
