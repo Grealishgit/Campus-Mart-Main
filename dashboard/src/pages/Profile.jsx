@@ -94,7 +94,7 @@ const Profile = () => {
         </div>
 
         <button onClick={handleProfileSave} disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#6769ef] hover:bg-[#5557d4] disabled:opacity-50 text-white text-sm rounded-lg transition-colors">
+          className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-[#6769ef] hover:bg-[#5557d4] disabled:opacity-50 text-white text-sm rounded-lg transition-colors">
           <Save size={15} />
           {loading ? 'Saving...' : 'Save Changes'}
         </button>
@@ -129,7 +129,7 @@ const Profile = () => {
         </div>
 
         <button onClick={handlePasswordChange} disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#6769ef] hover:bg-[#5557d4] disabled:opacity-50 text-white text-sm rounded-lg transition-colors">
+          className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-[#6769ef] hover:bg-[#5557d4] disabled:opacity-50 text-white text-sm rounded-lg transition-colors">
           <Lock size={15} />
           {loading ? 'Updating...' : 'Update Password'}
         </button>

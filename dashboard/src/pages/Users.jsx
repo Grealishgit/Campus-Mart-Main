@@ -34,6 +34,13 @@ const Users = () => {
     { title: 'With Faculty', value: withFaculty, icon: GraduationCap },
   ];
 
+  const user_stats = [
+    { title: 'Students', value: users.filter(u => u.role === 'student').length, icon: UsersIcon },
+    { title: 'Vendors', value: users.filter(u => u.role === 'vendor').length, icon: UsersIcon },
+    { title: 'Admins', value: users.filter(u => u.role === 'admin').length, icon: ShieldCheck },
+    { title: 'Registered Today', value: users.filter(u => new Date(u.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length, icon: UsersIcon },
+  ]
+
   const handleSearch = (e) => {
     e.preventDefault();
     setSearch(searchInput);
@@ -46,7 +53,7 @@ const Users = () => {
   };
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-5 space-y-5">
 
       <div className="flex items-center justify-between">
         <div>
@@ -72,6 +79,11 @@ const Users = () => {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(s => <StatCard key={s.title} {...s} dark={dark} />)}
+      </div>
+
+      {/* User Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {user_stats.map(s => <StatCard key={s.title} {...s} dark={dark} />)}
       </div>
 
       {/* Table */}
@@ -103,7 +115,14 @@ const Users = () => {
                   <td className={`px-5 py-3 font-medium ${dark ? 'text-white' : 'text-gray-800'}`}>{user.name}</td>
                   <td className={`px-5 py-3 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{user.email}</td>
                   <td className="px-5 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-[#6769ef]/15 text-[#6769ef]' : dark ? 'bg-gray-700 text-white/60' : 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
+                      ? 'bg-[#6769ef]/15 text-[#6769ef]'
+                      : user.role === 'vendor'
+                        ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
+                        : dark
+                          ? 'bg-gray-700 text-white/60'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
                       {user.role}
                     </span>
                   </td>
@@ -120,12 +139,12 @@ const Users = () => {
                     <div className="flex items-center gap-2">
                       {!user.is_verified && (
                         <button onClick={() => verifyUser(user.id)} title="Verify user"
-                          className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors">
+                          className="p-1.5 cursor-pointer rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors">
                           <ShieldCheck size={15} />
                         </button>
                       )}
                       <button onClick={() => handleDelete(user.id)} title="Delete user"
-                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors">
+                        className="p-1.5 cursor-pointer rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors">
                         <Trash2 size={15} />
                       </button>
                     </div>

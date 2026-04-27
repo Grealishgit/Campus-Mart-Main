@@ -103,16 +103,6 @@ const Navbar = ({ theme, themeMode, setTheme, sidebarOpen, setSidebarOpen, sideb
                                 <Bell size={15} className='text-[#6769ef]' />
                                 Notifications
                             </NavLink>
-
-                            <NavLink
-                                to='/queries'
-                                onClick={() => setShowProfileMenu(false)}
-                                className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm ${textMain} ${menuHover} transition-colors`}
-                            >
-                                <Headset size={15} className='text-[#6769ef]' />
-                                Support Queries
-                            </NavLink>
-
                             <div className={`my-1 border-t ${border}`} />
 
                             <button

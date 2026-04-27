@@ -140,6 +140,7 @@ const env = process.env.NODE_ENV;
     await pool.query('SELECT 1');
 
     app.listen(PORT, '0.0.0.0', () => {
+      console.log('Server Running!');
       // console.log(`Server running on http://192.168.0.105:${PORT}`);
       // console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       // console.log(`Server accessible from other devices on the network`);
