@@ -13,24 +13,25 @@ app.set('etag', false);
 
 // ── Security Middleware ─────────────────────────────────────
 // Set security HTTP headers
-app.use(helmet());
-
 // CORS Configuration - Whitelist specific origins
 app.use(cors({
   origin: [
-    'http://localhost:5000',      // Local backend
-    'http://localhost:8081',      // Expo dev server (mobile) 
-    'http://localhost:5173',    //  Admin page
-    'https://campus-mart.hantardev.tech', // Production frontend
-    'https://campus-mart-main.vercel.app', // Vercel preview deployment
-    'http://192.168.0.105:8081',  // Local network access
+    'http://localhost:5000',
+    'http://localhost:8081',
+    'http://localhost:5173',
+    'https://campus-mart.hantardev.tech',
+    'https://campus-mart-main.vercel.app',
+    'http://192.168.0.105:8081',
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // add OPTIONS
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200,
 }));
+
+
+app.use(helmet());
 
 // Sanitize data against NoSQL injection
 app.use(mongoSanitize());
@@ -130,27 +131,28 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT;
 
 const env = process.env.NODE_ENV;
-console.log(env)
+// console.log(env)
 
 
-if (env === 'development') {
   const startServer = async () => {
   try {
     // Forces an initial DB connection so status is shown at startup.
     await pool.query('SELECT 1');
 
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://192.168.0.105:${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`Server accessible from other devices on the network`);
+      // console.log(`Server running on http://192.168.0.105:${PORT}`);
+      // console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      // console.log(`Server accessible from other devices on the network`);
     });
   } catch (err) {
     console.error('Failed to connect to PostgreSQL on startup:', err.message);
     process.exit(1);
   }
   };
+
+
   startServer();
-}
+
 
 
 
