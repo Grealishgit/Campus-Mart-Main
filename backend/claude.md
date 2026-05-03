@@ -123,7 +123,7 @@ Every file and folder in `backend/` is listed below.
   Project manifest, scripts, dependencies, and metadata.
 
 - `README.md`  
-  Human-facing setup guide, endpoint summary, and deployment notes.
+  Human-fcaing setup guide, endpoint summary, and deployment notes.
 
 - `server.js`  
   Main Express server entry point. This is the first runtime file to inspect for app startup, middleware registration, and route mounting.
