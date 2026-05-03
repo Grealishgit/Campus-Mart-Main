@@ -22,7 +22,7 @@ export const useListings = () => {
     }, []);
 
     const verifyListing = async (id, type) => {
-        const { data } = await api.put(`/admin/listings/${id}/verify`, null, {
+        const { data } = await api.put(`/admin/listings/${id}/verify`, {}, {
             params: { type },
         });
         setListings((prev) => prev.map((l) => (l.id === id ? data.listing : l)));

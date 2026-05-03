@@ -48,7 +48,7 @@ export default function RootLayout() {
         initializeAuthSession(),
         AsyncStorage.getItem('onboarded'),
       ]);
-      console.log('bootstrap — onboarded:', onboarded, 'auth:', authenticated); // ✅
+      // console.log('bootstrap — onboarded:', onboarded, 'auth:', authenticated); 
       if (isMounted) {
         setIsAuth(authenticated);
         setUserRole(role ?? null);

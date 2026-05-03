@@ -60,18 +60,22 @@ export const getMarketplaceInsights = async (): Promise<AIInsights | null> => {
 /**
  * Format marketplace insights into a readable string for AI context
  * Used to enrich the system prompt with real marketplace data
+ * Prices formatted in KSh (Kenyan Shillings)
  */
 export const formatInsightsForAI = (insights: AIInsights): string => {
     if (!insights) return '';
 
     const lines: string[] = [];
 
+    // Helper to format price in KSh
+    const formatPrice = (price: number): string => `KSh ${price.toLocaleString()}`;
+
     // Cheapest products section
     if (insights.cheapest_products?.length > 0) {
         lines.push('CHEAP PRODUCTS AVAILABLE:');
         insights.cheapest_products.slice(0, 5).forEach((product, idx) => {
             const type = product.seller_role === 'vendor' ? 'Vendor' : 'Student';
-            lines.push(`${idx + 1}. ${product.title} - ${product.price} (${product.category}) by ${product.seller_name} (${type})`);
+            lines.push(`${idx + 1}. ${product.title} - ${formatPrice(product.price)} (${product.category}) by ${product.seller_name} (${type})`);
         });
         lines.push('');
     }
@@ -92,7 +96,7 @@ export const formatInsightsForAI = (insights: AIInsights): string => {
         lines.push(`• ${stats.active_sales} items for sale`);
         lines.push(`• ${stats.active_leases} items available to lease`);
         lines.push(`• ${stats.unique_vendors} sellers active`);
-        lines.push(`• Price range: ${stats.min_price} to ${stats.max_price} (avg: ${stats.avg_price})`);
+        lines.push(`• Price range: ${formatPrice(stats.min_price)} to ${formatPrice(stats.max_price)} (avg: ${formatPrice(stats.avg_price)})`);
         lines.push('');
     }
 
@@ -100,7 +104,7 @@ export const formatInsightsForAI = (insights: AIInsights): string => {
     if (insights.trending_products?.length > 0) {
         lines.push('RECENT LISTINGS:');
         insights.trending_products.slice(0, 3).forEach((product, idx) => {
-            lines.push(`${idx + 1}. ${product.title} - ${product.price} (${product.category}) by ${product.seller_name}`);
+            lines.push(`${idx + 1}. ${product.title} - ${formatPrice(product.price)} (${product.category}) by ${product.seller_name}`);
         });
     }
 
@@ -111,9 +115,11 @@ export const formatInsightsForAI = (insights: AIInsights): string => {
  * Generate a system instruction for the AI that includes real marketplace context
  */
 export const buildAISystemInstruction = (insightsContext: string): string => {
-    const baseInstruction = `You are an AI Campus Assistant for CampusMart, a university marketplace platform. Your role is to help students find, sell, or lease items on campus safely and conveniently.
+    const baseInstruction = `You are an AI Campus Assistant for CampusMart, a university marketplace platform in Kenya. Your role is to help students find, sell, or lease items on campus safely and conveniently.
 
 IMPORTANT FORMATTING RULES: DO NOT use any markdown syntax like asterisks (*), dashes (-), or bullet points. Write in plain, natural sentences. Use emojis occasionally 😊. Be friendly, energetic, and concise.
+
+CURRENCY: All prices are in KSh (Kenyan Shillings). Always reference prices in KSh when discussing items or deals.
 
 CURRENT MARKETPLACE DATA:
 ${insightsContext}
@@ -127,7 +133,9 @@ YOUR RESPONSIBILITIES:
 6. Highlight good deals and trending items
 7. Encourage safe transactions on CampusMart
 8. Answer questions about campus commerce and student needs
+9. Always reference prices in KSh
 
+TONE: Be friendly, encouraging, and practical. Make campus trading feel easy and safe. Occasionally reference specific products or categories from the marketplace to show you understand what's available. When discussing prices or deals, always use KSh
 TONE: Be friendly, encouraging, and practical. Make campus trading feel easy and safe. Occasionally reference specific products or categories from the marketplace to show you understand what's available.`;
 
     return baseInstruction;

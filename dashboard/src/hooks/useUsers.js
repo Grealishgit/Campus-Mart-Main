@@ -25,7 +25,7 @@ export const useUsers = (page = 1, search = '') => {
     }, [page, search]);
 
     const verifyUser = async (id) => {
-        const { data } = await api.put(`/admin/users/${id}/verify`);
+        const { data } = await api.put(`/admin/users/${id}/verify`, {});
         setUsers((prev) => prev.map((u) => (u.id === id ? data.user : u)));
     };
 

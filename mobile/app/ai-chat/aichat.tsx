@@ -11,7 +11,7 @@ const AiChat = () => {
     const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
         {
             role: 'model',
-            text: 'Hi! I\'m your CampusMart Assistant. Need help finding a textbook, figuring out dorm essentials, leasing gear, or checking campus commerce tips? Ask me anything! 🎓'
+            text: 'Hi! I\'m your CampusMart Assistant. Need help finding a textbook, figuring out dorm essentials, leasing gear, or checking campus-mart commerce tips? Ask me anything!'
         }
     ]);
     const [input, setInput] = useState('');
@@ -164,7 +164,7 @@ const AiChat = () => {
     return (
         <SafeAreaView>
             <View className="flex flex-col h-full bg-slate-50  overflow-hidden animate-slide-up">
-                <View className="bg-primary  p-6 pb-12 rounded-b-[2.5rem] relative">
+                <View className="bg-primary p-4 pb-5 rounded-b-[2.5rem] relative">
 
                     <View className="flex-row items-center justify-between mb-6">
                         <Pressable onPress={() => router.replace('/(tabs)')}
@@ -175,15 +175,14 @@ const AiChat = () => {
                             <Text className="text-white text-[10px] font-display-bold uppercase tracking-[0.2em]">Smart Assistant</Text>
                         </View>
                         <Pressable className="bg-white/20 p-2 rounded-full text-white backdrop-blur-md">
-                            <MaterialCommunityIcons name="dots-horizontal" size={24} color="white" />
+                            <View className="bg-white rounded-3xl shadow-xl flex items-center justify-center rotate-3 relative overflow-hidden">
+                                <Ionicons name="sparkles" size={24} color="#6769ef" />
+                                <View className="absolute inset-0 bg-primary/5 animate-pulse"></View>
+                            </View>
                         </Pressable>
                     </View>
 
                     <View className="flex flex-col items-center gap-2">
-                        <View className="size-20 bg-white rounded-3xl shadow-xl flex items-center justify-center rotate-3 relative overflow-hidden">
-                            <Ionicons name="sparkles" size={28} color="#6769ef" />
-                            <View className="absolute inset-0 bg-primary/5 animate-pulse"></View>
-                        </View>
                         <Text className="text-3xl font-display-bold text-white mt-2">How can I help?</Text>
                         <Text className="text-white/70 font-display-semibold text-md">Expert campus smart assistant</Text>
                     </View>
