@@ -164,9 +164,19 @@ export async function getMyListings(): Promise<ApiResponse<ListingsResponse>> {
 export async function getVendorStore(
   sellerId: string,
 ): Promise<ApiResponse<VendorStoreResponse>> {
-  return apiRequest<VendorStoreResponse>(`/listings/store/${sellerId}`, {
+  const response = await apiRequest<any>(`/listings/store/${sellerId}`, {
     method: 'GET',
   });
+
+  if (!response.success || !response.data) {
+    return response;
+  }
+
+  const store = response.data.store ?? response.data;
+  return {
+    ...response,
+    data: store,
+  };
 }
 
 

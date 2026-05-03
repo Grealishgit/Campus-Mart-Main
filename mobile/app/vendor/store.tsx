@@ -37,8 +37,9 @@ const VendorStore = () => {
 
             try {
                 const result = await getVendorStore(String(sellerId));
-                if (result.success && result.data) {
-                    setStoreData(result.data);
+                const storePayload = (result.data as any)?.store ?? result.data;
+                if (result.success && storePayload?.seller) {
+                    setStoreData(storePayload);
                 } else {
                     // Fallback for backends that haven't deployed /listings/store/:sellerId yet.
                     const all = await getAllListings({ page: 1, limit: 200 });
@@ -137,6 +138,11 @@ const VendorStore = () => {
     }
 
     const seller = storeData.seller;
+    const sellerAvatarUrl = seller.avatar_url ?? sellerAvatar ?? '';
+    const sellerLocationValue = seller.location ?? sellerLocation ?? '';
+    const sellerNameValue = seller.name ?? sellerName ?? 'Vendor';
+    const sellerRatingValue = Number(seller.rating ?? sellerRating ?? 0);
+    const sellerVerifiedValue = Boolean(seller.is_verified ?? (String(sellerVerified || 'false') === 'true'));
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -151,8 +157,8 @@ const VendorStore = () => {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
                 <View className="px-4 pt-4">
                     <View className="flex-row items-center gap-3 p-4 border border-gray-100 bg-gray-50 rounded-2xl">
-                        {seller.avatar_url ? (
-                            <Image source={{ uri: seller.avatar_url }} className="w-16 h-16 rounded-full" />
+                        {sellerAvatarUrl ? (
+                            <Image source={{ uri: sellerAvatarUrl }} className="w-16 h-16 rounded-full" />
                         ) : (
                             <View className="items-center justify-center w-16 h-16 rounded-full bg-primary/10">
                                 <Ionicons name="person" size={28} color="#6769ef" />
@@ -161,17 +167,17 @@ const VendorStore = () => {
 
                         <View className="flex-1">
                             <View className="flex-row items-center gap-1.5">
-                                <Text className="text-lg text-gray-900 font-display-semibold">{seller.name}</Text>
-                                {seller.is_verified && <MaterialIcons name="verified" size={16} color="#3b82f6" />}
+                                <Text className="text-lg text-gray-900 font-display-semibold">{sellerNameValue}</Text>
+                                {sellerVerifiedValue && <MaterialIcons name="verified" size={16} color="#3b82f6" />}
                             </View>
-                            <Text className="mt-0.5 text-sm text-gray-500 font-display">{seller.location || 'Location not set'}</Text>
+                            <Text className="mt-0.5 text-sm text-gray-500 font-display">{sellerLocationValue || 'Location not set'}</Text>
                         </View>
                     </View>
 
                     <View className="flex-row gap-2 mt-3">
                         <View className="flex-row items-center gap-1.5 px-3 py-2 border border-amber-100 rounded-xl bg-amber-50">
                             <Ionicons name="star" size={14} color="#f59e0b" />
-                            <Text className="text-sm text-amber-700 font-display-semibold">{Number(seller.rating || 0).toFixed(1)}</Text>
+                            <Text className="text-sm text-amber-700 font-display-semibold">{sellerRatingValue.toFixed(1)}</Text>
                         </View>
                         <View className="px-3 py-2 bg-gray-100 rounded-xl">
                             <Text className="text-sm text-gray-700 font-display-medium">Sales: {seller.total_sales || 0}</Text>

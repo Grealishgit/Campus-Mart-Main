@@ -152,7 +152,11 @@ const ListingCard: React.FC<ListingCardProps> = ({
                         color={localFavorited ? '#f43f5e' : 'white'}
                     />
                 </Pressable>
-
+                <View className="ml-1 px-2 absolute bottom-1 py-0.5 rounded-full" style={{ backgroundColor: accentSoft }}>
+                    <Text className="text-[10px] font-display-bold uppercase" style={{ color: accentColor }}>
+                        {isVendor ? 'Vendor' : 'Student'}
+                    </Text>
+                </View>
 
             </View >
 
@@ -166,11 +170,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     >
                         {listing.title.length > 15 ? listing.title.slice(0, 15) + '...' : listing.title}
                     </Text>
-                    <View className="px-2 py-1 rounded-full" style={{ backgroundColor: accentSoft }}>
-                        <Text className="text-[10px] font-display-bold uppercase" style={{ color: accentColor }}>
-                            {isVendor ? 'Vendor' : 'Student'}
-                        </Text>
-                    </View>
+
                     {/* Price */}
                     <View className="flex-row items-center justify-between">
                         <View className="flex-row items-end justify-end  gap-0.5">

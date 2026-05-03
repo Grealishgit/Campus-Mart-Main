@@ -481,7 +481,7 @@ const ProductItemScreen = () => {
                     <Pressable
                         onPress={handleBuyNow}
                         disabled={loading}
-                        className="items-center justify-center flex-1 py-4 rounded-2xl bg-primary active:opacity-80"
+                        className={`items-center justify-center flex-1 py-4 rounded-2xl ${isVendorSeller ? 'bg-[#f59e0b]' : 'bg-primary'} active:opacity-80`}
                     >
                         {loading
                             ? <ActivityIndicator color="white" />
