@@ -95,64 +95,66 @@ const Users = () => {
         ) : error ? (
             <p className="p-6 text-sm text-red-400">{error}</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
-                    <th className="px-5 py-3 font-medium text-left">Name</th>
-                    <th className="px-5 py-3 font-medium text-left">Email</th>
-                    <th className="px-5 py-3 font-medium text-left">Role</th>
-                    <th className="px-5 py-3 font-medium text-left">Faculty</th>
-                    <th className="px-5 py-3 font-medium text-left">Verified</th>
-                    <th className="px-5 py-3 font-medium text-left">Joined</th>
-                    <th className="px-5 py-3 font-medium text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 ? (
-                <tr><td colSpan={7} className={`text-center py-10 ${dark ? 'text-white/30' : 'text-gray-400'}`}>No users found</td></tr>
-              ) : users.map((user) => (
-                <tr key={user.id} className={`border-b last:border-0 ${dark ? 'border-gray-700/50 hover:bg-gray-700/40' : 'border-gray-100 hover:bg-gray-50'}`}>
-                  <td className={`px-5 py-3 font-medium ${dark ? 'text-white' : 'text-gray-800'}`}>{user.name}</td>
-                  <td className={`px-5 py-3 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{user.email}</td>
-                  <td className="px-5 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
-                      ? 'bg-[#6769ef]/15 text-[#6769ef]'
-                      : user.role === 'vendor'
-                        ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
-                        : dark
-                          ? 'bg-gray-700 text-white/60'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className={`px-5 py-3 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{user.faculty ?? '—'}</td>
-                  <td className="px-5 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.is_verified ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                      {user.is_verified ? 'Verified' : 'Unverified'}
-                    </span>
-                  </td>
-                  <td className={`px-5 py-3 ${dark ? 'text-white/50' : 'text-gray-400'}`}>
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      {!user.is_verified && (
-                        <button onClick={() => verifyUser(user.id)} title="Verify user"
-                          className="p-1.5 cursor-pointer rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors">
-                          <ShieldCheck size={15} />
-                        </button>
-                      )}
-                      <button onClick={() => handleDelete(user.id)} title="Delete user"
-                        className="p-1.5 cursor-pointer rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors">
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
+                      <th className="px-5 py-3 font-medium text-left">Name</th>
+                      <th className="px-5 py-3 font-medium text-left">Email</th>
+                      <th className="px-5 py-3 font-medium text-left">Role</th>
+                      <th className="px-5 py-3 font-medium text-left">Faculty</th>
+                      <th className="px-5 py-3 font-medium text-left">Verified</th>
+                      <th className="px-5 py-3 font-medium text-left">Joined</th>
+                      <th className="px-5 py-3 font-medium text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr><td colSpan={7} className={`text-center py-10 ${dark ? 'text-white/30' : 'text-gray-400'}`}>No users found</td></tr>
+                    ) : users.map((user) => (
+                      <tr key={user.id} className={`border-b last:border-0 ${dark ? 'border-gray-700/50 hover:bg-gray-700/40' : 'border-gray-100 hover:bg-gray-50'}`}>
+                        <td className={`px-5 py-3 font-medium ${dark ? 'text-white' : 'text-gray-800'}`}>{user.name}</td>
+                        <td className={`px-5 py-3 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{user.email}</td>
+                        <td className="px-5 py-3">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
+                            ? 'bg-[#6769ef]/15 text-[#6769ef]'
+                            : user.role === 'vendor'
+                              ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
+                              : dark
+                                ? 'bg-gray-700 text-white/60'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className={`px-5 py-3 ${dark ? 'text-white/60' : 'text-gray-500'}`}>{user.faculty ?? '—'}</td>
+                        <td className="px-5 py-3">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.is_verified ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                            {user.is_verified ? 'Verified' : 'Unverified'}
+                          </span>
+                        </td>
+                        <td className={`px-5 py-3 ${dark ? 'text-white/50' : 'text-gray-400'}`}>
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            {!user.is_verified && (
+                              <button onClick={() => verifyUser(user.id)} title="Verify user"
+                                className="p-1.5 cursor-pointer rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors">
+                                <ShieldCheck size={15} />
+                              </button>
+                            )}
+                            <button onClick={() => handleDelete(user.id)} title="Delete user"
+                              className="p-1.5 cursor-pointer rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors">
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
         )}
       </div>
 

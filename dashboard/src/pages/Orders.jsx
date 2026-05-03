@@ -59,6 +59,7 @@ const Orders = () => {
         ) : error ? (
             <p className="p-6 text-sm text-red-400">{error}</p>
         ) : (
+              <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
@@ -99,6 +100,7 @@ const Orders = () => {
               ))}
             </tbody>
           </table>
+              </div>
         )}
       </div>
 

@@ -52,9 +52,10 @@ const Leases = () => {
         ) : error ? (
             <p className="p-6 text-sm text-red-400">{error}</p>
         ) : (
-          <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full overflow-x-auto text-sm">
             <thead>
-              <tr className={`border-b ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
+                    <tr className={`border-b  ${dark ? 'border-gray-700 text-white/50' : 'border-gray-200 text-gray-500'}`}>
                     <th className="px-5 py-3 font-medium text-left">Title</th>
                     <th className="px-5 py-3 font-medium text-left">Category</th>
                     <th className="px-5 py-3 font-medium text-left">Price / mo</th>
@@ -89,7 +90,8 @@ const Leases = () => {
                   <td className="px-5 py-3">
                     {!listing.is_verified ? (
                       <button onClick={() => verifyListing(listing.id, 'LEASE')} title="Verify"
-                        className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors">
+                        className="p-1.5 rounded-lg gap-2 cursor-pointer flex items-center bg-gray-500/10 hover:bg-emerald-500/20 text-gray-200 hover:text-emerald-500 transition-colors">
+                        Verify
                         <ShieldCheck size={15} />
                       </button>
                     ) : <CheckCircle size={15} className="text-emerald-400 ml-1.5" />}
@@ -98,6 +100,7 @@ const Leases = () => {
               ))}
             </tbody>
           </table>
+              </div>
         )}
       </div>
     </div>
