@@ -153,7 +153,6 @@ const SignUpScreen = () => {
 
     if (role === 'student') {
       if (!formData.faculty.trim()) newErrors.faculty = "Faculty is required.";
-      if (!formData.year.trim()) newErrors.year = "Year is required.";
     }
 
     if (role === 'vendor') {
