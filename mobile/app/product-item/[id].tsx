@@ -11,6 +11,7 @@ import { addFavorite, removeFavorite, isFavorited } from '@/lib/favoriteService'
 import { createConversation } from '@/lib/chatService'
 import { createOrder } from '@/lib/orderService'
 import { getCurrentUser } from '@/lib/authService'
+import { deleteListing } from '@/lib/listingService'
 
 // ─── helpers ─────────────────────────────────────────────────
 const fmt = (date: Date) => date.toISOString().split('T')[0];
@@ -70,11 +71,11 @@ const ProductItemScreen = () => {
             if (isFav) {
                 const result = await removeFavorite(id, type as 'SALE' | 'LEASE');
                 // console.log('remove result:', result);
-                if (result.success) setIsFav(false);   
+                if (result.success) setIsFav(false);
             } else {
                 const result = await addFavorite(id, type as 'SALE' | 'LEASE');
                 // console.log('add result:', result);
-                if (result.success) setIsFav(true);   
+                if (result.success) setIsFav(true);
             }
         } catch (err: any) {
             console.error('favorite error:', err);
@@ -86,31 +87,31 @@ const ProductItemScreen = () => {
 
     const handleMessageSeller = async () => {
         try {
-      const result = await createConversation(id, type as 'SALE' | 'LEASE');
-      const conversation = result.data?.conversation;
-      if (result.success && conversation?.id) {
-        router.push({
-            pathname: '/chats/chat',
-            params: {
-                id: String(conversation.id),
-                name: sellerName ?? 'Seller',
-                avatarUrl: sellerAvatar ?? '',           
-                isOnline: 'false',
-                listingThumb: imageUrl ?? '',
-                listingTitle: title ?? '',             
-                type: conversation.type ?? 'BUYING',
-                lastMessage: '',
-                timestamp: conversation.created_at ?? '',
-                unreadCount: '0',
-            },
-        } as never);
-    } else {
-        Alert.alert('Error', result.error || 'Failed to start conversation');
-    }
-       } catch (err: any) {
-           Alert.alert('Error', err.message || 'Failed to start conversation');
-       }
-   };
+            const result = await createConversation(id, type as 'SALE' | 'LEASE');
+            const conversation = result.data?.conversation;
+            if (result.success && conversation?.id) {
+                router.push({
+                    pathname: '/chats/chat',
+                    params: {
+                        id: String(conversation.id),
+                        name: sellerName ?? 'Seller',
+                        avatarUrl: sellerAvatar ?? '',
+                        isOnline: 'false',
+                        listingThumb: imageUrl ?? '',
+                        listingTitle: title ?? '',
+                        type: conversation.type ?? 'BUYING',
+                        lastMessage: '',
+                        timestamp: conversation.created_at ?? '',
+                        unreadCount: '0',
+                    },
+                } as never);
+            } else {
+                Alert.alert('Error', result.error || 'Failed to start conversation');
+            }
+        } catch (err: any) {
+            Alert.alert('Error', err.message || 'Failed to start conversation');
+        }
+    };
 
     const handleBuyNow = async () => {
         try {
@@ -450,10 +451,36 @@ const ProductItemScreen = () => {
                                 <Text className="text-base font-display-semibold" style={{ color: themeColor }}>Edit Listing</Text>
                             </Pressable>
                             <Pressable
-                                onPress={() => Alert.alert('Delete', 'Delete this listing?', [
-                                    { text: 'Cancel', style: 'cancel' },
-                                    { text: 'Delete', style: 'destructive', onPress: () => router.back() },
-                                ])}
+                                onPress={() => Alert.alert(
+                                    'Delete listing',
+                                    'This will permanently remove your listing. Continue?',
+                                    [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        {
+                                            text: 'Delete',
+                                            style: 'destructive',
+                                            onPress: async () => {
+                                                try {
+                                                    setLoading(true);
+                                                    const result = await deleteListing(String(id), type as 'SALE' | 'LEASE');
+
+                                                    if (result.success) {
+                                                        Alert.alert('Deleted', 'Your listing was deleted successfully.', [
+                                                            { text: 'OK', onPress: () => router.replace('/(tabs)' as never) },
+                                                        ]);
+                                                        return;
+                                                    }
+
+                                                    Alert.alert('Error', result.error || 'Failed to delete listing');
+                                                } catch (err: any) {
+                                                    Alert.alert('Error', err.message || 'Failed to delete listing');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            },
+                                        },
+                                    ]
+                                )}
                                 className="flex-row items-center justify-center flex-1 gap-2 py-3 border border-red-200 bg-red-50 rounded-xl"
                             >
                                 <Ionicons name="trash-outline" size={18} color="#ef4444" />

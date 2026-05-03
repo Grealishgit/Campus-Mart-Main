@@ -4,18 +4,41 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { formatAIResponse } from '@/lib/helper';
+import { getMarketplaceInsights, formatInsightsForAI, buildAISystemInstruction, AIInsights } from '@/lib/aiService';
 
 const AiChat = () => {
 
     const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
         {
             role: 'model',
-            text: 'Hi! I\'m your CampusMart Assistant. Need help finding a textbook, figuring out dorm essentials, or checking campus lease rules? Ask me anything!'
+            text: 'Hi! I\'m your CampusMart Assistant. Need help finding a textbook, figuring out dorm essentials, leasing gear, or checking campus commerce tips? Ask me anything! 🎓'
         }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [marketplaceInsights, setMarketplaceInsights] = useState<AIInsights | null>(null);
+    const [systemInstruction, setSystemInstruction] = useState<string>('');
     const scrollRef = useRef<ScrollView>(null);
+
+    // Fetch marketplace insights on component mount
+    useEffect(() => {
+        const loadInsights = async () => {
+            try {
+                const insights = await getMarketplaceInsights();
+                if (insights) {
+                    setMarketplaceInsights(insights);
+                    const insightsContext = formatInsightsForAI(insights);
+                    const instruction = buildAISystemInstruction(insightsContext);
+                    setSystemInstruction(instruction);
+                }
+            } catch (error) {
+                console.error('Failed to load marketplace insights:', error);
+                // Fallback to basic instruction
+                setSystemInstruction(buildAISystemInstruction(''));
+            }
+        };
+        loadInsights();
+    }, []);
 
     useEffect(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
@@ -63,6 +86,9 @@ const AiChat = () => {
             // Use the latest flash model
             const model = 'gemini-flash-latest';
 
+            // Use dynamic system instruction with marketplace insights
+            const currentInstruction = systemInstruction || buildAISystemInstruction('');
+
             const response = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
                 {
@@ -81,7 +107,7 @@ const AiChat = () => {
                         systemInstruction: {
                             parts: [
                                 {
-                                    text: 'You are an AI Campus Assistant for CampusMart, a university marketplace. Important formatting rules: DO NOT use any markdown syntax like asterisks (*), dashes (-), or bullet points. Write in plain, natural sentences. Use emojis occasionally 😊. Be friendly, energetic, and concise. Help students with buying advice, textbook search tips, dorm decor ideas, and safety tips for campus trading. Mention that CampusMart is the safest way to trade on campus.'
+                                    text: currentInstruction
                                 }
                             ]
                         },

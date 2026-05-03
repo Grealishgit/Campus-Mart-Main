@@ -821,6 +821,101 @@ const getConditions = async (req, res) => {
   }
 };
 
+// Get marketplace insights for AI assistant (cheap products, categories, stats)
+const getAIInsights = async (req, res) => {
+  try {
+    // Get 10 cheapest products for AI context
+    const cheapestResult = await pool.query(
+      `
+        SELECT 
+          id, title, price, category, s.seller_id, u.name AS seller_name, u.role AS seller_role
+        FROM sale_listings s
+        JOIN users u ON s.seller_id = u.id
+        WHERE s.is_available = true AND s.is_sold = false
+        ORDER BY price ASC
+        LIMIT 10
+      `
+    );
+
+    // Get category distribution
+    const categoryResult = await pool.query(
+      `
+        SELECT category, COUNT(*) as count
+        FROM (
+          SELECT category FROM sale_listings WHERE is_available = true AND is_sold = false
+          UNION ALL
+          SELECT category FROM lease_listings WHERE is_available = true
+        ) listings
+        GROUP BY category
+        ORDER BY count DESC
+        LIMIT 8
+      `
+    );
+
+    // Get marketplace statistics
+    const statsResult = await pool.query(
+      `
+        SELECT 
+          (SELECT COUNT(*) FROM sale_listings WHERE is_available = true AND is_sold = false) as active_sales,
+          (SELECT COUNT(*) FROM lease_listings WHERE is_available = true) as active_leases,
+          (SELECT COUNT(DISTINCT seller_id) FROM sale_listings WHERE is_available = true AND is_sold = false) as unique_vendors,
+          (SELECT AVG(price) FROM sale_listings WHERE is_available = true AND is_sold = false) as avg_price,
+          (SELECT MIN(price) FROM sale_listings WHERE is_available = true AND is_sold = false) as min_price,
+          (SELECT MAX(price) FROM sale_listings WHERE is_available = true AND is_sold = false) as max_price
+      `
+    );
+
+    // Get trending products (most viewed/popular from recent)
+    const trendingResult = await pool.query(
+      `
+        SELECT 
+          id, title, price, category, created_at, s.seller_id, u.name AS seller_name
+        FROM sale_listings s
+        JOIN users u ON s.seller_id = u.id
+        WHERE s.is_available = true AND s.is_sold = false
+        ORDER BY created_at DESC
+        LIMIT 5
+      `
+    );
+
+    const stats = statsResult.rows[0];
+
+    res.json({
+      success: true,
+      insights: {
+        cheapest_products: cheapestResult.rows.map(item => ({
+          title: item.title,
+          price: item.price,
+          category: item.category,
+          seller_name: item.seller_name,
+          seller_role: item.seller_role,
+        })),
+        popular_categories: categoryResult.rows.map(row => ({
+          category: row.category,
+          count: parseInt(row.count),
+        })),
+        marketplace_stats: {
+          active_sales: parseInt(stats.active_sales),
+          active_leases: parseInt(stats.active_leases),
+          unique_vendors: parseInt(stats.unique_vendors),
+          avg_price: Math.round(parseFloat(stats.avg_price) || 0),
+          min_price: Math.round(parseFloat(stats.min_price) || 0),
+          max_price: Math.round(parseFloat(stats.max_price) || 0),
+        },
+        trending_products: trendingResult.rows.map(item => ({
+          title: item.title,
+          price: item.price,
+          category: item.category,
+          seller_name: item.seller_name,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('GetAIInsights error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch marketplace insights.' });
+  }
+};
+
 module.exports = {
   getListings,
   getListingById,
@@ -831,4 +926,5 @@ module.exports = {
   getVendorStore,
   getCategories,
   getConditions,
+  getAIInsights,
 };
