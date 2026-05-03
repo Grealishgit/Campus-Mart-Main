@@ -17,6 +17,7 @@ export interface Favorite {
   availableFrom?: string;
   availableUntil?: string;
   seller: {
+    role?: string;
     name: string;
     rating: number;
     avatarUrl?: string;

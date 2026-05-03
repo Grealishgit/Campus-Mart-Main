@@ -23,6 +23,7 @@ export interface Listing {
   imageUrl?: string;
   images?: string[];
   userId: string;
+  sellerRole?: string;
   sellerName?: string;  
   sellerRating?: number;
   sellerAvatar?: string;
@@ -71,6 +72,30 @@ export interface ConditionsResponse {
 export interface CreateListingResponse {
   listing?: Listing;
   message?: string;
+}
+
+export interface VendorStoreSeller {
+  id: string;
+  name: string;
+  email?: string;
+  role: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+  location?: string;
+  rating?: number;
+  total_sales?: number;
+  active_listings?: number;
+  created_at?: string;
+}
+
+export interface VendorStoreResponse {
+  seller: VendorStoreSeller;
+  listings: Listing[];
+  stats?: {
+    totalListings?: number;
+    averageRating?: number;
+    totalSales?: number;
+  };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -130,6 +155,17 @@ export async function getMyListings(): Promise<ApiResponse<ListingsResponse>> {
   return apiRequest<ListingsResponse>('/listings/my', {
     method: 'GET',
     requiresAuth: true,
+  });
+}
+
+/**
+ * Get vendor profile + active listings for vendor store page
+ */
+export async function getVendorStore(
+  sellerId: string,
+): Promise<ApiResponse<VendorStoreResponse>> {
+  return apiRequest<VendorStoreResponse>(`/listings/store/${sellerId}`, {
+    method: 'GET',
   });
 }
 

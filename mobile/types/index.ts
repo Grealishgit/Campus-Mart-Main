@@ -32,6 +32,7 @@ export interface Listing {
     imageUrl: string;
     isVerified: boolean;
     seller: {
+        role?: string;
         name: string;
         rating: number;
         avatarUrl: string;

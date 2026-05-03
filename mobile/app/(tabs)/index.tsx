@@ -110,6 +110,7 @@ const HomeScreen = () => {
         description: item.description,
         sellerId: item.seller?.id ?? item.userId ?? '',
         sellerName: item.seller?.name || item.seller_name || 'Unknown',
+        sellerRole: item.seller?.role || item.seller_role || item.sellerRole || 'student',
         sellerRating: item.seller?.rating || item.seller_rating || 0,
         sellerAvatar: item.seller?.avatarUrl || item.seller_avatar || '',
         sellerVerified: String(item.seller?.isVerified || item.seller_verified || false),

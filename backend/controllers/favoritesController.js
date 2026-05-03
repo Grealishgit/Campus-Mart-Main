@@ -40,6 +40,7 @@ const FAVORITES_QUERY = `
 
     -- Seller info
     u.name         AS seller_name,
+    u.role         AS seller_role,
     u.rating       AS seller_rating,
     u.avatar_url   AS seller_avatar,
     u.is_verified  AS seller_verified
@@ -77,6 +78,7 @@ const formatFavorite = (row) => ({
   maxDuration:    row.max_duration    ?? undefined,
   seller: {
     name:       row.seller_name,
+    role: row.seller_role,
     rating:     parseFloat(row.seller_rating) || 0,
     avatarUrl:  row.seller_avatar  ?? undefined,
     isVerified: row.seller_verified,

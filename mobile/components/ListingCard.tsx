@@ -28,6 +28,10 @@ const ListingCard: React.FC<ListingCardProps> = ({
     userId,
 }) => {
     const isLease = listing.type === TransactionType.LEASE;
+    const sellerRole = (listing as any)?.seller?.role ?? (listing as any)?.seller_role ?? (listing as any)?.sellerRole ?? 'student';
+    const isVendor = String(sellerRole).toLowerCase() === 'vendor';
+    const accentColor = isVendor ? '#f59e0b' : '#6769ef';
+    const accentSoft = isVendor ? '#f59e0b18' : '#6769ef18';
 
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const sellerId = (listing as any).userId;
@@ -116,7 +120,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     )}
                     <View
                         className=" flex-row items-center gap-1 px-2.5 py-1 rounded-full"
-                        style={{ backgroundColor: isLease ? '#6769ef' : '#10b981' }}
+                        style={{ backgroundColor: isLease ? accentColor : '#10b981' }}
                     >
 
                         <Ionicons
@@ -162,12 +166,17 @@ const ListingCard: React.FC<ListingCardProps> = ({
                     >
                         {listing.title.length > 15 ? listing.title.slice(0, 15) + '...' : listing.title}
                     </Text>
+                    <View className="px-2 py-1 rounded-full" style={{ backgroundColor: accentSoft }}>
+                        <Text className="text-[10px] font-display-bold uppercase" style={{ color: accentColor }}>
+                            {isVendor ? 'Vendor' : 'Student'}
+                        </Text>
+                    </View>
                     {/* Price */}
                     <View className="flex-row items-center justify-between">
                         <View className="flex-row items-end justify-end  gap-0.5">
                             <View>
                                 <Text style={{ color: isOwner ? '#c7d2fe' : '#9ca3af' }} className="text-md font-display">Ksh</Text>
-                                <Text style={{ color: isOwner ? '#ffffff' : '#6769ef' }} className="text-base leading-none font-display-bold">
+                                <Text style={{ color: isOwner ? '#ffffff' : accentColor }} className="text-base leading-none font-display-bold">
                                     {listing.price.toLocaleString()}
                                 </Text>
                             </View>
@@ -195,10 +204,10 @@ const ListingCard: React.FC<ListingCardProps> = ({
                             className="flex-row items-center gap-1 px-2 py-0.5 rounded-full"
                             style={{ backgroundColor: isOwner ? 'rgba(255,255,255,0.2)' : '#f3f4f6' }}
                         >
-                            <Ionicons name={item.icon as any} size={10} color={isOwner ? '#c7d2fe' : '#9ca3af'} />
+                            <Ionicons name={item.icon as any} size={10} color={isOwner ? '#c7d2fe' : accentColor} />
                             <Text
                                 className="text-[10px] font-display-medium"
-                                style={{ color: isOwner ? '#e0e7ff' : '#6b7280' }}
+                                style={{ color: isOwner ? '#e0e7ff' : accentColor }}
                                 numberOfLines={1}
                             >
                                 {item.value}

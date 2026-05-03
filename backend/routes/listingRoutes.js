@@ -4,7 +4,7 @@ const router = express.Router();
 // Controllers
 const {
   getListings, getListingById, createListing,
-  updateListing, deleteListing, getMyListings, getCategories, getConditions
+  updateListing, deleteListing, getMyListings, getVendorStore, getCategories, getConditions
 } = require('../controllers/listingController');
 
 // Middleware
@@ -31,6 +31,7 @@ router.get('/', validateRequest(getListingsSchema), asyncHandler(getListings));
 router.get('/categories', asyncHandler(getCategories));
 router.get('/conditions', asyncHandler(getConditions));
 router.get('/my', protect, asyncHandler(getMyListings));
+router.get('/store/:sellerId', asyncHandler(getVendorStore));
 router.get('/:id', asyncHandler(getListingById));
 router.post('/', protect, listingLimiter, upload.single('image'), validateRequest(createListingSchema), asyncHandler(createListing));
 router.put('/:id', protect, upload.single('image'), validateRequest(updateListingSchema), asyncHandler(updateListing));

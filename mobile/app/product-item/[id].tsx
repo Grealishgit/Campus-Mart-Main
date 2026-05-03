@@ -33,7 +33,7 @@ const ProductItemScreen = () => {
         id, title, price, priceUnit, type,
         category, condition, location, imageUrl,
         description, sellerName, sellerRating,
-        sellerAvatar, sellerVerified, sellerId,
+        sellerAvatar, sellerVerified, sellerId, sellerRole,
         minDuration, maxDuration, durationUnit,
         availableFrom, availableUntil,
     } = useLocalSearchParams<{
@@ -41,12 +41,16 @@ const ProductItemScreen = () => {
         priceUnit: string; type: string; category: string;
         condition: string; location: string; imageUrl: string;
         description: string; sellerName: string; sellerRating: string;
-        sellerAvatar: string; sellerVerified: string; sellerId: string;
+        sellerAvatar: string; sellerVerified: string; sellerId: string; sellerRole?: string;
         minDuration: string; maxDuration: string; durationUnit: string;
         availableFrom: string; availableUntil: string;
     }>();
 
     const isOwner = currentUserId && sellerId && currentUserId === sellerId;
+    const isVendorSeller = String(sellerRole || 'student').toLowerCase() === 'vendor';
+    const themeColor = isVendorSeller ? '#f59e0b' : '#6769ef';
+    const themeSoft = isVendorSeller ? '#f59e0b18' : '#6769ef18';
+    const sellerLabel = isVendorSeller ? 'Vendor' : 'Student';
     // console.log('current logged in user', currentUserId);
     // console.log("product seller", sellerId)
 
@@ -89,11 +93,11 @@ const ProductItemScreen = () => {
             pathname: '/chats/chat',
             params: {
                 id: String(conversation.id),
-                name: sellerName ?? 'Seller',       // ✅ from product params
-                avatarUrl: sellerAvatar ?? '',              // ✅
+                name: sellerName ?? 'Seller',
+                avatarUrl: sellerAvatar ?? '',           
                 isOnline: 'false',
-                listingThumb: imageUrl ?? '',              // ✅ product image
-                listingTitle: title ?? '',              // ✅ product title
+                listingThumb: imageUrl ?? '',
+                listingTitle: title ?? '',             
                 type: conversation.type ?? 'BUYING',
                 lastMessage: '',
                 timestamp: conversation.created_at ?? '',
@@ -142,6 +146,28 @@ const ProductItemScreen = () => {
         }
     };
 
+    const handleOpenSellerStore = async () => {
+        if (!sellerId || isOwner) return;
+
+        if (!isVendorSeller) {
+            Alert.alert('Student seller', 'This seller does not have a store page.');
+            return;
+        }
+
+        router.push({
+            pathname: '/vendor/store',
+            params: {
+                sellerId: String(sellerId),
+                sellerName: sellerName ?? 'Vendor',
+                sellerAvatar: sellerAvatar ?? '',
+                sellerRole: sellerRole ?? 'vendor',
+                sellerRating: String(sellerRating ?? 0),
+                sellerVerified: String(sellerVerified ?? false),
+                sellerLocation: location ?? '',
+            },
+        });
+    };
+
     // ─── detail pills ─────────────────────────────────────────
     const details = [
         { icon: <Feather name="box" size={20} color="#6769ef" />, label: 'Condition', value: condition },
@@ -157,7 +183,7 @@ const ProductItemScreen = () => {
                     onPress={() => router.back()}
                     className="items-center justify-center bg-white rounded-full shadow-sm w-11 h-11 active:bg-gray-50"
                 >
-                    <Ionicons name="chevron-back" size={22} color="#6769ef" />
+                    <Ionicons name="chevron-back" size={22} color={themeColor} />
                 </Pressable>
 
                 <View className="flex-row items-center gap-2">
@@ -183,7 +209,8 @@ const ProductItemScreen = () => {
                                     availableUntil: availableUntil ?? '',
                                 },
                             })}
-                            className="flex-row items-center gap-1.5 px-4 py-2 bg-primary rounded-full shadow-sm"
+                            className="flex-row items-center gap-1.5 px-4 py-2 rounded-full shadow-sm"
+                            style={{ backgroundColor: themeColor }}
                         >
                             <Ionicons name="create-outline" size={16} color="white" />
                             <Text className="text-sm text-white font-display-semibold">Edit</Text>
@@ -194,7 +221,7 @@ const ProductItemScreen = () => {
                                 onPress={() => { }}
                                 className="items-center justify-center bg-white rounded-full shadow-sm w-11 h-11 active:bg-gray-50"
                             >
-                                <Ionicons name="share-social-outline" size={20} color="#6769ef" />
+                                    <Ionicons name="share-social-outline" size={20} color={themeColor} />
                             </Pressable>
                             <Pressable
                                 onPress={handleLikeProduct}
@@ -202,8 +229,8 @@ const ProductItemScreen = () => {
                                     className="items-center justify-center bg-white rounded-full shadow-sm w-11 h-11 active:bg-gray-50"
                                 >
                                     {loading
-                                        ? <ActivityIndicator color="#6769ef" size="small" />
-                                        : <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? '#f43f5e' : '#6769ef'} />
+                                        ? <ActivityIndicator color={themeColor} size="small" />
+                                        : <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? '#f43f5e' : themeColor} />
                                     }
                                 </Pressable>
                         </>
@@ -224,7 +251,7 @@ const ProductItemScreen = () => {
                     {/* Type badge */}
                     <View
                         className="absolute px-3 py-1.5 rounded-full bottom-4 left-4"
-                        style={{ backgroundColor: type === 'LEASE' ? '#6769ef' : '#10b981' }}
+                        style={{ backgroundColor: type === 'LEASE' ? themeColor : '#10b981' }}
                     >
                         <Text className="text-xs tracking-widest text-white uppercase font-display-bold">
                             {type === 'LEASE' ? 'Lease' : 'For Sale'}
@@ -241,7 +268,7 @@ const ProductItemScreen = () => {
 
                     <View className="flex-row items-baseline gap-1.5 mt-2">
                         <Text className="text-xs text-gray-400 font-display">Ksh</Text>
-                        <Text className="text-3xl text-primary font-display-bold">
+                        <Text className="text-3xl font-display-bold" style={{ color: themeColor }}>
                             {Number(price).toLocaleString()}
                         </Text>
                         {type === 'LEASE' && priceUnit && (
@@ -259,7 +286,7 @@ const ProductItemScreen = () => {
                                 key={d.label}
                                 className="flex-row items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full"
                             >
-                                {d.icon}
+                                {React.cloneElement(d.icon, { color: themeColor })}
                                 <Text className="text-xs text-gray-500 font-display-medium">{d.label}: </Text>
                                 <Text className="text-xs text-gray-800 font-display-semibold">{d.value}</Text>
                             </View>
@@ -267,34 +294,43 @@ const ProductItemScreen = () => {
                     </View>
 
                     {/* ── Seller card ─────────────────────────────── */}
-                    <View className="flex-row items-center gap-3 p-4 mt-5 border border-gray-100 bg-gray-50 rounded-2xl">
+                    <Pressable
+                        onPress={handleOpenSellerStore}
+                        disabled={!sellerId || !!isOwner || !isVendorSeller}
+                        className="flex-row items-center gap-3 p-4 mt-5 border border-gray-100 bg-gray-50 rounded-2xl"
+                    >
                         {sellerAvatar ? (
                             <Image source={{ uri: sellerAvatar }} className="w-12 h-12 rounded-full" />
                         ) : (
                             <View className="items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                                <Ionicons name="person" size={22} color="#6769ef" />
+                                    <Ionicons name="person" size={22} color={themeColor} />
                             </View>
                         )}
 
                         <View className="flex-1">
-                            <View className="flex-row items-center gap-1">
+                            <View className="flex-row items-center gap-2">
                                 <Text className="text-base text-gray-900 font-display-semibold">
                                     {isOwner ? 'Posted by you' : sellerName}
                                 </Text>
+                                <View className="px-2 py-1 rounded-full" style={{ backgroundColor: themeSoft }}>
+                                    <Text className="text-[10px] font-display-bold uppercase" style={{ color: themeColor }}>
+                                        {sellerLabel}
+                                    </Text>
+                                </View>
                                 {sellerVerified === 'true' && (
                                     <MaterialIcons name="verified" size={15} color="#3b82f6" />
                                 )}
                             </View>
-                            <Text className="text-xs mt-0.5 font-display" style={{ color: sellerVerified === 'true' ? '#6769ef' : '#9ca3af' }}>
+                            <Text className="text-xs mt-0.5 font-display" style={{ color: sellerVerified === 'true' ? themeColor : '#9ca3af' }}>
                                 {isOwner ? 'You can edit this listing' : sellerVerified === 'true' ? 'Verified Seller' : 'Unverified Seller'}
                             </Text>
                         </View>
 
-                        <View className="flex-row items-center gap-1 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-xl">
-                            <Ionicons name="star" size={13} color="#f59e0b" />
-                            <Text className="text-sm text-amber-700 font-display-semibold">{sellerRating}</Text>
+                        <View className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-xl" style={{ backgroundColor: themeSoft, borderWidth: 1, borderColor: themeColor + '22' }}>
+                            <Ionicons name="star" size={13} color={themeColor} />
+                            <Text className="text-sm font-display-semibold" style={{ color: themeColor }}>{sellerRating}</Text>
                         </View>
-                    </View>
+                    </Pressable>
 
                     {/* ── Description ─────────────────────────────── */}
                     <View className="mt-5">
@@ -407,10 +443,11 @@ const ProductItemScreen = () => {
                                         availableUntil: availableUntil ?? '',
                                     },
                                 })}
-                                className="flex-row items-center justify-center flex-1 gap-2 py-3 border border-primary rounded-xl"
+                                className="flex-row items-center justify-center flex-1 gap-2 py-3 rounded-xl"
+                                style={{ borderWidth: 1, borderColor: themeColor }}
                             >
-                                <Ionicons name="create-outline" size={18} color="#6769ef" />
-                                <Text className="text-base text-primary font-display-semibold">Edit Listing</Text>
+                                <Ionicons name="create-outline" size={18} color={themeColor} />
+                                <Text className="text-base font-display-semibold" style={{ color: themeColor }}>Edit Listing</Text>
                             </Pressable>
                             <Pressable
                                 onPress={() => Alert.alert('Delete', 'Delete this listing?', [
@@ -435,9 +472,10 @@ const ProductItemScreen = () => {
                 >
                     <Pressable
                         onPress={handleMessageSeller}
-                        className="items-center justify-center border border-gray-200 w-14 h-14 rounded-2xl"
+                        className="items-center justify-center border w-14 h-14 rounded-2xl"
+                        style={{ borderColor: themeColor }}
                     >
-                        <Ionicons name="chatbubble-ellipses-outline" size={22} color="#6769ef" />
+                        <Ionicons name="chatbubble-ellipses-outline" size={22} color={themeColor} />
                     </Pressable>
 
                     <Pressable

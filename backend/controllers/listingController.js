@@ -49,6 +49,7 @@ const buildSaleSelect = (alias = 's') => `
   ${alias}.is_sold,
   ${alias}.seller_id,
   u.name AS seller_name,
+  u.role AS seller_role,
   u.rating AS seller_rating,
   u.avatar_url AS seller_avatar,
   u.is_verified AS seller_verified,
@@ -77,6 +78,7 @@ const buildLeaseSelect = (alias = 'l') => `
   FALSE AS is_sold,
   ${alias}.seller_id,
   u.name AS seller_name,
+  u.role AS seller_role,
   u.rating AS seller_rating,
   u.avatar_url AS seller_avatar,
   u.is_verified AS seller_verified,
@@ -211,6 +213,7 @@ const formatListing = (row) => ({
   seller: {
     id: row.seller_id,
     name: row.seller_name,
+    role: row.seller_role,
     rating: parseFloat(row.seller_rating) || 0,
     avatarUrl: row.seller_avatar,
     isVerified: row.seller_verified,
@@ -704,6 +707,67 @@ const getMyListings = async (req, res) => {
   }
 };
 
+const getVendorStore = async (req, res) => {
+  try {
+    const { sellerId } = req.params;
+
+    if (!sellerId) {
+      return res.status(400).json({ success: false, message: 'Seller id is required.' });
+    }
+
+    const vendorResult = await pool.query(
+      `
+        SELECT id, name, email, role, avatar_url, is_verified, location, rating, total_sales, active_listings, created_at
+        FROM users
+        WHERE id = $1 AND role = 'vendor'
+      `,
+      [sellerId]
+    );
+
+    if (!vendorResult.rows[0]) {
+      return res.status(404).json({ success: false, message: 'Vendor store not found.' });
+    }
+
+    const listingsResult = await pool.query(
+      `
+        SELECT * FROM (
+          SELECT
+            ${buildSaleSelect('s')}
+          FROM sale_listings s
+          JOIN users u ON s.seller_id = u.id
+          WHERE s.seller_id = $1 AND s.is_available = true AND s.is_sold = false
+
+          UNION ALL
+
+          SELECT
+            ${buildLeaseSelect('l')}
+          FROM lease_listings l
+          JOIN users u ON l.seller_id = u.id
+          WHERE l.seller_id = $1 AND l.is_available = true
+        ) combined
+        ORDER BY combined.created_at DESC
+      `,
+      [sellerId]
+    );
+
+    return res.json({
+      success: true,
+      store: {
+        seller: vendorResult.rows[0],
+        listings: listingsResult.rows.map(formatListing),
+        stats: {
+          totalListings: listingsResult.rows.length,
+          averageRating: Number(vendorResult.rows[0].rating || 0),
+          totalSales: Number(vendorResult.rows[0].total_sales || 0),
+        },
+      },
+    });
+  } catch (err) {
+    console.error('GetVendorStore error:', err.message);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+};
+
 const getCategories = async (req, res) => {
   try {
     const categoryTableResult = await pool.query(
@@ -764,6 +828,7 @@ module.exports = {
   updateListing,
   deleteListing,
   getMyListings,
+  getVendorStore,
   getCategories,
   getConditions,
 };

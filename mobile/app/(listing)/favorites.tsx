@@ -85,6 +85,7 @@ const FavoriteScreen = () => {
                 imageUrl: fav.imageUrl ?? '',
                 description: fav.description,
                 sellerName: fav.seller.name,
+                sellerRole: fav.seller.role || fav.seller_role || 'student',
                 sellerRating: String(fav.seller.rating),
                 sellerAvatar: fav.seller.avatarUrl ?? '',
                 sellerVerified: String(fav.seller.isVerified),
