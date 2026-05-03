@@ -141,8 +141,13 @@ const env = process.env.NODE_ENV;
 
     app.listen(PORT, '0.0.0.0', () => {
       console.log('Server Running!');
-      console.log(`Server running on http://192.168.0.111:${PORT}`);
-      // console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      if (env !== 'production') {
+        console.log(`Server running on http://192.168.0.111:${PORT}`);
+        console.log(`Environment: ${process.env.NODE_ENV}`);
+      } else {
+        console.log(`Environment: ${process.env.NODE_ENV}`);
+      }
+
       // console.log(`Server accessible from other devices on the network`);
     });
   } catch (err) {
